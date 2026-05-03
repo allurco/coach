@@ -40,7 +40,7 @@ it('shows the set-password form for a valid token', function () {
         ->assertStatus(200)
         ->assertSee('Maria')
         ->assertSee($user->email)
-        ->assertSee('Definir senha');
+        ->assertSee(__('invitation.page.submit'));
 });
 
 it('rejects passwords shorter than 8 chars', function () {
