@@ -52,11 +52,11 @@ class CoachWeeklyBriefing extends Command
             PROMPT;
 
         try {
-            $response = (new FinanceCoach)
-                ->forUser($user)
-                ->prompt($prompt, provider: Lab::Gemini, model: 'gemini-2.5-flash');
+            $coach = (new FinanceCoach)->forUser($user);
+            $response = $coach->prompt($prompt, provider: Lab::Gemini, model: 'gemini-2.5-flash');
 
             $body = trim((string) $response);
+            $conversationId = $coach->currentConversation();
 
             if ($body === '') {
                 $this->error('Coach retornou vazio.');
@@ -78,6 +78,7 @@ class CoachWeeklyBriefing extends Command
                 kind: 'weekly',
                 body: $body,
                 heading: $heading,
+                conversationId: $conversationId,
             ));
 
             $this->info("Email enviado pra {$user->email}.");
