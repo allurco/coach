@@ -30,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('/')
             ->login()
+            ->passwordReset()
             ->topNavigation()
             ->brandName(new HtmlString(
                 '<span class="coach-brand">Coach<span class="coach-brand-dot">.</span></span>'
