@@ -107,7 +107,7 @@ SEEDER_ADMIN_NAME=Your Name
 
 ## Email setup (Resend)
 
-The Coach sends scheduled pings and accepts replies via inbound webhook.
+Coach. sends scheduled pings and accepts replies via inbound webhook.
 Both go through Resend.
 
 ### 1. Verify your sending domain
@@ -158,8 +158,8 @@ The app is closed registration — only admins invite.
 2. Click your **avatar (top right) → Invite user**
 3. Fill name + email, optionally check "Admin"
 4. Resend sends them an email with a one-time link to set their password
-5. They click → set password → land in their (empty) Coach
-6. Coach interviews them onboarding-style and builds their plan
+5. They click → set password → land in their (empty) Coach.
+6. Coach. interviews them onboarding-style and builds their plan
 
 Existing users (if you migrated from a single-tenant install) are all
 auto-promoted to admin during the migration so nobody loses access.

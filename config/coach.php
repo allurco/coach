@@ -43,6 +43,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tavily web search API key
+    |--------------------------------------------------------------------------
+    |
+    | Powers the WebSearch tool. Sign up at https://tavily.com (free tier:
+    | 1000 queries/month). Without this set the tool returns a "not configured"
+    | message and the agent falls back to its training-data knowledge.
+    |
+    */
+    'tavily_api_key' => env('TAVILY_API_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Initial admin user (used by the database seeder)
     |--------------------------------------------------------------------------
     */

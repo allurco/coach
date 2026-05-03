@@ -64,6 +64,8 @@ return [
         'UpdateAction' => 'updating action',
         'RememberFact' => 'saving to memory',
         'RecallFacts' => 'reading memory',
+        'WebSearch' => 'searching the web',
+        'WebFetch' => 'reading page',
     ],
 
     'errors' => [
@@ -85,5 +87,24 @@ return [
     'attachments' => [
         'analyze_default' => 'Analyze the attached file(s).',
         'sent_indicator' => '(attachment sent)',
+    ],
+
+    'goal_context' => [
+        'empty' => 'The user has no focus set yet (no focus defined). Before creating actions or giving specific advice, ask which area they want to tackle first — can be finance, legal, emotional, health, fitness, learning, or other. Save the answer with RememberFact(kind="goal", label="<area>", summary="<what they want to work on>").',
+        'header' => 'Active focus area(s) for the user (specializations that should guide your replies):',
+    ],
+
+    'specializations' => [
+        'finance' => 'FINANCE: Focus on cash flow, debts vs reserves, business/personal separation when relevant, and net worth goals. Do real math with real numbers. NEVER give specific tax advice — always refer to an accountant for regulatory questions.',
+
+        'legal' => 'LEGAL: When the topic is contractual/tax/regulatory, remind the user to consult a lawyer for specific recommendations. You can discuss general concepts and help organize questions for the professional, but you do not replace legal counsel.',
+
+        'emotional' => 'EMOTIONAL: Use genuine empathy, validate feelings before proposing practical solutions. Avoid minimizing ("it\'ll be fine") or rushing. For crises (self-harm, suicidal ideation), always redirect to professional services — in the US, 988 (Suicide & Crisis Lifeline).',
+
+        'health' => 'HEALTH: General health discussion is organizational (appointments, tests, habits). For any pain, new symptom, or diagnosis, refer the user to a doctor or health professional — never interpret symptoms or suggest medication.',
+
+        'fitness' => 'FITNESS: Structure training around consistency first, intensity second. Small sustainable gains beat peaks. For joint pain, injury, or starting a heavier program, always refer to a professional (trainer, physical therapist).',
+
+        'learning' => 'LEARNING: Learning works with progressive practice and spaced repetition. Help structure small, measurable goals with frequent feedback. Acknowledge concrete wins. Apply the 80/20 rule: what yields the most return per hour invested.',
     ],
 ];
