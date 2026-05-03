@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Mail\PasswordResetLink;
 use Database\Factories\UserFactory;
+use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password', 'is_admin', 'invitation_token', 'invited_at', 'accepted_invitation_at'])]
@@ -46,6 +49,20 @@ class User extends Authenticatable implements FilamentUser
     public function isInvitationPending(): bool
     {
         return $this->invitation_token !== null && $this->accepted_invitation_at === null;
+    }
+
+    /**
+     * Override Laravel's default password-reset notification to use our
+     * branded mailable + translated subject/body. The reset URL is signed
+     * by Filament so the link can't be tampered with — without the
+     * signature param the route returns 403.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $resetUrl = Filament::getDefaultPanel()
+            ->getResetPasswordUrl($token, $this);
+
+        Mail::send(new PasswordResetLink(user: $this, resetUrl: $resetUrl));
     }
 
     public function initials(): string
