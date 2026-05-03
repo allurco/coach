@@ -3,7 +3,6 @@
 use App\Models\User;
 use App\Services\CoachReplyProcessor;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 function callProtected(object $obj, string $method, array $args = []): mixed
@@ -16,11 +15,7 @@ function callProtected(object $obj, string $method, array $args = []): mixed
 }
 
 beforeEach(function () {
-    $this->user = User::create([
-        'name' => 'Rogers',
-        'email' => 'admin@example.com',
-        'password' => Hash::make('x'),
-    ]);
+    $this->user = User::factory()->create(['email' => 'admin@example.com']);
     $this->processor = new CoachReplyProcessor;
 });
 
@@ -84,11 +79,7 @@ it('returns null when nothing matches', function () {
 });
 
 it('only matches conversations of the authenticated user', function () {
-    $other = User::create([
-        'name' => 'Outro',
-        'email' => 'outro@x.com',
-        'password' => Hash::make('x'),
-    ]);
+    $other = User::factory()->create(['email' => 'outro@x.com']);
     seedConversation($other->id, 'Foco do dia 02/05');
 
     $matched = callProtected($this->processor, 'guessConversationFromSubject', [
