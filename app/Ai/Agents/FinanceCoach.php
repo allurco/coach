@@ -183,24 +183,23 @@ class FinanceCoach implements Agent, Conversational, HasTools
     {
         $user = auth()->user();
         $name = $user?->name ?? 'usuário';
-        $contextPath = database_path('seeds/coach-context.json');
 
-        if (! file_exists($contextPath)) {
-            return "Nome: {$name}. (Sem contexto detalhado configurado.)";
-        }
+        // Profile facts come from coach_memories with kind='perfil'.
+        // The agent saves these via RememberFact during onboarding (renda,
+        // composição familiar, situação fiscal, metas, etc.).
+        $profileFacts = CoachMemory::where('kind', 'perfil')
+            ->where('is_active', true)
+            ->orderBy('created_at')
+            ->limit(20)
+            ->pluck('summary');
 
-        $context = json_decode(file_get_contents($contextPath), true);
-
-        if (! is_array($context) || empty($context)) {
-            return "Nome: {$name}.";
+        if ($profileFacts->isEmpty()) {
+            return "Nome: {$name}. (Sem perfil consolidado ainda — descubra durante a conversa.)";
         }
 
         $lines = ["Nome: {$name}."];
-        foreach ($context as $key => $value) {
-            if (is_array($value)) {
-                $value = implode(', ', $value);
-            }
-            $lines[] = "- {$key}: {$value}";
+        foreach ($profileFacts as $fact) {
+            $lines[] = "- {$fact}";
         }
 
         return implode("\n", $lines);
@@ -261,6 +260,20 @@ class FinanceCoach implements Agent, Conversational, HasTools
             - Use RememberFact pra guardar fatos importantes que descobrir (renda, dívida total, situação familiar etc.)
               MESMO durante o onboarding — vai ser útil em conversas futuras.
 
+            ## Perfil do usuário (importante!)
+            Conforme você descobrir fatos ESTRUTURAIS sobre quem é a pessoa (não eventos pontuais),
+            salve com RememberFact usando **kind="perfil"**. Esses são os fatos que aparecem no
+            seu system prompt em toda conversa daqui pra frente:
+            - Profissão, renda, situação fiscal (PF/PJ)
+            - Composição familiar (casado, filhos, dependentes)
+            - Dívidas estruturais e reservas (montantes globais)
+            - Metas de longo prazo (viagem, casa, aposentadoria)
+            - Preferências e restrições conhecidas
+
+            Eventos do dia (paguei fatura X hoje) ou análises de documentos (fatura R\$ X
+            venc. dia Y) usam outros kinds — `pagamento`, `fatura`, `decisao`, `evento`.
+            "perfil" é só pra fatos que descrevem QUEM A PESSOA É.
+
             ## Fluxo típico de onboarding (referência)
             Turno 1: "Opa. Pra começar do certo: qual é o maior aperto financeiro agora?"
             Turno 2-5: descobrir números (renda, dívidas, reserva), entender se é PF/PJ.
@@ -316,13 +329,14 @@ class FinanceCoach implements Agent, Conversational, HasTools
 
     protected function recentMemoriesSummary(): string
     {
-        $userId = auth()->id();
-        if (! $userId) {
+        if (! auth()->id()) {
             return '(sem usuário autenticado)';
         }
 
-        $memories = CoachMemory::where('user_id', $userId)
-            ->where('is_active', true)
+        // Profile facts are surfaced separately via userContext(); skip them
+        // here to avoid duplicating the same lines in the system prompt.
+        $memories = CoachMemory::where('is_active', true)
+            ->where('kind', '!=', 'perfil')
             ->orderBy('event_date', 'desc')
             ->limit(10)
             ->get();

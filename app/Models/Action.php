@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Action extends Model
 {
     protected $fillable = [
+        'user_id',
         'title',
         'description',
         'category',
@@ -59,6 +62,29 @@ class Action extends Model
         'concluido' => 'Concluído',
         'cancelado' => 'Cancelado',
     ];
+
+    protected static function booted(): void
+    {
+        // Auto-scope every query to the authenticated user.
+        // Multi-tenant isolation: no user accidentally sees another's plan.
+        static::addGlobalScope('owner', function (Builder $query) {
+            if ($userId = auth()->id()) {
+                $query->where("{$query->getModel()->getTable()}.user_id", $userId);
+            }
+        });
+
+        // Auto-fill user_id on create when one is logged in.
+        static::creating(function (Action $action) {
+            if ($action->user_id === null && $userId = auth()->id()) {
+                $action->user_id = $userId;
+            }
+        });
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function isOverdue(): bool
     {

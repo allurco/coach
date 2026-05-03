@@ -2,9 +2,12 @@
 
 use App\Ai\Tools\UpdateAction;
 use App\Models\Action;
+use App\Models\User;
 use Laravel\Ai\Tools\Request;
 
 beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
     $this->tool = new UpdateAction;
     $this->action = Action::create([
         'title' => 'Pagar fatura',
