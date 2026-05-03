@@ -64,6 +64,8 @@ return [
         'UpdateAction' => 'atualizando ação',
         'RememberFact' => 'salvando na memória',
         'RecallFacts' => 'consultando memória',
+        'WebSearch' => 'pesquisando na web',
+        'WebFetch' => 'lendo página',
     ],
 
     'errors' => [
@@ -85,5 +87,24 @@ return [
     'attachments' => [
         'analyze_default' => 'Analisa o(s) arquivo(s) anexado(s).',
         'sent_indicator' => '(anexo enviado)',
+    ],
+
+    'goal_context' => [
+        'empty' => 'O usuário ainda não tem foco definido (sem foco definido). Antes de criar ações ou dar conselho específico, pergunte qual área ele quer trabalhar primeiro — pode ser finance, legal, emotional, health, fitness, learning, ou outro tema. Salve a resposta com RememberFact(kind="goal", label="<area>", summary="<o que ele quer trabalhar>").',
+        'header' => 'Foco(s) ativo(s) do usuário (especializações que devem guiar suas respostas):',
+    ],
+
+    'specializations' => [
+        'finance' => 'FINANCE: Foco em fluxo de caixa, dívidas vs reservas, separação PJ/PF quando aplicável, e metas de patrimônio. Faça matemática concreta com os valores reais. NUNCA dê conselho fiscal específico — sempre referencie um contador pra dúvidas regulatórias.',
+
+        'legal' => 'LEGAL: Quando o assunto é contratual/fiscal/regulatório, lembre o usuário de consultar um advogado pra recomendações específicas. Você pode discutir conceitos gerais e ajudar a organizar perguntas pro profissional, mas não substitui assessoria.',
+
+        'emotional' => 'EMOTIONAL: Use empatia genuína, valide sentimentos antes de propor soluções práticas. Evite minimizar ("vai ficar tudo bem") ou apressar. Pra crises (autolesão, ideação suicida), sempre redirecione pra serviços profissionais — no Brasil, CVV 188.',
+
+        'health' => 'HEALTH: Discussões de saúde geral são organizacionais (consultas, exames, hábitos). Pra qualquer dor, sintoma novo ou diagnóstico, refira o usuário a um médico ou profissional de saúde — nunca interprete sintomas nem sugira medicamento.',
+
+        'fitness' => 'FITNESS: Estruture treinos por consistência primeiro, intensidade depois. Pequenos ganhos sustentáveis valem mais que picos. Pra dor articular, lesão, ou início de programa de treino mais pesado, sempre refira a um profissional (educador físico, fisioterapeuta).',
+
+        'learning' => 'LEARNING: Aprendizado funciona com prática progressiva e revisão espaçada. Ajude a estruturar metas pequenas, mensuráveis, com feedback frequente. Reconheça wins concretos. Use a regra dos 80/20: o que dá mais resultado por hora investida.',
     ],
 ];

@@ -7,6 +7,8 @@ use App\Ai\Tools\ListActions;
 use App\Ai\Tools\RecallFacts;
 use App\Ai\Tools\RememberFact;
 use App\Ai\Tools\UpdateAction;
+use App\Ai\Tools\WebFetch;
+use App\Ai\Tools\WebSearch;
 use App\Models\Action;
 use App\Models\CoachMemory;
 use Laravel\Ai\Concerns\RemembersConversations;
@@ -25,15 +27,16 @@ class FinanceCoach implements Agent, Conversational, HasTools
         $stats = $this->planStats();
         $recentMemories = $this->recentMemoriesSummary();
         $userContext = $this->userContext();
+        $goalContext = $this->goalContext();
         $today = $this->todayContext();
         $isOnboarding = Action::count() === 0;
 
         if ($isOnboarding) {
-            return $this->onboardingInstructions($userContext, $today);
+            return $this->onboardingInstructions($userContext, $today, $goalContext);
         }
 
         return <<<PROMPT
-            Você é o coach financeiro pessoal — não um app, uma pessoa.
+            Você é o coach pessoal — não um app, uma pessoa.
 
             ## Hoje
             $today
@@ -45,6 +48,9 @@ class FinanceCoach implements Agent, Conversational, HasTools
             - Português coloquial brasileiro, fala como quem conhece a pessoa
             - Nada de "olá usuário" ou tom corporativo
             - Mensagens curtas (3-6 frases). Mais que isso satura.
+
+            ## Foco do usuário
+            $goalContext
 
             ## Contexto do usuário
             $userContext
@@ -176,7 +182,48 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new UpdateAction,
             new RememberFact,
             new RecallFacts,
+            new WebSearch,
+            new WebFetch,
         ];
+    }
+
+    /**
+     * Returns the active focus areas (goals) for the user, with built-in
+     * specialization guidance for known labels (finance, legal, emotional,
+     * health, fitness, learning). Returns a neutral prompt asking the agent
+     * to discover the goal when none is set.
+     */
+    protected function goalContext(): string
+    {
+        if (! auth()->id()) {
+            return (string) __('coach.goal_context.empty');
+        }
+
+        $goals = CoachMemory::where('kind', 'goal')
+            ->where('is_active', true)
+            ->orderBy('created_at')
+            ->get();
+
+        if ($goals->isEmpty()) {
+            return (string) __('coach.goal_context.empty');
+        }
+
+        $lines = [(string) __('coach.goal_context.header')];
+
+        foreach ($goals as $goal) {
+            $lines[] = "- [{$goal->label}] {$goal->summary}";
+
+            $specKey = "coach.specializations.{$goal->label}";
+            $spec = (string) __($specKey);
+
+            // __() returns the key itself when no translation exists; only
+            // include if a real translation came back.
+            if ($spec !== $specKey) {
+                $lines[] = $spec;
+            }
+        }
+
+        return implode("\n", $lines);
     }
 
     protected function userContext(): string
@@ -205,13 +252,16 @@ class FinanceCoach implements Agent, Conversational, HasTools
         return implode("\n", $lines);
     }
 
-    protected function onboardingInstructions(string $userContext, string $today): string
+    protected function onboardingInstructions(string $userContext, string $today, string $goalContext = ''): string
     {
         return <<<PROMPT
-            Você é o coach financeiro pessoal — não um app, uma pessoa.
+            Você é o coach pessoal — não um app, uma pessoa.
 
             ## Hoje
             $today
+
+            ## Foco do usuário
+            $goalContext
 
             ## ESTADO ATUAL: ONBOARDING
             Esse é o PRIMEIRO contato. O plano de ações está VAZIO. Sua missão:

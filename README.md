@@ -1,13 +1,17 @@
 # Coach.
 
-Personal accountability coach for financial recovery.
+A self-hosted, multi-tenant AI accountability coach.
 
-A self-hosted multi-tenant Laravel + Filament app where an AI coach (Gemini)
-helps users out of financial trouble by:
+Built originally for financial recovery, but the framework is goal-agnostic:
+fitness, language learning, side projects, building a habit, getting out of
+debt — anything where the missing piece is a system that doesn't get tired
+of asking *"did you actually do that today?"*.
 
-- Tracking actions of a recovery plan with deadlines and priorities
+A Laravel + Filament app where an AI coach (Gemini) helps users by:
+
+- Tracking actions of a plan with deadlines, priorities, and categories
 - Sending scheduled email pings (morning brief, weekly recap, stuck-action nudges)
-- Reading PDFs uploaded (faturas, extratos, boletos) and summarizing them
+- Reading PDFs uploaded (faturas, extratos, boletos, contratos) and summarizing them
 - Remembering important facts across conversations (long-term memory)
 - Replying via email — replies thread back into the same conversation
 
@@ -103,7 +107,7 @@ SEEDER_ADMIN_NAME=Your Name
 
 ## Email setup (Resend)
 
-The Coach sends scheduled pings and accepts replies via inbound webhook.
+Coach. sends scheduled pings and accepts replies via inbound webhook.
 Both go through Resend.
 
 ### 1. Verify your sending domain
@@ -154,8 +158,8 @@ The app is closed registration — only admins invite.
 2. Click your **avatar (top right) → Invite user**
 3. Fill name + email, optionally check "Admin"
 4. Resend sends them an email with a one-time link to set their password
-5. They click → set password → land in their (empty) Coach
-6. Coach interviews them onboarding-style and builds their plan
+5. They click → set password → land in their (empty) Coach.
+6. Coach. interviews them onboarding-style and builds their plan
 
 Existing users (if you migrated from a single-tenant install) are all
 auto-promoted to admin during the migration so nobody loses access.

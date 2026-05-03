@@ -1,3 +1,72 @@
+# Coach. — Project rules
+
+These are project-specific rules that take precedence over the Laravel
+Boost guidelines below. They reflect choices already made and are not
+up for re-debate per task.
+
+## Branching
+
+- Every new feature starts from a freshly pulled `main` branch:
+  `git checkout main && git pull && git checkout -b feature/<name>`.
+- Never branch from another open feature branch unless the dependency
+  is unavoidable and the user explicitly asks for it. If multi-branch
+  dependency is the case, surface it upfront.
+
+## TDD is mandatory for new features
+
+- Write tests first, watch them fail, then implement until green.
+- Use **Pest** (this project uses Pest 4, not raw PHPUnit).
+- Cover happy path + at least one failure path + edge cases that
+  matter to the feature (multi-tenant isolation, locale, time zones,
+  network failures, etc.).
+- Before opening a PR or pushing, run the **full** suite locally
+  (`./vendor/bin/pest --compact`) and confirm green.
+- Do NOT remove existing tests without explicit user approval.
+- Tests must work in **both locales** (`pt_BR` and `en`). Never assert
+  literal Portuguese strings — assert against `__('namespace.key')`
+  or use locale-agnostic regex. CI runs with `APP_LOCALE=en`; local
+  dev runs `pt_BR`. Tests that pass locally but fail in CI for this
+  reason waste a deploy cycle.
+
+## Localization
+
+- Every user-facing string lives in `lang/{pt_BR,en}/<namespace>.php`
+  and is rendered via `__()` or `trans()`. No hardcoded copy in
+  Blade, Filament resources, mail templates, or the agent's
+  user-visible responses.
+- The agent's **system prompts** are intentionally NOT translated —
+  they're instructions to the model, not output to the user. Keep
+  prompt content in the agent class, but ensure user-facing strings
+  the agent emits via fallback messages (e.g. "Pronto." in
+  `summarizeToolActivity`) come from the lang files.
+- When adding a new feature with new copy, add the keys to BOTH
+  `pt_BR` and `en` files in the same commit. CI catches missing
+  translations only sometimes — don't rely on that.
+
+## Multi-tenancy
+
+- This app is multi-tenant via row-level scoping on `Action` and
+  `CoachMemory` (global scope `owner` filters by `auth()->id()`).
+- Any new model that holds user-specific data MUST add the same
+  global scope and `user_id` foreign key.
+- Console commands and webhook controllers must call
+  `auth()->login($user)` before invoking the agent so the global
+  scopes activate for the right user.
+- Never assume `auth()->id()` is set inside a tool — the agent runs
+  in different contexts (Filament, console, webhook). Tests should
+  exercise the unauthenticated path too.
+
+## Pre-commit checklist
+
+1. `vendor/bin/pint --dirty --format agent` — format only what changed.
+2. `./vendor/bin/pest --compact` — entire suite green.
+3. If you added/changed user-facing copy: confirm both `lang/pt_BR/`
+   and `lang/en/` files were updated.
+4. If you added a new model with user data: confirm global scope is
+   in place and isolation tests exist.
+
+---
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
