@@ -47,7 +47,7 @@ class UpdateAction implements Tool
             $changes[] = 'notas adicionadas';
         }
 
-        if (array_key_exists('deadline', (array) $request) && $request['deadline'] !== null) {
+        if (! empty($request['deadline'])) {
             $action->deadline = $this->parseRelativeDate($request['deadline']) ?: null;
             $changes[] = 'deadline atualizado';
         }
