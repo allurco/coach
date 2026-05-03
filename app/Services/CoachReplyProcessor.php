@@ -62,8 +62,10 @@ class CoachReplyProcessor
             return null;
         }
 
-        // Strip emoji prefixes from coach pings (☀️ Foco do dia → Foco do dia)
-        $clean = preg_replace('/^[\p{So}\p{Sk}\s]+/u', '', $clean);
+        // Strip emoji prefixes from coach pings (☀️ Foco do dia → Foco do dia).
+        // Includes Mark-Nonspacing for the U+FE0F variation selector that follows
+        // many emojis ("☀\u{FE0F}").
+        $clean = preg_replace('/^[\p{S}\p{Mn}\s]+/u', '', $clean);
         $clean = trim($clean);
 
         return DB::table('agent_conversations')
