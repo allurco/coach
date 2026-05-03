@@ -53,7 +53,7 @@ return [
         'title' => 'Concluir ação',
         'label' => 'Como você concluiu?',
         'optional' => '(opcional)',
-        'placeholder' => 'Ex: Paguei via Pix da reserva XP. Tirou R$ 6.299 do principal, sobraram R$ 71.701.',
+        'placeholder' => 'Ex: Paguei via Pix com a reserva. Quitou o saldo todo.',
         'cancel' => 'Cancelar',
         'confirm' => 'Concluir',
     ],
