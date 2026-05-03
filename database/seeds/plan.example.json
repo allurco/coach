@@ -1,0 +1,39 @@
+[
+    {
+        "title": "Pagar conta de luz",
+        "description": "Conta mensal — vencimento dia 15.",
+        "category": "financeiro",
+        "priority": "media",
+        "importance": "rotineiro",
+        "difficulty": "rapido",
+        "status": "pendente",
+        "deadline": "2026-12-15"
+    },
+    {
+        "title": "Reunião com o contador",
+        "description": "Revisar declaração anual e pendências fiscais.",
+        "category": "fiscal",
+        "priority": "alta",
+        "importance": "importante",
+        "difficulty": "medio",
+        "status": "pendente"
+    },
+    {
+        "title": "Renegociar plano de internet",
+        "description": "Cotar concorrentes, ligar pra retenção, pedir desconto.",
+        "category": "financeiro",
+        "priority": "baixa",
+        "importance": "rotineiro",
+        "difficulty": "rapido",
+        "status": "pendente"
+    },
+    {
+        "title": "Definir meta de aporte mensal",
+        "description": "Estabelecer valor fixo, configurar débito automático no dia do pagamento.",
+        "category": "financeiro",
+        "priority": "media",
+        "importance": "importante",
+        "difficulty": "rapido",
+        "status": "pendente"
+    }
+]
