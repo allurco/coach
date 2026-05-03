@@ -151,7 +151,7 @@ Check your Gmail (or whatever inbox) for SPF/DKIM/DMARC = PASS in the headers.
 The app is closed registration — only admins invite.
 
 1. Log in as admin
-2. Click your **avatar (top right) → Convidar usuário**
+2. Click your **avatar (top right) → Invite user**
 3. Fill name + email, optionally check "Admin"
 4. Resend sends them an email with a one-time link to set their password
 5. They click → set password → land in their (empty) Coach
