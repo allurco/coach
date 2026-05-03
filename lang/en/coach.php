@@ -53,7 +53,7 @@ return [
         'title' => 'Complete action',
         'label' => 'How did you complete it?',
         'optional' => '(optional)',
-        'placeholder' => 'Eg: Paid via wire transfer from the XP reserve. Took $6,299 off the principal, $71,701 left.',
+        'placeholder' => 'Eg: Paid via wire transfer from savings. Cleared the whole balance.',
         'cancel' => 'Cancel',
         'confirm' => 'Complete',
     ],
