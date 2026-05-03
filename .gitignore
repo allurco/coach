@@ -41,3 +41,4 @@ yarn-error.log
 # Personal seed data (your real plan + coach context)
 /database/seeds/plan.json
 /database/seeds/coach-context.json
+/storage/debugbar
