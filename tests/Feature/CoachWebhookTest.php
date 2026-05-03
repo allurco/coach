@@ -2,16 +2,11 @@
 
 use App\Models\User;
 use App\Services\CoachReplyProcessor;
-use Illuminate\Support\Facades\Hash;
 
 beforeEach(function () {
     config(['coach.webhook_secret' => 'test-secret-123']);
 
-    $this->user = User::create([
-        'name' => 'Rogers',
-        'email' => 'admin@example.com',
-        'password' => Hash::make('x'),
-    ]);
+    $this->user = User::factory()->create(['email' => 'admin@example.com']);
 });
 
 it('rejects requests without the secret header', function () {
