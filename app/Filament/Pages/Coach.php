@@ -178,7 +178,7 @@ class Coach extends Page implements HasForms
             ->components([
                 Textarea::make('message')
                     ->hiddenLabel()
-                    ->placeholder('fala aí')
+                    ->placeholder(__('coach.composer.placeholder'))
                     ->rows(3)
                     ->autofocus(),
                 FileUpload::make('attachments')
@@ -210,7 +210,7 @@ class Coach extends Page implements HasForms
             ->get()
             ->map(fn ($c) => [
                 'id' => $c->id,
-                'title' => $c->title ?: 'sem título',
+                'title' => $c->title ?: __('coach.conversations.untitled'),
                 'updated_at' => $c->updated_at,
                 'updated_label' => $this->humanTime($c->updated_at),
             ])
@@ -282,7 +282,7 @@ class Coach extends Page implements HasForms
 
         $this->messages[] = [
             'role' => 'user',
-            'content' => $userMessage ?: '(anexo enviado)',
+            'content' => $userMessage ?: __('coach.attachments.sent_indicator'),
             'attachments' => $attachmentNames,
             'time' => now()->format('H:i'),
         ];
@@ -341,7 +341,7 @@ class Coach extends Page implements HasForms
                 'attachment_paths' => $attachmentPaths,
             ]);
 
-            $promptToSend = $userMessage ?: 'Analisa o(s) arquivo(s) anexado(s).';
+            $promptToSend = $userMessage ?: __('coach.attachments.analyze_default');
 
             if (! empty($documents)) {
                 $promptToSend .= "\n\n---\n\n"
@@ -375,13 +375,7 @@ class Coach extends Page implements HasForms
             $accumulated = '';
             $this->streamingText = '';
 
-            $toolLabels = [
-                'ListActions' => 'consultando plano',
-                'CreateAction' => 'criando ação',
-                'UpdateAction' => 'atualizando ação',
-                'RememberFact' => 'salvando na memória',
-                'RecallFacts' => 'consultando memória',
-            ];
+            $toolLabels = (array) __('coach.tool_labels');
 
             $stream = $coach->stream(
                 $promptToSend,
@@ -457,7 +451,7 @@ class Coach extends Page implements HasForms
         } catch (Throwable $e) {
             $this->messages[] = [
                 'role' => 'error',
-                'content' => 'Erro: '.$e->getMessage(),
+                'content' => __('coach.errors.prefix').$e->getMessage(),
                 'attachments' => [],
                 'time' => now()->format('H:i'),
             ];
@@ -481,7 +475,7 @@ class Coach extends Page implements HasForms
     protected function summarizeToolActivity(array $activity): string
     {
         if (empty($activity)) {
-            return '_(o coach processou mas não retornou texto — pergunta de novo)_';
+            return __('coach.errors.no_text_returned');
         }
 
         $created = 0;
@@ -499,20 +493,26 @@ class Coach extends Page implements HasForms
 
         $parts = [];
         if ($created > 0) {
-            $parts[] = $created === 1 ? 'criei 1 ação' : "criei {$created} ações";
+            $parts[] = $created === 1
+                ? __('coach.recap.created_one')
+                : __('coach.recap.created_many', ['count' => $created]);
         }
         if ($updated > 0) {
-            $parts[] = $updated === 1 ? 'atualizei 1 ação' : "atualizei {$updated} ações";
+            $parts[] = $updated === 1
+                ? __('coach.recap.updated_one')
+                : __('coach.recap.updated_many', ['count' => $updated]);
         }
         if ($remembered > 0) {
-            $parts[] = $remembered === 1 ? 'salvei 1 fato' : "salvei {$remembered} fatos";
+            $parts[] = $remembered === 1
+                ? __('coach.recap.remembered_one')
+                : __('coach.recap.remembered_many', ['count' => $remembered]);
         }
 
         if (empty($parts)) {
-            return 'Pronto.';
+            return __('coach.recap.done');
         }
 
-        return 'Pronto — '.implode(', ', $parts).'. Olha o plano no flyout pra conferir.';
+        return __('coach.recap.with_results', ['parts' => implode(', ', $parts)]);
     }
 
     protected function humanTime($timestamp): string

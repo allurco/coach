@@ -3,10 +3,12 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Coach;
+use App\Filament\Resources\Users\UserResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -41,6 +43,18 @@ class AdminPanelProvider extends PanelProvider
             ->homeUrl(fn (): string => Coach::getUrl())
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label(fn (): string => __('users.menu.invite'))
+                    ->icon('heroicon-o-user-plus')
+                    ->url(fn (): string => UserResource::getUrl('create'))
+                    ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false),
+                MenuItem::make()
+                    ->label(fn (): string => __('users.menu.manage'))
+                    ->icon('heroicon-o-users')
+                    ->url(fn (): string => UserResource::getUrl('index'))
+                    ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false),
+            ])
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
                 fn (): string => <<<'HTML'

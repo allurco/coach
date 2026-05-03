@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -31,9 +32,28 @@ class CoachMemory extends Model
         'decisao' => 'Decisão',
         'evento' => 'Evento',
         'fato' => 'Fato',
+        'perfil' => 'Perfil',
         'meta' => 'Meta/Objetivo',
         'aprendizado' => 'Aprendizado',
     ];
+
+    protected static function booted(): void
+    {
+        // Auto-scope every query to the authenticated user.
+        // Memories are private — defense in depth on top of explicit filters.
+        static::addGlobalScope('owner', function (Builder $query) {
+            if ($userId = auth()->id()) {
+                $query->where("{$query->getModel()->getTable()}.user_id", $userId);
+            }
+        });
+
+        // Auto-fill user_id on create when one is logged in.
+        static::creating(function (CoachMemory $memory) {
+            if ($memory->user_id === null && $userId = auth()->id()) {
+                $memory->user_id = $userId;
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
