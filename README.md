@@ -1,13 +1,17 @@
 # Coach.
 
-Personal accountability coach for financial recovery.
+A self-hosted, multi-tenant AI accountability coach.
 
-A self-hosted multi-tenant Laravel + Filament app where an AI coach (Gemini)
-helps users out of financial trouble by:
+Built originally for financial recovery, but the framework is goal-agnostic:
+fitness, language learning, side projects, building a habit, getting out of
+debt — anything where the missing piece is a system that doesn't get tired
+of asking *"did you actually do that today?"*.
 
-- Tracking actions of a recovery plan with deadlines and priorities
+A Laravel + Filament app where an AI coach (Gemini) helps users by:
+
+- Tracking actions of a plan with deadlines, priorities, and categories
 - Sending scheduled email pings (morning brief, weekly recap, stuck-action nudges)
-- Reading PDFs uploaded (faturas, extratos, boletos) and summarizing them
+- Reading PDFs uploaded (faturas, extratos, boletos, contratos) and summarizing them
 - Remembering important facts across conversations (long-term memory)
 - Replying via email — replies thread back into the same conversation
 

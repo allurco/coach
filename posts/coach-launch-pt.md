@@ -1,14 +1,20 @@
 ---
-title: "Coach.: um coach financeiro open-source com IA pra você self-hospedar"
-description: "Construí uma IA pra me tirar do vermelho. Aí abri o código."
+title: "Coach.: um coach de accountability open-source com IA pra self-hospedar"
+description: "Construí uma IA pra me tirar do vermelho. Virou um framework de accountability genérico e abri o código."
 date: 2026-05-03
 tags: [open-source, ia, laravel, filament, gemini]
 ---
 
 # Coach.
 
-Construí um coach financeiro com IA pra mim mesmo e acabei de abrir o
-código em [github.com/allurco/coach](https://github.com/allurco/coach).
+Construí um coach de accountability com IA pra mim mesmo e acabei de
+abrir o código em [github.com/allurco/coach](https://github.com/allurco/coach).
+
+Começou como coach financeiro — meu problema na época — mas a estrutura
+serve pra qualquer objetivo. Sempre que a peça que falta é um sistema
+que não se cansa de perguntar *"você fez isso hoje mesmo?"*, ele encaixa:
+sair do vermelho, treinar pra algo, aprender idioma, lançar um side
+project, quebrar um vício.
 
 ## O porquê
 

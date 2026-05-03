@@ -1,14 +1,20 @@
 ---
-title: "Coach.: an open-source AI financial coach you self-host"
-description: "I built an AI to coach me out of financial trouble. Then I open-sourced it."
+title: "Coach.: an open-source AI accountability coach you self-host"
+description: "I built an AI to coach me out of financial trouble. It turned into a general accountability framework, and I open-sourced it."
 date: 2026-05-03
 tags: [open-source, ai, laravel, filament, gemini]
 ---
 
 # Coach.
 
-I built an AI financial coach for myself, and just open-sourced it at
+I built an AI accountability coach for myself, and just open-sourced it at
 [github.com/allurco/coach](https://github.com/allurco/coach).
+
+It started as a financial coach — that was my problem at the time — but
+the framework is goal-agnostic. Anywhere the missing piece is a system
+that doesn't get tired of asking *"did you actually do that today?"*,
+this fits: getting out of debt, training for something, learning a
+language, shipping a side project, breaking a habit.
 
 ## Why
 
