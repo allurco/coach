@@ -21,8 +21,10 @@ it('returns a neutral message when no goal is set', function () {
     $coach = new FinanceCoach;
     $context = goalContextOf($coach);
 
-    expect($context)->toContain('sem foco definido')
-        // No specialization markers should be injected.
+    // Whatever the active locale, the empty case should match the translation
+    // key exactly and never include any specialization marker.
+    expect($context)->toBe((string) __('coach.goal_context.empty'))
+        ->and($context)
         ->not->toContain('FINANCE:')
         ->not->toContain('LEGAL:')
         ->not->toContain('EMOTIONAL:');
@@ -142,7 +144,7 @@ it('ignores inactive goals', function () {
     ]);
 
     expect(goalContextOf(new FinanceCoach))
-        ->toContain('sem foco definido')
+        ->toBe((string) __('coach.goal_context.empty'))
         ->not->toContain('Old finance goal');
 });
 
@@ -171,6 +173,6 @@ it('does not include other users goals (multi-tenant isolation)', function () {
     ]);
 
     expect(goalContextOf(new FinanceCoach))
-        ->toContain('sem foco definido')
+        ->toBe((string) __('coach.goal_context.empty'))
         ->not->toContain('OTHER user');
 });
