@@ -57,12 +57,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
-                fn (): string => <<<'HTML'
-                    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-                    <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=geist:300,400,500,600,700">
-                    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=geist:300,400,500,600,700">
-                    <link rel="stylesheet" href="/css/coach.css">
-                HTML
+                fn (): string => '<link rel="stylesheet" href="/css/coach.css">',
             )
             ->middleware([
                 EncryptCookies::class,
