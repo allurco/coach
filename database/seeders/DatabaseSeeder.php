@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
                 'name' => $name,
                 'email' => $email,
                 'password' => Hash::make($password),
+                'is_admin' => true,
             ]);
 
             $this->command->newLine();
