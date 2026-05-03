@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = env('SEEDER_ADMIN_EMAIL');
+        $email = config('coach.seeder.admin_email');
 
         if (! $email) {
             $this->command->error('SEEDER_ADMIN_EMAIL is not set in .env — aborting seed.');
@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        $name = env('SEEDER_ADMIN_NAME', 'Admin');
+        $name = config('coach.seeder.admin_name');
 
         $user = User::where('email', $email)->first();
 

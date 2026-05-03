@@ -25,4 +25,14 @@ return [
     |
     */
     'webhook_secret' => env('COACH_WEBHOOK_SECRET'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Initial admin user (used by the database seeder)
+    |--------------------------------------------------------------------------
+    */
+    'seeder' => [
+        'admin_email' => env('SEEDER_ADMIN_EMAIL'),
+        'admin_name' => env('SEEDER_ADMIN_NAME', 'Admin'),
+    ],
 ];
