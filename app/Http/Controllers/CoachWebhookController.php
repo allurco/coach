@@ -37,6 +37,7 @@ class CoachWebhookController extends Controller
 
         $data = $request->validate([
             'from' => 'required|string|email',
+            'to' => 'nullable|string',
             'subject' => 'nullable|string|max:500',
             'text' => 'nullable|string',
             'html' => 'nullable|string',
@@ -60,18 +61,25 @@ class CoachWebhookController extends Controller
             return response()->json(['ok' => true, 'note' => 'empty reply, ignored']);
         }
 
+        // Resolve conversation: explicit conversation_id wins; otherwise try to
+        // extract it from the To address subaddressing (reply+CONVID@...);
+        // otherwise fall back to subject matching inside the processor.
+        $conversationId = $data['conversation_id']
+            ?? $this->extractConversationIdFromTo($data['to'] ?? null);
+
         Log::info('Coach webhook: processing', [
             'from' => $user->email,
+            'to' => $data['to'] ?? null,
             'subject' => $data['subject'] ?? null,
             'reply_length' => strlen($reply),
-            'conversation_id' => $data['conversation_id'] ?? null,
+            'conversation_id' => $conversationId,
         ]);
 
         try {
             $result = $processor->process(
                 user: $user,
                 reply: $reply,
-                conversationId: $data['conversation_id'] ?? null,
+                conversationId: $conversationId,
                 subjectHint: $data['subject'] ?? null,
             );
 
@@ -87,5 +95,28 @@ class CoachWebhookController extends Controller
 
             return response()->json(['error' => 'processing failed'], 500);
         }
+    }
+
+    /**
+     * Pull a conversation UUID out of a To: header that uses subaddressing,
+     * e.g. "reply+019dee27-cbd7-7196-9ec8-0ddb4f585bec@coach.allur.co" or
+     * `Coach <reply+...@coach.allur.co>`. Returns null when no match.
+     */
+    protected function extractConversationIdFromTo(?string $to): ?string
+    {
+        if (! $to) {
+            return null;
+        }
+
+        // UUID v7 (used by laravel/ai) and v4 both fit this 8-4-4-4-12 hex pattern.
+        if (preg_match(
+            '/reply\+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})@/i',
+            $to,
+            $m,
+        )) {
+            return strtolower($m[1]);
+        }
+
+        return null;
     }
 }

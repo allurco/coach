@@ -28,6 +28,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Reply domain
+    |--------------------------------------------------------------------------
+    |
+    | Domain used to build the Reply-To address on outgoing pings, so that the
+    | conversation id can be encoded as `reply+{conversationId}@{domain}`.
+    | When the user replies, the inbound webhook extracts the id from the
+    | To field and routes back into the same conversation.
+    |
+    | Falls back to parsing APP_URL host if not set.
+    |
+    */
+    'reply_domain' => env('COACH_REPLY_DOMAIN'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Initial admin user (used by the database seeder)
     |--------------------------------------------------------------------------
     */
