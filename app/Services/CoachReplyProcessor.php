@@ -22,6 +22,10 @@ class CoachReplyProcessor
         ?string $conversationId = null,
         ?string $subjectHint = null,
     ): array {
+        // Authenticate so any tools the agent calls (CreateAction, UpdateAction,
+        // ListActions) are scoped to this user via the Action global scope.
+        auth()->login($user);
+
         if ($conversationId === null) {
             $conversationId = $this->guessConversationFromSubject($user, $subjectHint);
         }

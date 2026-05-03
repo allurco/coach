@@ -2,9 +2,12 @@
 
 use App\Ai\Tools\CreateAction;
 use App\Models\Action;
+use App\Models\User;
 use Laravel\Ai\Tools\Request;
 
 beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
     $this->tool = new CreateAction;
 });
 

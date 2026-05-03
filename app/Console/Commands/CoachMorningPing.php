@@ -27,6 +27,9 @@ class CoachMorningPing extends Command
             return self::FAILURE;
         }
 
+        // Authenticate so the Action global scope filters to this user's plan.
+        auth()->login($user);
+
         $this->info("Gerando briefing matinal para {$user->email}…");
 
         $prompt = <<<'PROMPT'

@@ -28,6 +28,10 @@ class CoachStuckCheck extends Command
             return self::FAILURE;
         }
 
+        // Authenticate so the Action global scope filters to this user's plan,
+        // and so any tools the agent calls also see only this user's data.
+        auth()->login($user);
+
         $days = (int) $this->option('days');
 
         $stuckActions = Action::query()
