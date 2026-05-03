@@ -223,7 +223,7 @@
                         @if ($a['status'] !== 'concluido')
                             <div class="plan-item-actions">
                                 <button type="button" class="plan-action-btn done"
-                                        wire:click="markActionDone({{ $a['id'] }})"
+                                        wire:click="startCompleteAction({{ $a['id'] }})"
                                         title="Concluir">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                 </button>
@@ -254,6 +254,43 @@
             </div>
         </aside>
     </div>
+
+    @if ($completingActionId !== null)
+        <div class="complete-modal-overlay" wire:click="cancelCompleteAction"
+             wire:key="complete-modal-{{ $completingActionId }}">
+            <div class="complete-modal" @click.stop wire:click.stop>
+                <div class="complete-modal-header">
+                    <span class="complete-modal-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    <div>
+                        <div class="complete-modal-title">Concluir ação</div>
+                        <div class="complete-modal-subtitle">{{ $completingActionTitle }}</div>
+                    </div>
+                </div>
+                <label class="complete-modal-label" for="completingNotes">
+                    Como você concluiu? <span class="complete-modal-optional">(opcional)</span>
+                </label>
+                <textarea id="completingNotes"
+                          class="complete-modal-textarea"
+                          wire:model="completingNotes"
+                          rows="4"
+                          placeholder="Ex: Paguei via Pix da reserva XP. Tirou R$ 6.299 do principal, sobraram R$ 71.701."
+                          autofocus
+                          wire:keydown.escape="cancelCompleteAction"></textarea>
+                <div class="complete-modal-footer">
+                    <button type="button" class="complete-modal-cancel"
+                            wire:click="cancelCompleteAction">
+                        Cancelar
+                    </button>
+                    <button type="button" class="complete-modal-confirm"
+                            wire:click="confirmCompleteAction">
+                        Concluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <script>
         document.addEventListener('click', (e) => {

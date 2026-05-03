@@ -61,6 +61,12 @@ class Coach extends Page implements HasForms
 
     public string $planFilter = 'pendente';
 
+    public ?int $completingActionId = null;
+
+    public ?string $completingActionTitle = null;
+
+    public string $completingNotes = '';
+
     public function getHeading(): string
     {
         return '';
@@ -111,13 +117,44 @@ class Coach extends Page implements HasForms
         $this->loadPlan();
     }
 
-    public function markActionDone(int $id): void
+    public function startCompleteAction(int $id): void
     {
-        Action::where('id', $id)->update([
+        $action = Action::find($id);
+        if (! $action) {
+            return;
+        }
+        $this->completingActionId = $id;
+        $this->completingActionTitle = $action->title;
+        $this->completingNotes = '';
+    }
+
+    public function cancelCompleteAction(): void
+    {
+        $this->completingActionId = null;
+        $this->completingActionTitle = null;
+        $this->completingNotes = '';
+    }
+
+    public function confirmCompleteAction(): void
+    {
+        if ($this->completingActionId === null) {
+            return;
+        }
+
+        $payload = [
             'status' => 'concluido',
             'completed_at' => now(),
             'snooze_until' => null,
-        ]);
+        ];
+
+        $notes = trim($this->completingNotes);
+        if ($notes !== '') {
+            $payload['result_notes'] = $notes;
+        }
+
+        Action::where('id', $this->completingActionId)->update($payload);
+
+        $this->cancelCompleteAction();
         $this->loadPlan();
     }
 
