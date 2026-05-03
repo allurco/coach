@@ -31,6 +31,8 @@ class Coach extends Page implements HasForms
 
     protected string $view = 'filament.pages.coach';
 
+    protected static ?string $slug = '/';
+
     protected static ?string $navigationLabel = 'Coach';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeftRight;
