@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Notifications\ResetPassword;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +13,14 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Replace Filament's default password-reset notification with our
+        // branded version (Coach. layout + pt_BR/en translations). Filament
+        // resolves the parent class via the container, so binding here is
+        // enough — no other call sites need to change.
+        $this->app->bind(
+            \Filament\Auth\Notifications\ResetPassword::class,
+            ResetPassword::class,
+        );
     }
 
     public function boot(): void
