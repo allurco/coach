@@ -47,6 +47,18 @@ return [
             'week' => 'Next week',
             'month' => '1 month',
         ],
+        'details' => [
+            'expand' => 'Show details',
+            'collapse' => 'Hide',
+            'description' => 'Description',
+            'importance' => 'Importance',
+            'difficulty' => 'Difficulty',
+            'snoozed_until' => 'Snoozed until :date',
+            'result_notes' => 'Completion notes',
+            'completed_at' => 'Completed on :date',
+            'attachments' => 'Attachments',
+            'no_attachments' => 'No attachments',
+        ],
     ],
 
     'complete_modal' => [

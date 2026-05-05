@@ -905,8 +905,7 @@
 
 .plan-item {
     display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
+    flex-direction: column;
     padding: 0.7rem 0.75rem;
     border-radius: 10px;
     transition: background .12s ease;
@@ -917,9 +916,40 @@
     background: var(--c-bg-alt);
 }
 
+.plan-item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
 .plan-item-main {
     flex: 1;
     min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    user-select: none;
+}
+
+.plan-item-main-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.plan-item-chevron {
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: var(--c-muted);
+    transition: transform .15s ease;
+    display: inline-flex;
+}
+
+.plan-item-chevron.is-open {
+    transform: rotate(90deg);
+}
+
+.plan-item.has-details .plan-item-main:hover .plan-item-chevron {
+    color: var(--c-ink);
 }
 
 .plan-item-title {
@@ -1039,6 +1069,59 @@
     justify-content: center;
     color: #059669;
     flex-shrink: 0;
+}
+
+.plan-item-details {
+    margin-top: 0.55rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    background: var(--c-bg-alt);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+.plan-item-detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.plan-item-detail-row-inline {
+    flex-direction: row;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.plan-item-detail-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--c-muted);
+    font-weight: 600;
+}
+
+.plan-item-detail-value {
+    color: var(--c-ink);
+    word-break: break-word;
+}
+
+.plan-item-attachments {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    color: var(--c-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.plan-item-attachments li {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem;
 }
 
 .plan-empty {

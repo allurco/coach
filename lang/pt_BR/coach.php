@@ -47,6 +47,18 @@ return [
             'week' => 'Próx. semana',
             'month' => '1 mês',
         ],
+        'details' => [
+            'expand' => 'Ver detalhes',
+            'collapse' => 'Recolher',
+            'description' => 'Descrição',
+            'importance' => 'Importância',
+            'difficulty' => 'Dificuldade',
+            'snoozed_until' => 'Adiado até :date',
+            'result_notes' => 'Notas de conclusão',
+            'completed_at' => 'Concluído em :date',
+            'attachments' => 'Anexos',
+            'no_attachments' => 'Nenhum anexo',
+        ],
     ],
 
     'complete_modal' => [

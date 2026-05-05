@@ -107,6 +107,20 @@ class Coach extends Page implements HasForms
                 'deadline' => $a->deadline?->format('d/m/Y'),
                 'is_overdue' => $a->isOverdue(),
                 'is_due_soon' => $a->isDueSoon(),
+                'description' => $a->description,
+                'importance' => $a->importance,
+                'difficulty' => $a->difficulty,
+                'snooze_until' => $a->snooze_until?->format('d/m/Y'),
+                'result_notes' => $a->result_notes,
+                'completed_at' => $a->completed_at?->format('d/m/Y'),
+                'attachments' => collect($a->attachments ?? [])
+                    ->filter(fn ($p) => is_string($p) && $p !== '')
+                    ->map(fn (string $path) => [
+                        'path' => $path,
+                        'name' => basename($path),
+                    ])
+                    ->values()
+                    ->all(),
             ])
             ->toArray();
     }
