@@ -45,14 +45,7 @@
     margin: 0 auto;
 }
 
-@media (max-width: 768px) {
-    .coach-shell {
-        grid-template-columns: 1fr;
-    }
-    .coach-sidebar { display: none; }
-}
-
-/* Sidebar */
+/* Sidebar (desktop default — column in the grid) */
 .coach-sidebar {
     display: flex;
     flex-direction: column;
@@ -60,6 +53,87 @@
     border-right: 1px solid var(--c-line);
     padding-right: 1rem;
     overflow: hidden;
+}
+
+/* Sidebar overlay (only used as drawer backdrop on mobile) */
+.sidebar-overlay {
+    display: none;
+}
+
+/* Hamburger toggle (only visible on mobile) */
+.sidebar-toggle-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--c-ink);
+    cursor: pointer;
+    margin-right: 0.25rem;
+    flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--c-bg-alt);
+}
+
+/* === Mobile (≤768px): single-column shell, sidebar slides in from left === */
+@media (max-width: 768px) {
+    .coach-shell {
+        grid-template-columns: 1fr;
+        height: calc(100vh - 80px);
+    }
+
+    .sidebar-toggle-btn {
+        display: inline-flex;
+    }
+
+    .coach-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(320px, 88vw);
+        background: var(--c-bg);
+        border-right: 1px solid var(--c-line);
+        padding: 1.25rem 1rem;
+        z-index: 51;
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.32,.72,.24,1);
+        box-shadow: 24px 0 60px -16px rgba(15,15,15,.18);
+    }
+
+    .coach-sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15,15,15,.32);
+        backdrop-filter: blur(2px);
+        z-index: 50;
+    }
+
+    /* Compact header on phones */
+    .coach-header {
+        padding: 0.6rem 0 0.85rem;
+    }
+    .coach-title {
+        font-size: 0.95rem;
+    }
+    .coach-status {
+        font-size: 0.7rem;
+    }
+
+    /* Plan toggle text-only on phones (icon + count, no "Plano" label) */
+    .plan-toggle-btn {
+        padding: 0.45rem 0.7rem;
+    }
 }
 
 .sidebar-header {
@@ -167,8 +241,14 @@
     padding: 1rem 0 1.25rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.75rem;
     border-bottom: 1px solid var(--c-line);
+}
+
+/* The middle text block grows to push plan toggle to the right */
+.coach-header-text {
+    flex: 1;
+    min-width: 0;
 }
 
 .coach-title {

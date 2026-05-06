@@ -36,7 +36,10 @@ class AdminPanelProvider extends PanelProvider
                 '<span class="coach-brand">Coach<span class="coach-brand-dot">.</span></span>'
             ))
             ->colors([
-                'primary' => Color::Amber,
+                // Match the brand: Coach.'s dot is orange (#ea580c). Using
+                // it as the primary keeps the login CTA, save buttons and
+                // any other primary action consistent with the wordmark.
+                'primary' => Color::Orange,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

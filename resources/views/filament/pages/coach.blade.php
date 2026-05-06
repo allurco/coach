@@ -1,13 +1,26 @@
 <x-filament-panels::page>
 
-    <div class="coach-page" x-data="{ planOpen: false }" @keydown.escape.window="planOpen = false">
+    <div class="coach-page"
+         x-data="{ planOpen: false, sidebarOpen: false }"
+         @keydown.escape.window="planOpen = false; sidebarOpen = false">
         <div class="coach-shell">
 
-            {{-- Sidebar with chat history --}}
-            <aside class="coach-sidebar">
+            {{-- Sidebar with chat history. Visible by default on desktop;
+                 turns into a slide-in drawer on mobile. --}}
+            <div class="sidebar-overlay"
+                 x-show="sidebarOpen"
+                 x-transition.opacity
+                 @click="sidebarOpen = false"
+                 style="display: none;"></div>
+
+            <aside class="coach-sidebar"
+                   :class="sidebarOpen ? 'is-open' : ''">
                 <div class="sidebar-header">
                     <div class="sidebar-title">Conversas</div>
-                    <button type="button" class="new-chat-btn" wire:click="newConversation" title="Nova conversa">
+                    <button type="button" class="new-chat-btn"
+                            wire:click="newConversation"
+                            @click="sidebarOpen = false"
+                            title="Nova conversa">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         novo
                     </button>
@@ -17,7 +30,8 @@
                     @forelse ($conversations as $conv)
                         <button type="button"
                                 class="conv-item {{ $conversationId === $conv['id'] ? 'active' : '' }}"
-                                wire:click="loadConversation('{{ $conv['id'] }}')">
+                                wire:click="loadConversation('{{ $conv['id'] }}')"
+                                @click="sidebarOpen = false">
                             <div class="conv-item-title">{{ $conv['title'] }}</div>
                             <div class="conv-item-time">{{ $conv['updated_label'] }}</div>
                         </button>
@@ -34,7 +48,13 @@
 
                 {{-- Header --}}
                 <div class="coach-header">
-                    <div>
+                    <button type="button" class="sidebar-toggle-btn"
+                            @click="sidebarOpen = true"
+                            aria-label="Abrir conversas">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="15" y2="18"/></svg>
+                    </button>
+
+                    <div class="coach-header-text">
                         <div class="coach-title">
                             Coach
                             @if ($conversationId)
