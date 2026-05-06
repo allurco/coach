@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Ai\Agents\FinanceCoach;
 use App\Models\Action;
+use App\Models\Goal;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Forms\Components\FileUpload;
@@ -49,7 +50,20 @@ class Coach extends Page implements HasForms
 
     public bool $thinking = false;
 
-    public array $conversations = [];
+    /** Each entry: [id, name, label, last_activity_label]. */
+    public array $goals = [];
+
+    public ?int $activeGoalId = null;
+
+    public array $goalHistory = [];
+
+    public bool $historyOpen = false;
+
+    public bool $newGoalOpen = false;
+
+    public string $newGoalName = '';
+
+    public string $newGoalLabel = 'general';
 
     public ?string $streamingText = null;
 
@@ -80,13 +94,36 @@ class Coach extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill();
-        $this->loadConversations();
+        $this->loadGoals();
+        $this->activateDefaultGoal();
         $this->loadPlan();
+    }
+
+    /**
+     * Pick the user's defaultGoal as the active workspace and load its
+     * latest conversation. No-op when the user has no goals (shouldn't
+     * happen — UserObserver creates one on signup).
+     */
+    protected function activateDefaultGoal(): void
+    {
+        $defaultGoal = auth()->user()?->defaultGoal();
+
+        if ($defaultGoal === null) {
+            return;
+        }
+
+        $this->setActiveGoal($defaultGoal->id);
     }
 
     public function loadPlan(): void
     {
         $query = Action::query();
+
+        // Scope plan to the active goal so each workspace shows only its
+        // own actions. Falls back to user-wide if no goal is active yet.
+        if ($this->activeGoalId !== null) {
+            $query->where('goal_id', $this->activeGoalId);
+        }
 
         if ($this->planFilter !== 'todas') {
             $query->where('status', $this->planFilter);
@@ -213,22 +250,122 @@ class Coach extends Page implements HasForms
             ->statePath('data');
     }
 
-    public function loadConversations(): void
+    public function loadGoals(): void
     {
-        $userId = auth()->id();
+        $user = auth()->user();
+        if (! $user) {
+            $this->goals = [];
 
-        $this->conversations = DB::table('agent_conversations')
-            ->where('user_id', $userId)
-            ->orderBy('updated_at', 'desc')
-            ->limit(40)
-            ->get()
-            ->map(fn ($c) => [
-                'id' => $c->id,
-                'title' => $c->title ?: __('coach.conversations.untitled'),
-                'updated_at' => $c->updated_at,
-                'updated_label' => $this->humanTime($c->updated_at),
-            ])
-            ->toArray();
+            return;
+        }
+
+        $this->goals = $user->goalsForSidebar()->map(fn ($g) => [
+            'id' => $g->id,
+            'name' => $g->name,
+            'label' => $g->label,
+            'is_archived' => (bool) $g->is_archived,
+            'last_activity_label' => $g->last_activity_at
+                ? $this->humanTime($g->last_activity_at)
+                : null,
+        ])->toArray();
+    }
+
+    /**
+     * Switch the active workspace. Loads the goal's most recent conversation
+     * (if any) into $messages, clears the message thread otherwise, and
+     * refreshes the plan to show only this goal's actions.
+     */
+    public function setActiveGoal(int $goalId): void
+    {
+        $goal = Goal::find($goalId);
+        if (! $goal) {
+            return;
+        }
+
+        $this->activeGoalId = $goal->id;
+        $latest = $goal->latestConversation();
+
+        if ($latest) {
+            $this->loadConversation($latest->id);
+        } else {
+            $this->messages = [];
+            $this->conversationId = null;
+        }
+
+        $this->historyOpen = false;
+        $this->goalHistory = [];
+        $this->loadPlan();
+    }
+
+    public function startNewConversationInActiveGoal(): void
+    {
+        $this->messages = [];
+        $this->conversationId = null;
+        $this->form->fill(['message' => '', 'attachments' => []]);
+    }
+
+    public function toggleHistory(): void
+    {
+        $this->historyOpen = ! $this->historyOpen;
+
+        if (! $this->historyOpen) {
+            $this->goalHistory = [];
+
+            return;
+        }
+
+        if ($this->activeGoalId === null) {
+            return;
+        }
+
+        $goal = Goal::find($this->activeGoalId);
+        if (! $goal) {
+            return;
+        }
+
+        $this->goalHistory = $goal->conversationHistory()->map(fn ($c) => [
+            'id' => $c->id,
+            'title' => $c->title ?: __('coach.conversations.untitled'),
+            'updated_label' => $this->humanTime($c->updated_at),
+        ])->toArray();
+    }
+
+    public function openNewGoal(): void
+    {
+        $this->newGoalOpen = true;
+        $this->newGoalName = '';
+        $this->newGoalLabel = 'general';
+    }
+
+    public function cancelNewGoal(): void
+    {
+        $this->newGoalOpen = false;
+        $this->newGoalName = '';
+    }
+
+    public function createGoal(): void
+    {
+        $name = trim($this->newGoalName);
+        if ($name === '') {
+            return;
+        }
+
+        $label = in_array($this->newGoalLabel, array_keys(Goal::LABELS), true)
+            ? $this->newGoalLabel
+            : 'general';
+
+        $goal = Goal::create([
+            'name' => $name,
+            'label' => $label,
+        ]);
+
+        // Reset cached defaultGoal so subsequent calls see the new goal as
+        // a candidate (the cache was filled at request start).
+        auth()->user()?->refreshDefaultGoal();
+
+        $this->cancelNewGoal();
+        $this->loadGoals();
+        $this->setActiveGoal($goal->id);
     }
 
     public function loadConversation(string $id): void
@@ -442,6 +579,17 @@ class Coach extends Page implements HasForms
             // Capture the conversation ID after streaming so the next turn continues it.
             $this->conversationId = $coach->currentConversation() ?? $this->conversationId;
 
+            // laravel/ai inserts agent_conversations rows without our goal_id.
+            // Stamp the active goal so this thread is owned by the right
+            // workspace (sidebar ordering, history, plan scoping all rely
+            // on it).
+            if ($this->conversationId !== null && $this->activeGoalId !== null) {
+                DB::table('agent_conversations')
+                    ->where('id', $this->conversationId)
+                    ->whereNull('goal_id')
+                    ->update(['goal_id' => $this->activeGoalId]);
+            }
+
             $rawText = trim($accumulated !== '' ? $accumulated : (string) ($stream->text ?? ''));
 
             if ($rawText === '') {
@@ -460,7 +608,7 @@ class Coach extends Page implements HasForms
             ];
 
             $this->streamingText = null;
-            $this->loadConversations();
+            $this->loadGoals();
             $this->loadPlan();
         } catch (Throwable $e) {
             $this->messages[] = [
@@ -474,16 +622,14 @@ class Coach extends Page implements HasForms
         $this->thinking = false;
     }
 
+    /**
+     * Kept as the public alias the blade template binds to. Internally
+     * routes to startNewConversationInActiveGoal — a fresh thread within
+     * the user's currently selected workspace, not a new goal.
+     */
     public function newConversation(): void
     {
-        $this->messages = [];
-        $this->conversationId = null;
-        $this->form->fill();
-    }
-
-    public function resetConversation(): void
-    {
-        $this->newConversation();
+        $this->startNewConversationInActiveGoal();
     }
 
     protected function summarizeToolActivity(array $activity): string

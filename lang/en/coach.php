@@ -30,6 +30,33 @@ return [
         'untitled' => 'untitled',
     ],
 
+    'sidebar' => [
+        'title' => 'Goals',
+        'new' => 'new',
+        'new_goal' => 'Create new goal',
+        'empty' => 'No goals yet. Create one to start.',
+        'no_activity' => 'no conversation yet',
+    ],
+
+    'header' => [
+        'new_thread' => 'new thread',
+        'history' => 'history',
+    ],
+
+    'new_goal_modal' => [
+        'title' => 'New goal',
+        'name_label' => 'Name',
+        'name_placeholder' => 'Eg: Climb out of debt, Half marathon, Learn German',
+        'label_label' => 'Category',
+        'cancel' => 'Cancel',
+        'create' => 'Create goal',
+    ],
+
+    'history_panel' => [
+        'title' => 'Conversation history',
+        'empty' => 'No prior conversations in this goal.',
+    ],
+
     'plan' => [
         'filters' => [
             'pendente' => 'Pending',

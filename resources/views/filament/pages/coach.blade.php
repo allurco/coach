@@ -16,28 +16,35 @@
             <aside class="coach-sidebar"
                    :class="sidebarOpen ? 'is-open' : ''">
                 <div class="sidebar-header">
-                    <div class="sidebar-title">Conversas</div>
+                    <div class="sidebar-title">{{ __('coach.sidebar.title') }}</div>
                     <button type="button" class="new-chat-btn"
-                            wire:click="newConversation"
+                            wire:click="openNewGoal"
                             @click="sidebarOpen = false"
-                            title="Nova conversa">
+                            title="{{ __('coach.sidebar.new_goal') }}">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        novo
+                        {{ __('coach.sidebar.new') }}
                     </button>
                 </div>
 
                 <div class="conv-list">
-                    @forelse ($conversations as $conv)
+                    @forelse ($goals as $goal)
                         <button type="button"
-                                class="conv-item {{ $conversationId === $conv['id'] ? 'active' : '' }}"
-                                wire:click="loadConversation('{{ $conv['id'] }}')"
+                                class="conv-item {{ $activeGoalId === $goal['id'] ? 'active' : '' }}"
+                                wire:click="setActiveGoal({{ $goal['id'] }})"
                                 @click="sidebarOpen = false">
-                            <div class="conv-item-title">{{ $conv['title'] }}</div>
-                            <div class="conv-item-time">{{ $conv['updated_label'] }}</div>
+                            <div class="conv-item-title">{{ $goal['name'] }}</div>
+                            <div class="conv-item-time">
+                                @if ($goal['last_activity_label'])
+                                    {{ $goal['last_activity_label'] }}
+                                @else
+                                    {{ __('coach.sidebar.no_activity') }}
+                                @endif
+                                · {{ $goal['label'] }}
+                            </div>
                         </button>
                     @empty
                         <div class="conv-empty">
-                            Suas conversas aparecem aqui depois da primeira mensagem.
+                            {{ __('coach.sidebar.empty') }}
                         </div>
                     @endforelse
                 </div>
@@ -55,15 +62,28 @@
                     </button>
 
                     <div class="coach-header-text">
+                        @php
+                            $activeGoal = collect($goals)->firstWhere('id', $activeGoalId);
+                        @endphp
                         <div class="coach-title">
-                            Coach
+                            {{ $activeGoal['name'] ?? 'Coach' }}
                             @if ($conversationId)
                                 <span class="pulse-dot"></span>
                             @endif
                         </div>
                         <div class="coach-status">
-                            @if ($conversationId)
-                                conversa em andamento
+                            @if ($activeGoal)
+                                <span class="coach-status-label">{{ $activeGoal['label'] }}</span>
+                                <button type="button" class="coach-mini-btn"
+                                        wire:click="newConversation"
+                                        title="{{ __('coach.header.new_thread') }}">
+                                    + {{ __('coach.header.new_thread') }}
+                                </button>
+                                <button type="button" class="coach-mini-btn"
+                                        wire:click="toggleHistory"
+                                        title="{{ __('coach.header.history') }}">
+                                    {{ __('coach.header.history') }}
+                                </button>
                             @else
                                 pronto pra conversar
                             @endif
@@ -359,6 +379,75 @@
             </div>
         </aside>
     </div>
+
+    {{-- History panel: older conversations of the active goal --}}
+    @if ($historyOpen)
+        <div class="complete-modal-overlay" wire:click="toggleHistory">
+            <div class="history-panel" @click.stop wire:click.stop>
+                <div class="history-panel-header">
+                    <div class="history-panel-title">{{ __('coach.history_panel.title') }}</div>
+                    <button type="button" class="plan-close-btn" wire:click="toggleHistory">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="history-panel-list">
+                    @forelse ($goalHistory as $conv)
+                        <button type="button" class="history-item"
+                                wire:click="loadConversation('{{ $conv['id'] }}')"
+                                @click="$wire.toggleHistory()">
+                            <div class="history-item-title">{{ $conv['title'] }}</div>
+                            <div class="history-item-time">{{ $conv['updated_label'] }}</div>
+                        </button>
+                    @empty
+                        <div class="history-empty">{{ __('coach.history_panel.empty') }}</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- New goal modal --}}
+    @if ($newGoalOpen)
+        <div class="complete-modal-overlay" wire:click="cancelNewGoal">
+            <div class="complete-modal" @click.stop wire:click.stop style="max-width: 440px;">
+                <div class="complete-modal-header">
+                    <div>
+                        <div class="complete-modal-title">{{ __('coach.new_goal_modal.title') }}</div>
+                    </div>
+                </div>
+
+                <label class="complete-modal-label" for="newGoalName">{{ __('coach.new_goal_modal.name_label') }}</label>
+                <input type="text"
+                       id="newGoalName"
+                       class="complete-modal-textarea"
+                       style="min-height: 0; height: 38px; padding: 8px 12px;"
+                       wire:model="newGoalName"
+                       placeholder="{{ __('coach.new_goal_modal.name_placeholder') }}"
+                       autofocus
+                       wire:keydown.enter="createGoal"
+                       wire:keydown.escape="cancelNewGoal">
+
+                <label class="complete-modal-label" for="newGoalLabel">{{ __('coach.new_goal_modal.label_label') }}</label>
+                <select id="newGoalLabel"
+                        class="complete-modal-textarea"
+                        style="min-height: 0; height: 38px; padding: 0 12px;"
+                        wire:model="newGoalLabel">
+                    @foreach (App\Models\Goal::LABELS as $key => $name)
+                        <option value="{{ $key }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+
+                <div class="complete-modal-footer">
+                    <button type="button" class="complete-modal-cancel" wire:click="cancelNewGoal">
+                        {{ __('coach.new_goal_modal.cancel') }}
+                    </button>
+                    <button type="button" class="complete-modal-confirm" wire:click="createGoal">
+                        {{ __('coach.new_goal_modal.create') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     @if ($completingActionId !== null)
         <div class="complete-modal-overlay" wire:click="cancelCompleteAction"
