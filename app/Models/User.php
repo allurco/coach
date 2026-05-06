@@ -58,17 +58,38 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Per-instance cache for defaultGoal() so creating many actions in one
+     * request doesn't issue N extra queries.
+     */
+    private ?Goal $cachedDefaultGoal = null;
+
+    private bool $defaultGoalResolved = false;
+
+    /**
      * Returns the user's primary active goal, used as the fallback when no
-     * goal is explicitly selected. Skips archived goals.
+     * goal is explicitly selected. Skips archived goals. Memoized on the
+     * model instance — flush by calling refreshDefaultGoal() if you change
+     * goals mid-request.
      */
     public function defaultGoal(): ?Goal
     {
-        return Goal::withoutGlobalScope('owner')
-            ->where('user_id', $this->id)
-            ->where('is_archived', false)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->first();
+        if (! $this->defaultGoalResolved) {
+            $this->cachedDefaultGoal = Goal::withoutGlobalScope('owner')
+                ->where('user_id', $this->id)
+                ->where('is_archived', false)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first();
+            $this->defaultGoalResolved = true;
+        }
+
+        return $this->cachedDefaultGoal;
+    }
+
+    public function refreshDefaultGoal(): void
+    {
+        $this->cachedDefaultGoal = null;
+        $this->defaultGoalResolved = false;
     }
 
     public function initials(): string

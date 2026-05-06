@@ -50,6 +50,27 @@ class Goal extends Model
                 $goal->user_id = $userId;
             }
         });
+
+        // Refuse to archive the user's last active goal — every action and
+        // conversation needs at least one workspace to attach to. Use raw
+        // queries to bypass when you really need to (migrations, tests).
+        static::saving(function (Goal $goal) {
+            if (! $goal->is_archived || ! $goal->isDirty('is_archived')) {
+                return;
+            }
+
+            $hasOtherActive = static::withoutGlobalScope('owner')
+                ->where('user_id', $goal->user_id)
+                ->where('id', '!=', $goal->id)
+                ->where('is_archived', false)
+                ->exists();
+
+            if (! $hasOtherActive) {
+                throw new \DomainException(
+                    'Cannot archive the last active goal — create another goal first.'
+                );
+            }
+        });
     }
 
     public function user(): BelongsTo

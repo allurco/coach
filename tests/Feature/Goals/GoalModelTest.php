@@ -171,8 +171,68 @@ it('defaultGoal skips archived goals', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    Goal::where('user_id', $user->id)->update(['is_archived' => true]);
+    // Force-archive the observer-created default (bypasses last-active guard).
+    Goal::query()->where('user_id', $user->id)->update(['is_archived' => true]);
     $active = Goal::create(['label' => 'finance', 'name' => 'Active goal']);
 
     expect($user->defaultGoal()?->is($active))->toBeTrue();
+});
+
+// ===== Last-active goal guard =====
+
+it('prevents archiving the only remaining active goal', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $only = Goal::where('user_id', $user->id)->first();
+
+    expect(fn () => $only->update(['is_archived' => true]))
+        ->toThrow(DomainException::class);
+
+    expect($only->fresh()->is_archived)->toBeFalse();
+});
+
+it('allows archiving when another active goal exists', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    Goal::create(['label' => 'fitness', 'name' => 'Fitness']);
+    $first = Goal::where('user_id', $user->id)->orderBy('id')->first();
+
+    $first->update(['is_archived' => true]);
+
+    expect($first->fresh()->is_archived)->toBeTrue();
+});
+
+// ===== Action creation requires an active goal =====
+
+it('Action::create throws a clear exception if the user has no active goal', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    // Force-archive every goal — bypasses the saving guard via raw query.
+    Goal::query()->where('user_id', $user->id)->update(['is_archived' => true]);
+
+    expect(fn () => Action::create(['title' => 'orphan', 'status' => 'pendente']))
+        ->toThrow(DomainException::class, 'no active goal');
+});
+
+it('Action::create still works when an explicit goal_id is given even if defaultGoal is null', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $explicit = Goal::create(['label' => 'fitness', 'name' => 'Explicit']);
+
+    // Archive the observer goal so defaultGoal would return $explicit.
+    Goal::query()->where('user_id', $user->id)
+        ->where('id', '!=', $explicit->id)
+        ->update(['is_archived' => true]);
+
+    $action = Action::create([
+        'goal_id' => $explicit->id,
+        'title' => 'works',
+        'status' => 'pendente',
+    ]);
+
+    expect($action->goal_id)->toBe($explicit->id);
 });
