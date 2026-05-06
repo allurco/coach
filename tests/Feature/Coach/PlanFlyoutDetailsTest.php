@@ -99,7 +99,7 @@ it('handles null attachments without crashing', function () {
     expect($page->planActions[0]['attachments'])->toBeArray()->toBeEmpty();
 });
 
-it('does not leak details from another users action', function () {
+it('does not leak details from another user\'s action', function () {
     $intruder = User::factory()->create();
 
     Action::withoutGlobalScope('owner')->create([
