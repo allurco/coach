@@ -76,6 +76,9 @@ class AdminPanelProvider extends PanelProvider
                         <meta name="apple-mobile-web-app-status-bar-style" content="default">
                         <meta name="apple-mobile-web-app-title" content="Coach.">
                         <link rel="manifest" href="/manifest.webmanifest">
+                        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+                        <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+                        <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
                         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
                         <link rel="preload" href="/fonts/filament/filament/inter/inter-latin-wght-normal-NRMW37G5.woff2" as="font" type="font/woff2" crossorigin>
                         <style>
