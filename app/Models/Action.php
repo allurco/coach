@@ -10,6 +10,7 @@ class Action extends Model
 {
     protected $fillable = [
         'user_id',
+        'goal_id',
         'title',
         'description',
         'category',
@@ -73,10 +74,32 @@ class Action extends Model
             }
         });
 
-        // Auto-fill user_id on create when one is logged in.
+        // Auto-fill user_id + goal_id on create when one is logged in.
+        //
+        // - When auth() matches $action->user_id (the common case: tools, UI,
+        //   webhook), reuse the in-memory authenticated user so this hook
+        //   doesn't add a User::find query per insert.
+        // - User::defaultGoal() is memoized per-instance, so creating N
+        //   actions in one request resolves the goal once and reuses it.
+        // - If no active goal exists, throw a clear DomainException instead
+        //   of letting the DB raise a NOT NULL constraint violation.
         static::creating(function (Action $action) {
             if ($action->user_id === null && $userId = auth()->id()) {
                 $action->user_id = $userId;
+            }
+
+            if ($action->goal_id === null && $action->user_id !== null) {
+                $user = auth()->id() === $action->user_id
+                    ? auth()->user()
+                    : User::find($action->user_id);
+
+                $action->goal_id = $user?->defaultGoal()?->id;
+            }
+
+            if ($action->goal_id === null) {
+                throw new \DomainException(
+                    'Cannot create action: user has no active goal. Create or unarchive a goal first.'
+                );
             }
         });
     }
@@ -84,6 +107,11 @@ class Action extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function goal(): BelongsTo
+    {
+        return $this->belongsTo(Goal::class);
     }
 
     public function isOverdue(): bool
