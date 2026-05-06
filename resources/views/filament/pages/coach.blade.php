@@ -235,8 +235,10 @@
                                 <div class="plan-item-main-text">
                                     <div class="plan-item-title {{ $a['is_overdue'] ? 'overdue' : '' }}">{{ $a['title'] }}</div>
                                     <div class="plan-item-meta">
-                                        <span class="plan-badge-cat plan-cat-{{ $a['category'] }}">{{ $a['category'] }}</span>
-                                        <span class="plan-badge-pri plan-pri-{{ $a['priority'] }}">{{ $a['priority'] }}</span>
+                                        <div class="plan-item-badges">
+                                            <span class="plan-badge-cat plan-cat-{{ $a['category'] }}">{{ $a['category'] }}</span>
+                                            <span class="plan-badge-pri plan-pri-{{ $a['priority'] }}">{{ $a['priority'] }}</span>
+                                        </div>
                                         @if ($a['deadline'])
                                             <span class="plan-deadline {{ $a['is_overdue'] ? 'overdue' : ($a['is_due_soon'] ? 'soon' : '') }}">
                                                 {{ $a['deadline'] }}

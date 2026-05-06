@@ -986,8 +986,15 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    flex-wrap: wrap;
     font-size: 0.7rem;
+}
+
+.plan-item-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 0;
 }
 
 /* ----- Badges: tinted, no border ----- */
@@ -1048,20 +1055,13 @@
 .dark .plan-deadline.soon { background: rgba(217,119,6,.22); color: #fbbf24; }
 .dark .plan-deadline.overdue { background: rgba(220,38,38,.22); color: #fca5a5; }
 
-/* ----- Action buttons: hover-revealed for less clutter ----- */
+/* ----- Action buttons (always visible) ----- */
 .plan-item-actions {
     display: flex;
     align-items: center;
     gap: 0.3rem;
     flex-shrink: 0;
     position: relative;
-    opacity: 0;
-    transition: opacity .15s ease;
-}
-
-.plan-item:hover .plan-item-actions,
-.plan-item:focus-within .plan-item-actions {
-    opacity: 1;
 }
 
 .plan-action-btn {
@@ -1411,4 +1411,37 @@
 
 .complete-modal-confirm:hover {
     background: #047857;
+}
+
+/* ============================================================ */
+/*  Mobile + touch refinements                                  */
+/* ============================================================ */
+
+/*
+ * Plan item meta row on phones: stack the badge cluster and the deadline pill
+ * vertically so every card lays out the same way (badges row + deadline row,
+ * deadline right-aligned). Same DOM, different layout — chips keep hugging
+ * their content instead of stretching.
+ */
+@media (max-width: 600px) {
+    .plan-item-meta {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .plan-item-meta .plan-deadline {
+        align-self: flex-end;
+        margin-left: 0;
+    }
+
+    /* Pump up touch targets a touch on phones. */
+    .plan-action-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .plan-item {
+        padding: 0.95rem 1.25rem;
+    }
 }

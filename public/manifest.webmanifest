@@ -1,0 +1,20 @@
+{
+    "name": "Coach.",
+    "short_name": "Coach.",
+    "description": "Self-hosted AI accountability coach.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#0a0a0a",
+    "background_color": "#fafaf7",
+    "lang": "pt-BR",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "166x166",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}
