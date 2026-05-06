@@ -194,7 +194,7 @@
         font-size: 0.7rem;
     }
 
-    /* Plan toggle text-only on phones (icon + count, no "Plano" label) */
+    /* Tighten plan toggle padding on phones — label still reads "Plano N" */
     .plan-toggle-btn {
         padding: 0.45rem 0.7rem;
     }

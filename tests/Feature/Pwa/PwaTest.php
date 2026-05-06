@@ -6,9 +6,16 @@ it('serves the web app manifest at /manifest.webmanifest', function () {
     $response->assertStatus(200)
         ->assertHeader('Content-Type', 'application/manifest+json');
 
-    $manifest = json_decode(file_get_contents(public_path('manifest.webmanifest')), true);
+    // Validate the actual HTTP response body, not the on-disk file. Catches
+    // routing regressions where the URL might serve a 200 with different
+    // content (an error page rendered as 200, a stale cached HTML, etc.).
+    $body = $response->streamedContent();
+    expect($body)->not->toBeEmpty();
+
+    $manifest = json_decode($body, true);
 
     expect($manifest)
+        ->not->toBeNull()
         ->toHaveKey('name')
         ->toHaveKey('short_name')
         ->toHaveKey('start_url')
@@ -30,8 +37,11 @@ it('serves the service worker at /sw.js with the right content type', function (
     $response->assertStatus(200)
         ->assertHeader('Content-Type', 'application/javascript');
 
-    $script = file_get_contents(public_path('sw.js'));
-    expect($script)->toContain('install');
+    // Validate the response body actually carries SW lifecycle code rather
+    // than (e.g.) an error page slipped past the route.
+    expect($response->streamedContent())
+        ->toContain('install')
+        ->toContain('addEventListener');
 });
 
 it('login page exposes the manifest link in the document head', function () {
