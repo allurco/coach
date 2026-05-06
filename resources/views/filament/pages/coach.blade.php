@@ -207,13 +207,19 @@
             <div class="plan-list">
                 @forelse ($planActions as $a)
                     @php
-                        $hasDetails = ! empty($a['description'])
-                            || ! empty($a['importance'])
-                            || ! empty($a['difficulty'])
-                            || ! empty($a['snooze_until'])
-                            || ! empty($a['result_notes'])
-                            || ! empty($a['completed_at'])
-                            || ! empty($a['attachments']);
+                        $detailFields = [
+                            'description',
+                            'importance',
+                            'difficulty',
+                            'snooze_until',
+                            'result_notes',
+                            'completed_at',
+                            'attachments',
+                        ];
+
+                        $hasDetails = array_key_exists('has_details', $a)
+                            ? (bool) $a['has_details']
+                            : collect($detailFields)->contains(fn ($field) => ! empty($a[$field]));
                     @endphp
                     <div class="plan-item {{ $hasDetails ? 'has-details' : '' }}"
                          x-data="{ menu: false, open: false }"
