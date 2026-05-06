@@ -226,7 +226,7 @@
                          @click.away="menu = false">
                         <div class="plan-item-row">
                             <div class="plan-item-main"
-                                 @if ($hasDetails) @click="open = !open" role="button" :aria-expanded="open" style="cursor: pointer;" @endif>
+                                 @if ($hasDetails) @click="open = !open" @keydown.enter.prevent="open = !open" @keydown.space.prevent="open = !open" tabindex="0" role="button" :aria-expanded="open" style="cursor: pointer;" @endif>
                                 @if ($hasDetails)
                                     <span class="plan-item-chevron" :class="open ? 'is-open' : ''" aria-hidden="true">
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
