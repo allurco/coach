@@ -9,7 +9,7 @@ it('serves the web app manifest at /manifest.webmanifest', function () {
     // Validate the actual HTTP response body, not the on-disk file. Catches
     // routing regressions where the URL might serve a 200 with different
     // content (an error page rendered as 200, a stale cached HTML, etc.).
-    $body = $response->streamedContent();
+    $body = $response->getContent();
     expect($body)->not->toBeEmpty();
 
     $manifest = json_decode($body, true);
@@ -34,12 +34,16 @@ it('serves the web app manifest at /manifest.webmanifest', function () {
 it('serves the service worker at /sw.js with the right content type', function () {
     $response = $this->get('/sw.js');
 
-    $response->assertStatus(200)
-        ->assertHeader('Content-Type', 'application/javascript');
+    $response->assertStatus(200);
+
+    // Use a contains-check on Content-Type — we send "application/javascript;
+    // charset=utf-8" but the precise spelling is implementation detail.
+    expect($response->headers->get('Content-Type'))
+        ->toContain('application/javascript');
 
     // Validate the response body actually carries SW lifecycle code rather
     // than (e.g.) an error page slipped past the route.
-    expect($response->streamedContent())
+    expect($response->getContent())
         ->toContain('install')
         ->toContain('addEventListener');
 });
