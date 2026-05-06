@@ -10,6 +10,7 @@ class Action extends Model
 {
     protected $fillable = [
         'user_id',
+        'goal_id',
         'title',
         'description',
         'category',
@@ -73,10 +74,17 @@ class Action extends Model
             }
         });
 
-        // Auto-fill user_id on create when one is logged in.
+        // Auto-fill user_id + goal_id on create when one is logged in.
+        // goal_id falls back to the user's default goal so legacy callers
+        // that don't know about goals (most existing tools) still work.
         static::creating(function (Action $action) {
             if ($action->user_id === null && $userId = auth()->id()) {
                 $action->user_id = $userId;
+            }
+
+            if ($action->goal_id === null && $action->user_id !== null) {
+                $user = User::find($action->user_id);
+                $action->goal_id = $user?->defaultGoal()?->id;
             }
         });
     }
@@ -84,6 +92,11 @@ class Action extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function goal(): BelongsTo
+    {
+        return $this->belongsTo(Goal::class);
     }
 
     public function isOverdue(): bool

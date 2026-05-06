@@ -10,6 +10,7 @@ class CoachMemory extends Model
 {
     protected $fillable = [
         'user_id',
+        'goal_id',
         'kind',
         'label',
         'summary',
@@ -72,6 +73,11 @@ class CoachMemory extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function goal(): BelongsTo
+    {
+        return $this->belongsTo(Goal::class);
     }
 
     public function sourceAction(): BelongsTo
