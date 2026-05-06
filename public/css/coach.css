@@ -60,6 +60,17 @@
     display: none;
 }
 
+/*
+ * Hide Filament's own topbar sidebar toggles. We don't register any nav
+ * items (the Coach page hides itself via shouldRegisterNavigation=false),
+ * so the built-in hamburger would open an empty mobile drawer. Our chat
+ * header has its own hamburger for the conversations sidebar.
+ */
+.fi-topbar-open-sidebar-btn,
+.fi-topbar-close-sidebar-btn {
+    display: none !important;
+}
+
 /* Hamburger toggle (only visible on mobile) */
 .sidebar-toggle-btn {
     display: none;
