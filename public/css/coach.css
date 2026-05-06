@@ -45,14 +45,7 @@
     margin: 0 auto;
 }
 
-@media (max-width: 768px) {
-    .coach-shell {
-        grid-template-columns: 1fr;
-    }
-    .coach-sidebar { display: none; }
-}
-
-/* Sidebar */
+/* Sidebar (desktop default — column in the grid) */
 .coach-sidebar {
     display: flex;
     flex-direction: column;
@@ -60,6 +53,151 @@
     border-right: 1px solid var(--c-line);
     padding-right: 1rem;
     overflow: hidden;
+}
+
+/* Sidebar overlay (only used as drawer backdrop on mobile) */
+.sidebar-overlay {
+    display: none;
+}
+
+/*
+ * Hide Filament's own topbar sidebar toggles. We don't register any nav
+ * items (the Coach page hides itself via shouldRegisterNavigation=false),
+ * so the built-in hamburger would open an empty mobile drawer. Our chat
+ * header has its own hamburger for the conversations sidebar.
+ */
+.fi-topbar-open-sidebar-btn,
+.fi-topbar-close-sidebar-btn {
+    display: none !important;
+}
+
+/*
+ * Slim the Filament topbar — default is 64px which feels heavy for a
+ * single-app shell. 48px keeps the brand + avatar comfortable while
+ * giving back ~16px of vertical space to the chat content. We also
+ * hide the empty .fi-topbar-nav-groups slot since we don't register
+ * any panel-level nav items.
+ */
+.fi-topbar {
+    min-height: 48px !important;
+    padding: 0 1rem !important;
+}
+
+.fi-topbar > nav {
+    min-height: 48px !important;
+    padding: 0 !important;
+}
+
+.fi-topbar-nav-groups {
+    display: none !important;
+}
+
+/*
+ * Tighten the brand link so it doesn't add its own vertical padding,
+ * and shrink the avatar/menu controls a touch.
+ */
+.fi-topbar-start a,
+.fi-topbar-end {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/*
+ * Filament hides .fi-topbar-start on mobile by default, expecting the
+ * brand to live in the (sidebar nav) drawer. We have no sidebar nav,
+ * so force the brand visible on every viewport.
+ */
+.fi-topbar-start {
+    display: flex !important;
+    align-items: center;
+}
+
+/*
+ * Filament's page wrapper adds 32px top/bottom padding by default,
+ * meant for pages with breadcrumbs + subheaders. The Coach page has
+ * its own compact header right below the topbar, so the 32px just
+ * looks like dead space. Tighten to 8px (0.5rem) and let our own
+ * header carry the breathing room.
+ */
+.fi-page-header-main-ctn {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0 !important;
+}
+
+/* Hamburger toggle (only visible on mobile) */
+.sidebar-toggle-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--c-ink);
+    cursor: pointer;
+    margin-right: 0.25rem;
+    flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--c-bg-alt);
+}
+
+/* === Mobile (≤768px): single-column shell, sidebar slides in from left === */
+@media (max-width: 768px) {
+    .coach-shell {
+        grid-template-columns: 1fr;
+        height: calc(100vh - 80px);
+    }
+
+    .sidebar-toggle-btn {
+        display: inline-flex;
+    }
+
+    .coach-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(320px, 88vw);
+        background: var(--c-bg);
+        border-right: 1px solid var(--c-line);
+        padding: 1.25rem 1rem;
+        z-index: 51;
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.32,.72,.24,1);
+        box-shadow: 24px 0 60px -16px rgba(15,15,15,.18);
+    }
+
+    .coach-sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15,15,15,.32);
+        backdrop-filter: blur(2px);
+        z-index: 50;
+    }
+
+    /* Compact header on phones */
+    .coach-header {
+        padding: 0.6rem 0 0.85rem;
+    }
+    .coach-title {
+        font-size: 0.95rem;
+    }
+    .coach-status {
+        font-size: 0.7rem;
+    }
+
+    /* Plan toggle text-only on phones (icon + count, no "Plano" label) */
+    .plan-toggle-btn {
+        padding: 0.45rem 0.7rem;
+    }
 }
 
 .sidebar-header {
@@ -167,8 +305,14 @@
     padding: 1rem 0 1.25rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.75rem;
     border-bottom: 1px solid var(--c-line);
+}
+
+/* The middle text block grows to push plan toggle to the right */
+.coach-header-text {
+    flex: 1;
+    min-width: 0;
 }
 
 .coach-title {
@@ -986,8 +1130,15 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    flex-wrap: wrap;
     font-size: 0.7rem;
+}
+
+.plan-item-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 0;
 }
 
 /* ----- Badges: tinted, no border ----- */
@@ -1048,20 +1199,13 @@
 .dark .plan-deadline.soon { background: rgba(217,119,6,.22); color: #fbbf24; }
 .dark .plan-deadline.overdue { background: rgba(220,38,38,.22); color: #fca5a5; }
 
-/* ----- Action buttons: hover-revealed for less clutter ----- */
+/* ----- Action buttons (always visible) ----- */
 .plan-item-actions {
     display: flex;
     align-items: center;
     gap: 0.3rem;
     flex-shrink: 0;
     position: relative;
-    opacity: 0;
-    transition: opacity .15s ease;
-}
-
-.plan-item:hover .plan-item-actions,
-.plan-item:focus-within .plan-item-actions {
-    opacity: 1;
 }
 
 .plan-action-btn {
@@ -1411,4 +1555,37 @@
 
 .complete-modal-confirm:hover {
     background: #047857;
+}
+
+/* ============================================================ */
+/*  Mobile + touch refinements                                  */
+/* ============================================================ */
+
+/*
+ * Plan item meta row on phones: stack the badge cluster and the deadline pill
+ * vertically so every card lays out the same way (badges row + deadline row,
+ * deadline right-aligned). Same DOM, different layout — chips keep hugging
+ * their content instead of stretching.
+ */
+@media (max-width: 600px) {
+    .plan-item-meta {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .plan-item-meta .plan-deadline {
+        align-self: flex-end;
+        margin-left: 0;
+    }
+
+    /* Pump up touch targets a touch on phones. */
+    .plan-action-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .plan-item {
+        padding: 0.95rem 1.25rem;
+    }
 }

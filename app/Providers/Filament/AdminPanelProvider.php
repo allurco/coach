@@ -36,7 +36,10 @@ class AdminPanelProvider extends PanelProvider
                 '<span class="coach-brand">Coach<span class="coach-brand-dot">.</span></span>'
             ))
             ->colors([
-                'primary' => Color::Amber,
+                // Match the brand: Coach.'s dot is orange (#ea580c). Using
+                // it as the primary keeps the login CTA, save buttons and
+                // any other primary action consistent with the wordmark.
+                'primary' => Color::Orange,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -65,6 +68,18 @@ class AdminPanelProvider extends PanelProvider
                     $cssVersion = file_exists($cssPath) ? filemtime($cssPath) : '';
 
                     return <<<HTML
+                        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+                        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+                        <meta name="theme-color" content="#fafaf7" media="(prefers-color-scheme: light)">
+                        <meta name="apple-mobile-web-app-capable" content="yes">
+                        <meta name="mobile-web-app-capable" content="yes">
+                        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+                        <meta name="apple-mobile-web-app-title" content="Coach.">
+                        <link rel="manifest" href="/manifest.webmanifest">
+                        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+                        <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+                        <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+                        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
                         <link rel="preload" href="/fonts/filament/filament/inter/inter-latin-wght-normal-NRMW37G5.woff2" as="font" type="font/woff2" crossorigin>
                         <style>
                             .coach-brand{font-weight:700;font-size:1.05rem;letter-spacing:-.01em;color:#171717}
@@ -75,6 +90,13 @@ class AdminPanelProvider extends PanelProvider
                             .dark .coach-brand-dot{color:#fb923c}
                         </style>
                         <link rel="stylesheet" href="/css/coach.css?v={$cssVersion}">
+                        <script>
+                            if ('serviceWorker' in navigator) {
+                                window.addEventListener('load', () => {
+                                    navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                                });
+                            }
+                        </script>
                         HTML;
                 },
             )
