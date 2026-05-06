@@ -58,18 +58,25 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
-                fn (): string => <<<'HTML'
-                    <link rel="preload" href="/fonts/filament/filament/inter/inter-latin-wght-normal-NRMW37G5.woff2" as="font" type="font/woff2" crossorigin>
-                    <style>
-                        .coach-brand{font-weight:700;font-size:1.05rem;letter-spacing:-.01em;color:#171717}
-                        .coach-brand-dot{color:#ea580c;font-weight:700;margin-left:1px}
-                        .fi-simple-page .coach-brand{font-size:2.5rem;letter-spacing:-.035em;line-height:1}
-                        .fi-simple-page .coach-brand-dot{font-size:2.5rem}
-                        .dark .coach-brand{color:#fafafa}
-                        .dark .coach-brand-dot{color:#fb923c}
-                    </style>
-                    <link rel="stylesheet" href="/css/coach.css">
-                HTML,
+                function (): string {
+                    // Bust Cloudflare/browser cache when coach.css changes — appended
+                    // filemtime() means the URL is unique per deploy.
+                    $cssPath = public_path('css/coach.css');
+                    $cssVersion = file_exists($cssPath) ? filemtime($cssPath) : '';
+
+                    return <<<HTML
+                        <link rel="preload" href="/fonts/filament/filament/inter/inter-latin-wght-normal-NRMW37G5.woff2" as="font" type="font/woff2" crossorigin>
+                        <style>
+                            .coach-brand{font-weight:700;font-size:1.05rem;letter-spacing:-.01em;color:#171717}
+                            .coach-brand-dot{color:#ea580c;font-weight:700;margin-left:1px}
+                            .fi-simple-page .coach-brand{font-size:2.5rem;letter-spacing:-.035em;line-height:1}
+                            .fi-simple-page .coach-brand-dot{font-size:2.5rem}
+                            .dark .coach-brand{color:#fafafa}
+                            .dark .coach-brand-dot{color:#fb923c}
+                        </style>
+                        <link rel="stylesheet" href="/css/coach.css?v={$cssVersion}">
+                        HTML;
+                },
             )
             ->middleware([
                 EncryptCookies::class,
