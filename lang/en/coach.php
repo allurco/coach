@@ -47,6 +47,7 @@ return [
             'week' => 'Next week',
             'month' => '1 month',
         ],
+        'count' => '{0}no actions|{1}1 action|[2,*]:count actions',
         'details' => [
             'expand' => 'Show details',
             'collapse' => 'Hide',

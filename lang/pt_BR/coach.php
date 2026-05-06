@@ -47,6 +47,7 @@ return [
             'week' => 'Próx. semana',
             'month' => '1 mês',
         ],
+        'count' => '{0}sem ações|{1}1 ação|[2,*]:count ações',
         'details' => [
             'expand' => 'Ver detalhes',
             'collapse' => 'Recolher',
