@@ -1589,3 +1589,109 @@
         padding: 0.95rem 1.25rem;
     }
 }
+
+/* ============================================================ */
+/*  Goal-as-conversation: header chips, history panel           */
+/* ============================================================ */
+
+.coach-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.coach-status-label {
+    background: color-mix(in srgb, var(--c-ink) 6%, transparent);
+    color: var(--c-muted);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    text-transform: lowercase;
+}
+
+.coach-mini-btn {
+    background: transparent;
+    border: 1px solid var(--c-line);
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.7rem;
+    color: var(--c-muted);
+    cursor: pointer;
+    transition: all .12s;
+}
+
+.coach-mini-btn:hover {
+    border-color: var(--c-ink);
+    color: var(--c-ink);
+}
+
+/* History panel — uses .complete-modal-overlay as backdrop */
+.history-panel {
+    background: var(--c-bg);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px -10px rgba(0,0,0,0.3);
+    animation: complete-modal-pop 140ms ease-out;
+}
+
+.history-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--c-line);
+}
+
+.history-panel-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--c-ink);
+}
+
+.history-panel-list {
+    overflow-y: auto;
+    padding: 0.5rem 0.5rem 1rem;
+    flex: 1;
+}
+
+.history-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 0.7rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 0.2rem;
+    transition: background .12s;
+}
+
+.history-item:hover {
+    background: var(--c-bg-alt);
+}
+
+.history-item-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--c-ink);
+}
+
+.history-item-time {
+    font-size: 0.7rem;
+    color: var(--c-muted);
+    margin-top: 0.15rem;
+}
+
+.history-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--c-muted);
+    font-size: 0.85rem;
+}
