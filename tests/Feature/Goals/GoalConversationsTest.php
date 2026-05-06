@@ -5,7 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-function seedConversation(int $userId, int $goalId, string $title, ?string $updatedAt = null): string
+function seedGoalConversation(int $userId, int $goalId, string $title, ?string $updatedAt = null): string
 {
     $id = (string) Str::uuid();
     DB::table('agent_conversations')->insert([
@@ -36,9 +36,9 @@ it('returns null when the goal has no conversations yet', function () {
 it('returns the most recently updated conversation for the goal', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
 
-    seedConversation($this->user->id, $goal->id, 'Old', now()->subDays(10));
-    $latestId = seedConversation($this->user->id, $goal->id, 'Recent', now()->subHour());
-    seedConversation($this->user->id, $goal->id, 'Older', now()->subDays(2));
+    seedGoalConversation($this->user->id, $goal->id, 'Old', now()->subDays(10));
+    $latestId = seedGoalConversation($this->user->id, $goal->id, 'Recent', now()->subHour());
+    seedGoalConversation($this->user->id, $goal->id, 'Older', now()->subDays(2));
 
     expect($goal->latestConversation()?->id)->toBe($latestId);
 });
@@ -47,7 +47,7 @@ it('does not pick up other goals conversations', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Finance']);
     $fitness = Goal::create(['label' => 'fitness', 'name' => 'Fitness']);
 
-    seedConversation($this->user->id, $fitness->id, 'Fitness chat', now());
+    seedGoalConversation($this->user->id, $fitness->id, 'Fitness chat', now());
 
     expect($finance->latestConversation())->toBeNull();
 });
@@ -59,16 +59,16 @@ it('history is empty when goal has 0 or 1 conversations', function () {
 
     expect($goal->conversationHistory())->toBeEmpty();
 
-    seedConversation($this->user->id, $goal->id, 'Only one', now());
+    seedGoalConversation($this->user->id, $goal->id, 'Only one', now());
     expect($goal->conversationHistory())->toBeEmpty();
 });
 
 it('history excludes the latest and orders newest-first', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
 
-    $oldest = seedConversation($this->user->id, $goal->id, 'Oldest', now()->subDays(10));
-    $middle = seedConversation($this->user->id, $goal->id, 'Middle', now()->subDays(5));
-    $latest = seedConversation($this->user->id, $goal->id, 'Latest', now()->subHour());
+    $oldest = seedGoalConversation($this->user->id, $goal->id, 'Oldest', now()->subDays(10));
+    $middle = seedGoalConversation($this->user->id, $goal->id, 'Middle', now()->subDays(5));
+    $latest = seedGoalConversation($this->user->id, $goal->id, 'Latest', now()->subHour());
 
     $history = $goal->conversationHistory();
 
@@ -102,8 +102,8 @@ it('User::goalsForSidebar floats most-recently-touched goals to the top', functi
     $b = Goal::create(['label' => 'fitness', 'name' => 'B']);
     $c = Goal::create(['label' => 'learning', 'name' => 'C']);
 
-    seedConversation($this->user->id, $b->id, 'B chat', now()->subHour());      // most recent
-    seedConversation($this->user->id, $a->id, 'A chat', now()->subDays(2));
+    seedGoalConversation($this->user->id, $b->id, 'B chat', now()->subHour());      // most recent
+    seedGoalConversation($this->user->id, $a->id, 'A chat', now()->subDays(2));
     // C has no conversation
 
     $sidebar = $this->user->goalsForSidebar();
@@ -115,8 +115,8 @@ it('User::goalsForSidebar floats most-recently-touched goals to the top', functi
 
 it('Goal hasMany conversations relationship', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
-    seedConversation($this->user->id, $goal->id, 'A', now());
-    seedConversation($this->user->id, $goal->id, 'B', now());
+    seedGoalConversation($this->user->id, $goal->id, 'A', now());
+    seedGoalConversation($this->user->id, $goal->id, 'B', now());
 
     expect($goal->conversations)->toHaveCount(2);
 });
@@ -130,8 +130,8 @@ it('conversations relationship respects user scope (no cross-tenant leak)', func
         'name' => 'Other goal',
     ]);
 
-    seedConversation($this->user->id, $goal->id, 'Mine', now());
-    seedConversation($other->id, $otherGoal->id, 'Theirs', now());
+    seedGoalConversation($this->user->id, $goal->id, 'Mine', now());
+    seedGoalConversation($other->id, $otherGoal->id, 'Theirs', now());
 
     expect($goal->conversations)->toHaveCount(1)
         ->and($goal->conversations->first()->title)->toBe('Mine');
