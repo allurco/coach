@@ -56,3 +56,29 @@ it('login page sets apple-mobile-web-app meta tags so iOS treats it as installab
         ->assertSee('name="apple-mobile-web-app-capable"', escape: false)
         ->assertSee('name="apple-mobile-web-app-title"', escape: false);
 });
+
+// ===== Graceful failure when files are missing on disk =====
+
+it('returns 404 (not 500) when the manifest file is missing on disk', function () {
+    $original = public_path('manifest.webmanifest');
+    $stash = $original.'.bak';
+    rename($original, $stash);
+
+    try {
+        $this->get('/manifest.webmanifest')->assertStatus(404);
+    } finally {
+        rename($stash, $original);
+    }
+});
+
+it('returns 404 (not 500) when the service worker file is missing on disk', function () {
+    $original = public_path('sw.js');
+    $stash = $original.'.bak';
+    rename($original, $stash);
+
+    try {
+        $this->get('/sw.js')->assertStatus(404);
+    } finally {
+        rename($stash, $original);
+    }
+});
