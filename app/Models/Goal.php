@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Goal extends Model
 {
@@ -86,5 +87,36 @@ class Goal extends Model
     public function memories(): HasMany
     {
         return $this->hasMany(CoachMemory::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(AgentConversation::class);
+    }
+
+    /**
+     * The "active" thread for this goal — most recently updated conversation.
+     * Returns null if no conversations have started under this goal yet.
+     */
+    public function latestConversation(): ?AgentConversation
+    {
+        return AgentConversation::where('goal_id', $this->id)
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
+    }
+
+    /**
+     * Older conversations (everything except the latest), newest-first.
+     * Used to render the goal's history view.
+     */
+    public function conversationHistory(): Collection
+    {
+        $conversations = AgentConversation::where('goal_id', $this->id)
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return $conversations->skip(1)->values();
     }
 }

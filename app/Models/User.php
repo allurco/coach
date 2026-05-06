@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password', 'is_admin', 'invitation_token', 'invited_at', 'accepted_invitation_at'])]
@@ -90,6 +91,30 @@ class User extends Authenticatable implements FilamentUser
     {
         $this->cachedDefaultGoal = null;
         $this->defaultGoalResolved = false;
+    }
+
+    /**
+     * Active goals ordered for the sidebar: most-recently-touched first
+     * (by their latest conversation's updated_at), then by sort_order/id
+     * for goals with no conversations yet.
+     */
+    public function goalsForSidebar(): Collection
+    {
+        return Goal::withoutGlobalScope('owner')
+            ->where('goals.user_id', $this->id)
+            ->where('goals.is_archived', false)
+            ->leftJoin('agent_conversations', function ($join) {
+                $join->on('agent_conversations.goal_id', '=', 'goals.id')
+                    ->whereRaw('agent_conversations.updated_at = (
+                        select max(updated_at) from agent_conversations ac2
+                        where ac2.goal_id = goals.id
+                    )');
+            })
+            ->select('goals.*', 'agent_conversations.updated_at as last_activity_at')
+            ->orderByRaw('agent_conversations.updated_at IS NULL, agent_conversations.updated_at DESC')
+            ->orderBy('goals.sort_order')
+            ->orderBy('goals.id')
+            ->get();
     }
 
     public function initials(): string
