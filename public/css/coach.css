@@ -71,6 +71,47 @@
     display: none !important;
 }
 
+/*
+ * Slim the Filament topbar — default is 64px which feels heavy for a
+ * single-app shell. 48px keeps the brand + avatar comfortable while
+ * giving back ~16px of vertical space to the chat content. We also
+ * hide the empty .fi-topbar-nav-groups slot since we don't register
+ * any panel-level nav items.
+ */
+.fi-topbar {
+    min-height: 48px !important;
+    padding: 0 1rem !important;
+}
+
+.fi-topbar > nav {
+    min-height: 48px !important;
+    padding: 0 !important;
+}
+
+.fi-topbar-nav-groups {
+    display: none !important;
+}
+
+/*
+ * Tighten the brand link so it doesn't add its own vertical padding,
+ * and shrink the avatar/menu controls a touch.
+ */
+.fi-topbar-start a,
+.fi-topbar-end {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/*
+ * Filament hides .fi-topbar-start on mobile by default, expecting the
+ * brand to live in the (sidebar nav) drawer. We have no sidebar nav,
+ * so force the brand visible on every viewport.
+ */
+.fi-topbar-start {
+    display: flex !important;
+    align-items: center;
+}
+
 /* Hamburger toggle (only visible on mobile) */
 .sidebar-toggle-btn {
     display: none;
