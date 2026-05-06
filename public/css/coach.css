@@ -112,6 +112,18 @@
     align-items: center;
 }
 
+/*
+ * Filament's page wrapper adds 32px top/bottom padding by default,
+ * meant for pages with breadcrumbs + subheaders. The Coach page has
+ * its own compact header right below the topbar, so the 32px just
+ * looks like dead space. Tighten to 8px (0.5rem) and let our own
+ * header carry the breathing room.
+ */
+.fi-page-header-main-ctn {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0 !important;
+}
+
 /* Hamburger toggle (only visible on mobile) */
 .sidebar-toggle-btn {
     display: none;
