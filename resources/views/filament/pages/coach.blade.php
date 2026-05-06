@@ -206,39 +206,123 @@
 
             <div class="plan-list">
                 @forelse ($planActions as $a)
-                    <div class="plan-item" x-data="{ menu: false }" @click.away="menu = false">
-                        <div class="plan-item-main">
-                            <div class="plan-item-title {{ $a['is_overdue'] ? 'overdue' : '' }}">{{ $a['title'] }}</div>
-                            <div class="plan-item-meta">
-                                <span class="plan-badge-cat plan-cat-{{ $a['category'] }}">{{ $a['category'] }}</span>
-                                <span class="plan-badge-pri plan-pri-{{ $a['priority'] }}">{{ $a['priority'] }}</span>
-                                @if ($a['deadline'])
-                                    <span class="plan-deadline {{ $a['is_overdue'] ? 'overdue' : ($a['is_due_soon'] ? 'soon' : '') }}">
-                                        {{ $a['deadline'] }}
+                    @php
+                        $detailFields = [
+                            'description',
+                            'importance',
+                            'difficulty',
+                            'snooze_until',
+                            'result_notes',
+                            'completed_at',
+                            'attachments',
+                        ];
+
+                        $hasDetails = array_key_exists('has_details', $a)
+                            ? (bool) $a['has_details']
+                            : collect($detailFields)->contains(fn ($field) => ! empty($a[$field]));
+                    @endphp
+                    <div class="plan-item {{ $hasDetails ? 'has-details' : '' }}"
+                         x-data="{ menu: false, open: false }"
+                         @click.away="menu = false">
+                        <div class="plan-item-row">
+                            <div class="plan-item-main"
+                                 @if ($hasDetails) @click="open = !open" @keydown.enter.prevent="open = !open" @keydown.space.prevent="open = !open" tabindex="0" role="button" :aria-expanded="open" style="cursor: pointer;" @endif>
+                                @if ($hasDetails)
+                                    <span class="plan-item-chevron" :class="open ? 'is-open' : ''" aria-hidden="true">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                                     </span>
                                 @endif
-                            </div>
-                        </div>
-
-                        @if ($a['status'] !== 'concluido')
-                            <div class="plan-item-actions">
-                                <button type="button" class="plan-action-btn done"
-                                        wire:click="startCompleteAction({{ $a['id'] }})"
-                                        title="{{ __('coach.plan.mark_done') }}">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                </button>
-                                <button type="button" class="plan-action-btn snooze" @click="menu = !menu" title="{{ __('coach.plan.snooze') }}">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                </button>
-                                <div x-show="menu" x-transition class="plan-snooze-menu" style="display: none;">
-                                    @foreach (__('coach.plan.snooze_options') as $key => $label)
-                                        <button type="button" wire:click="snoozeAction({{ $a['id'] }}, '{{ $key }}')" @click="menu = false">{{ $label }}</button>
-                                    @endforeach
+                                <div class="plan-item-main-text">
+                                    <div class="plan-item-title {{ $a['is_overdue'] ? 'overdue' : '' }}">{{ $a['title'] }}</div>
+                                    <div class="plan-item-meta">
+                                        <span class="plan-badge-cat plan-cat-{{ $a['category'] }}">{{ $a['category'] }}</span>
+                                        <span class="plan-badge-pri plan-pri-{{ $a['priority'] }}">{{ $a['priority'] }}</span>
+                                        @if ($a['deadline'])
+                                            <span class="plan-deadline {{ $a['is_overdue'] ? 'overdue' : ($a['is_due_soon'] ? 'soon' : '') }}">
+                                                {{ $a['deadline'] }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
-                        @else
-                            <div class="plan-item-done-mark">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+
+                            @if ($a['status'] !== 'concluido')
+                                <div class="plan-item-actions" @click.stop>
+                                    <button type="button" class="plan-action-btn done"
+                                            wire:click="startCompleteAction({{ $a['id'] }})"
+                                            title="{{ __('coach.plan.mark_done') }}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </button>
+                                    <button type="button" class="plan-action-btn snooze" @click="menu = !menu" title="{{ __('coach.plan.snooze') }}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    </button>
+                                    <div x-show="menu" x-transition class="plan-snooze-menu" style="display: none;">
+                                        @foreach (__('coach.plan.snooze_options') as $key => $label)
+                                            <button type="button" wire:click="snoozeAction({{ $a['id'] }}, '{{ $key }}')" @click="menu = false">{{ $label }}</button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <div class="plan-item-done-mark">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                            @endif
+                        </div>
+
+                        @if ($hasDetails)
+                            <div class="plan-item-details" x-show="open" x-transition style="display: none;">
+                                @if (! empty($a['description']))
+                                    <div class="plan-item-detail-row">
+                                        <div class="plan-item-detail-label">{{ __('coach.plan.details.description') }}</div>
+                                        <div class="plan-item-detail-value">{{ $a['description'] }}</div>
+                                    </div>
+                                @endif
+                                @if (! empty($a['importance']) || ! empty($a['difficulty']))
+                                    <div class="plan-item-detail-row plan-item-detail-row-inline">
+                                        @if (! empty($a['importance']))
+                                            <div>
+                                                <div class="plan-item-detail-label">{{ __('coach.plan.details.importance') }}</div>
+                                                <div class="plan-item-detail-value">{{ $a['importance'] }}</div>
+                                            </div>
+                                        @endif
+                                        @if (! empty($a['difficulty']))
+                                            <div>
+                                                <div class="plan-item-detail-label">{{ __('coach.plan.details.difficulty') }}</div>
+                                                <div class="plan-item-detail-value">{{ $a['difficulty'] }}</div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                                @if (! empty($a['snooze_until']))
+                                    <div class="plan-item-detail-row">
+                                        <div class="plan-item-detail-value">
+                                            {{ __('coach.plan.details.snoozed_until', ['date' => $a['snooze_until']]) }}
+                                        </div>
+                                    </div>
+                                @endif
+                                @if (! empty($a['completed_at']))
+                                    <div class="plan-item-detail-row">
+                                        <div class="plan-item-detail-value">
+                                            {{ __('coach.plan.details.completed_at', ['date' => $a['completed_at']]) }}
+                                        </div>
+                                    </div>
+                                @endif
+                                @if (! empty($a['result_notes']))
+                                    <div class="plan-item-detail-row">
+                                        <div class="plan-item-detail-label">{{ __('coach.plan.details.result_notes') }}</div>
+                                        <div class="plan-item-detail-value">{{ $a['result_notes'] }}</div>
+                                    </div>
+                                @endif
+                                @if (! empty($a['attachments']))
+                                    <div class="plan-item-detail-row">
+                                        <div class="plan-item-detail-label">{{ __('coach.plan.details.attachments') }}</div>
+                                        <ul class="plan-item-attachments">
+                                            @foreach ($a['attachments'] as $att)
+                                                <li>{{ $att['name'] }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
