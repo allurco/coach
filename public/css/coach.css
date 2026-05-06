@@ -765,24 +765,25 @@
 /*  Plan flyout drawer                                          */
 /* ============================================================ */
 
+/* ----- Toggle button (in topbar) ----- */
 .plan-toggle-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.45rem 0.85rem;
-    background: var(--c-bg);
-    border: 1px solid var(--c-line);
-    border-radius: 8px;
+    gap: 0.45rem;
+    padding: 0.5rem 0.95rem;
+    background: var(--c-ink);
+    border: none;
+    border-radius: 999px;
     font-size: 0.82rem;
     font-weight: 500;
-    color: var(--c-ink);
+    color: var(--c-bg);
     cursor: pointer;
-    transition: all .15s ease;
+    transition: transform .12s ease, opacity .12s ease;
 }
 
 .plan-toggle-btn:hover {
-    border-color: var(--c-ink);
-    background: var(--c-bg-alt);
+    transform: translateY(-1px);
+    opacity: .92;
 }
 
 .plan-badge {
@@ -791,19 +792,26 @@
     justify-content: center;
     min-width: 18px;
     height: 18px;
-    padding: 0 5px;
-    background: var(--c-accent);
-    color: white;
-    border-radius: 9px;
+    padding: 0 6px;
+    background: rgba(255,255,255,0.18);
+    color: var(--c-bg);
+    border-radius: 999px;
     font-size: 0.65rem;
     font-weight: 600;
-    margin-left: 0.2rem;
+    font-variant-numeric: tabular-nums;
 }
 
+.dark .plan-toggle-btn {
+    background: var(--c-ink);
+    color: var(--c-bg);
+}
+
+/* ----- Drawer surface ----- */
 .plan-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(15, 15, 15, 0.32);
+    backdrop-filter: blur(2px);
     z-index: 50;
 }
 
@@ -812,42 +820,43 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(420px, 90vw);
+    width: min(440px, 92vw);
     background: var(--c-bg);
-    border-left: 1px solid var(--c-line);
+    border-left: none;
     z-index: 51;
     transform: translateX(100%);
-    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    transition: transform .28s cubic-bezier(.32,.72,.24,1);
     display: flex;
     flex-direction: column;
-    box-shadow: -10px 0 30px -10px rgba(0,0,0,.15);
+    box-shadow: -24px 0 60px -16px rgba(15,15,15,.18), -1px 0 0 rgba(0,0,0,.04);
 }
 
 .plan-drawer.is-open {
     transform: translateX(0);
 }
 
+/* ----- Drawer header ----- */
 .plan-drawer-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    padding: 1.1rem 1.25rem;
-    border-bottom: 1px solid var(--c-line);
+    padding: 1.5rem 1.5rem 1rem;
     flex-shrink: 0;
 }
 
 .plan-drawer-title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
     color: var(--c-ink);
+    line-height: 1.1;
 }
 
 .plan-drawer-sub {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     color: var(--c-muted);
-    margin-top: 0.1rem;
-    text-transform: lowercase;
+    margin-top: 0.35rem;
+    font-variant-numeric: tabular-nums;
 }
 
 .plan-close-btn {
@@ -855,9 +864,10 @@
     border: none;
     color: var(--c-muted);
     cursor: pointer;
-    padding: 0.4rem;
-    border-radius: 6px;
-    transition: all .15s ease;
+    padding: 0.45rem;
+    border-radius: 8px;
+    transition: all .12s ease;
+    margin-top: -0.25rem;
 }
 
 .plan-close-btn:hover {
@@ -865,51 +875,56 @@
     background: var(--c-bg-alt);
 }
 
+/* ----- Filter pills ----- */
 .plan-filters {
     display: flex;
-    gap: 0.3rem;
-    padding: 0.7rem 1.25rem;
-    border-bottom: 1px solid var(--c-line);
+    gap: 0.4rem;
+    padding: 0 1.5rem 1rem;
     flex-wrap: wrap;
     flex-shrink: 0;
 }
 
 .plan-filter {
     background: transparent;
-    border: 1px solid var(--c-line);
+    border: none;
     border-radius: 999px;
-    padding: 0.3rem 0.7rem;
-    font-size: 0.72rem;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.78rem;
     font-weight: 500;
     color: var(--c-muted);
     cursor: pointer;
-    transition: all .15s ease;
+    transition: background .12s ease, color .12s ease;
 }
 
 .plan-filter:hover {
     color: var(--c-ink);
-    border-color: var(--c-ink);
+    background: var(--c-bg-alt);
 }
 
 .plan-filter.active {
     background: var(--c-ink);
     color: var(--c-bg);
-    border-color: var(--c-ink);
 }
 
+/* ----- List (edge-to-edge with hairline dividers) ----- */
 .plan-list {
     flex: 1;
     overflow-y: auto;
-    padding: 0.5rem 0.5rem 1rem;
+    padding: 0;
+    border-top: 1px solid color-mix(in srgb, var(--c-line) 70%, transparent);
 }
 
 .plan-item {
     display: flex;
     flex-direction: column;
-    padding: 0.7rem 0.75rem;
-    border-radius: 10px;
+    padding: 0.95rem 1.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--c-line) 70%, transparent);
     transition: background .12s ease;
     position: relative;
+}
+
+.plan-item:last-child {
+    border-bottom: none;
 }
 
 .plan-item:hover {
@@ -919,7 +934,7 @@
 .plan-item-row {
     display: flex;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0.6rem;
 }
 
 .plan-item-main {
@@ -927,7 +942,7 @@
     min-width: 0;
     display: flex;
     align-items: flex-start;
-    gap: 0.4rem;
+    gap: 0.45rem;
     user-select: none;
 }
 
@@ -938,109 +953,150 @@
 
 .plan-item-chevron {
     flex-shrink: 0;
-    margin-top: 3px;
+    margin-top: 5px;
     color: var(--c-muted);
-    transition: transform .15s ease;
+    opacity: 0.55;
+    transition: transform .18s cubic-bezier(.32,.72,.24,1), opacity .12s ease, color .12s ease;
     display: inline-flex;
 }
 
 .plan-item-chevron.is-open {
     transform: rotate(90deg);
+    opacity: 1;
+    color: var(--c-ink);
 }
 
 .plan-item.has-details .plan-item-main:hover .plan-item-chevron {
+    opacity: 1;
     color: var(--c-ink);
 }
 
+/* ----- Title (state lives on deadline pill, not the title) ----- */
 .plan-item-title {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     font-weight: 500;
     color: var(--c-ink);
     line-height: 1.35;
-    margin-bottom: 0.4rem;
+    letter-spacing: -0.005em;
+    margin-bottom: 0.5rem;
 }
 
-.plan-item-title.overdue {
-    color: #dc2626;
-    font-weight: 600;
-}
-
+/* ----- Meta row ----- */
 .plan-item-meta {
     display: flex;
     align-items: center;
     gap: 0.4rem;
     flex-wrap: wrap;
-    font-size: 0.68rem;
+    font-size: 0.7rem;
 }
 
+/* ----- Badges: tinted, no border ----- */
 .plan-badge-cat,
 .plan-badge-pri {
-    padding: 0.12rem 0.45rem;
-    border-radius: 4px;
+    padding: 0.22rem 0.55rem;
+    border-radius: 5px;
     font-weight: 500;
+    font-size: 0.7rem;
+    border: none;
     text-transform: lowercase;
-    border: 1px solid var(--c-line);
-}
-
-.plan-cat-financeiro { color: #059669; border-color: color-mix(in srgb, #059669 30%, var(--c-line)); }
-.plan-cat-fiscal { color: #dc2626; border-color: color-mix(in srgb, #dc2626 30%, var(--c-line)); }
-.plan-cat-operacional { color: #d97706; border-color: color-mix(in srgb, #d97706 30%, var(--c-line)); }
-.plan-cat-crescimento { color: #2563eb; border-color: color-mix(in srgb, #2563eb 30%, var(--c-line)); }
-
-.plan-pri-alta { color: #dc2626; }
-.plan-pri-media { color: #d97706; }
-.plan-pri-baixa { color: var(--c-muted); }
-
-.plan-deadline {
+    background: color-mix(in srgb, var(--c-ink) 6%, transparent);
     color: var(--c-muted);
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
 }
 
-.plan-deadline.soon { color: #d97706; font-weight: 600; }
-.plan-deadline.overdue { color: #dc2626; font-weight: 600; }
+.plan-cat-financeiro { background: rgba(5,150,105,.1); color: #047857; }
+.plan-cat-fiscal { background: rgba(220,38,38,.1); color: #b91c1c; }
+.plan-cat-operacional { background: rgba(217,119,6,.1); color: #b45309; }
+.plan-cat-crescimento { background: rgba(37,99,235,.1); color: #1d4ed8; }
 
+.plan-pri-alta { background: rgba(220,38,38,.1); color: #b91c1c; }
+.plan-pri-media { background: rgba(217,119,6,.1); color: #b45309; }
+.plan-pri-baixa {
+    background: color-mix(in srgb, var(--c-ink) 6%, transparent);
+    color: var(--c-muted);
+}
+
+.dark .plan-cat-financeiro { background: rgba(5,150,105,.18); color: #34d399; }
+.dark .plan-cat-fiscal { background: rgba(220,38,38,.18); color: #fca5a5; }
+.dark .plan-cat-operacional { background: rgba(217,119,6,.18); color: #fbbf24; }
+.dark .plan-cat-crescimento { background: rgba(37,99,235,.18); color: #93c5fd; }
+.dark .plan-pri-alta { background: rgba(220,38,38,.18); color: #fca5a5; }
+.dark .plan-pri-media { background: rgba(217,119,6,.18); color: #fbbf24; }
+
+/* ----- Deadline as status pill (carries the state color) ----- */
+.plan-deadline {
+    margin-left: auto;
+    padding: 0.22rem 0.55rem;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    background: color-mix(in srgb, var(--c-ink) 6%, transparent);
+    color: var(--c-muted);
+}
+
+.plan-deadline.soon {
+    background: rgba(217,119,6,.12);
+    color: #b45309;
+}
+
+.plan-deadline.overdue {
+    background: rgba(220,38,38,.14);
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.dark .plan-deadline.soon { background: rgba(217,119,6,.22); color: #fbbf24; }
+.dark .plan-deadline.overdue { background: rgba(220,38,38,.22); color: #fca5a5; }
+
+/* ----- Action buttons: hover-revealed for less clutter ----- */
 .plan-item-actions {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.3rem;
     flex-shrink: 0;
     position: relative;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.plan-item:hover .plan-item-actions,
+.plan-item:focus-within .plan-item-actions {
+    opacity: 1;
 }
 
 .plan-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: transparent;
-    border: 1px solid var(--c-line);
-    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    background: color-mix(in srgb, var(--c-ink) 6%, transparent);
+    border: none;
+    border-radius: 8px;
     color: var(--c-muted);
     cursor: pointer;
-    transition: all .15s ease;
+    transition: all .12s ease;
 }
 
 .plan-action-btn:hover {
-    border-color: var(--c-ink);
-    color: var(--c-ink);
-    background: var(--c-bg);
+    background: var(--c-ink);
+    color: var(--c-bg);
 }
 
-.plan-action-btn.done:hover { color: #059669; border-color: #059669; }
-.plan-action-btn.snooze:hover { color: #d97706; border-color: #d97706; }
+.plan-action-btn.done:hover { background: #059669; color: white; }
+.plan-action-btn.snooze:hover { background: #d97706; color: white; }
 
+/* ----- Snooze menu ----- */
 .plan-snooze-menu {
     position: absolute;
     right: 0;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     background: var(--c-bg);
     border: 1px solid var(--c-line);
-    border-radius: 10px;
-    box-shadow: 0 10px 25px -8px rgba(0,0,0,.15);
-    padding: 0.3rem;
-    min-width: 140px;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px -12px rgba(15,15,15,.18), 0 0 0 1px rgba(0,0,0,.02);
+    padding: 0.35rem;
+    min-width: 160px;
     z-index: 10;
 }
 
@@ -1050,11 +1106,12 @@
     text-align: left;
     background: transparent;
     border: none;
-    padding: 0.45rem 0.7rem;
-    border-radius: 6px;
-    font-size: 0.78rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 7px;
+    font-size: 0.8rem;
     color: var(--c-ink);
     cursor: pointer;
+    transition: background .1s ease;
 }
 
 .plan-snooze-menu button:hover {
@@ -1062,8 +1119,8 @@
 }
 
 .plan-item-done-mark {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1071,34 +1128,41 @@
     flex-shrink: 0;
 }
 
+/* ----- Expanded details ----- */
 .plan-item-details {
-    margin-top: 0.55rem;
-    padding: 0.6rem 0.7rem;
-    border-radius: 8px;
-    background: var(--c-bg-alt);
+    margin-top: 0.7rem;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--c-ink) 4%, transparent);
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    font-size: 0.78rem;
-    line-height: 1.4;
+    gap: 0.7rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    animation: plan-detail-in .18s ease-out;
+}
+
+@keyframes plan-detail-in {
+    from { opacity: 0; transform: translateY(-2px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .plan-item-detail-row {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.2rem;
 }
 
 .plan-item-detail-row-inline {
     flex-direction: row;
-    gap: 1.25rem;
+    gap: 1.5rem;
     flex-wrap: wrap;
 }
 
 .plan-item-detail-label {
     font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     color: var(--c-muted);
     font-weight: 600;
 }
@@ -1114,7 +1178,7 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.25rem;
     color: var(--c-ink);
     font-variant-numeric: tabular-nums;
 }
@@ -1124,22 +1188,31 @@
     font-size: 0.72rem;
 }
 
+/* ----- Empty state ----- */
 .plan-empty {
-    padding: 2rem 1.25rem;
+    padding: 3rem 1.5rem;
     text-align: center;
     color: var(--c-muted);
-    font-size: 0.85rem;
+    font-size: 0.88rem;
 }
 
 .plan-empty-link {
-    display: block;
-    margin-top: 0.5rem;
+    display: inline-block;
+    margin-top: 0.75rem;
     background: transparent;
     border: none;
-    color: var(--c-accent);
-    font-size: 0.8rem;
+    color: var(--c-ink);
+    font-size: 0.82rem;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in srgb, var(--c-ink) 30%, transparent);
+    transition: text-decoration-color .12s ease;
+}
+
+.plan-empty-link:hover {
+    text-decoration-color: var(--c-ink);
 }
 
 /* ============================================================ */
