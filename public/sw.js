@@ -5,14 +5,15 @@
 const VERSION = 'coach-v1';
 
 self.addEventListener('install', (event) => {
-    self.skipWaiting();
+    // Tie skipWaiting() to the lifecycle so the browser holds the install
+    // state until activation is ready, instead of resolving the promise
+    // detached from waitUntil().
+    event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', (event) => {
-    // Network-first for everything. The browser handles caching via HTTP.
-    return;
-});
+// No fetch handler: we want the browser's default network behavior. Add an
+// event.respondWith(...) here when implementing an offline/cache strategy.

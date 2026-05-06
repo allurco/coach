@@ -93,7 +93,10 @@ class AdminPanelProvider extends PanelProvider
                         <script>
                             if ('serviceWorker' in navigator) {
                                 window.addEventListener('load', () => {
-                                    navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                                    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                                        .catch((err) => {
+                                            console.warn('Coach SW registration failed:', err);
+                                        });
                                 });
                             }
                         </script>
