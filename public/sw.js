@@ -15,5 +15,10 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
-// No fetch handler: we want the browser's default network behavior. Add an
-// event.respondWith(...) here when implementing an offline/cache strategy.
+// IMPORTANT: Chrome's "Add to Home Screen" install banner requires the
+// service worker to have a fetch event handler — even an empty one. Without
+// this listener the PWA criteria don't pass and the prompt never fires.
+// We're not implementing a caching strategy (yet); the listener is here
+// solely to satisfy that criterion. Add event.respondWith(...) inside if/
+// when offline support gets added.
+self.addEventListener('fetch', () => {});
