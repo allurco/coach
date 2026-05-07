@@ -185,15 +185,11 @@
                                 <div class="msg-avatar coach">C</div>
                                 <div class="msg-body">
                                     <div class="msg-name">Coach</div>
-                                    <div class="msg-content"
-                                         x-data="{}"
-                                         x-init="$nextTick(() => $el.closest('.coach-thread').scrollTop = $el.closest('.coach-thread').scrollHeight)">
-                                        <span class="streaming-content"
-                                              wire:stream="coach-stream"></span>
-                                        <span class="thinking-dots" aria-hidden="true">
-                                            <span></span><span></span><span></span>
-                                        </span>
-                                    </div>
+                                    {{-- Single-line markup is intentional: msg-content carries
+                                         white-space: pre-wrap (so streamed LLM text keeps its
+                                         own newlines), which would otherwise render the indented
+                                         child spans as empty lines and inflate the bubble. --}}
+                                    <div class="msg-content" x-data="{}" x-init="$nextTick(() => $el.closest('.coach-thread').scrollTop = $el.closest('.coach-thread').scrollHeight)"><span class="streaming-content" wire:stream="coach-stream"></span><span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span></div>
                                 </div>
                             </div>
                         @endif
