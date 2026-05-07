@@ -102,6 +102,7 @@ return [
         'ListActions' => 'reading plan',
         'CreateAction' => 'creating action',
         'UpdateAction' => 'updating action',
+        'CreateGoal' => 'creating goal',
         'RememberFact' => 'saving to memory',
         'RecallFacts' => 'reading memory',
         'WebSearch' => 'searching the web',
