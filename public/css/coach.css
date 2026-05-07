@@ -41,6 +41,10 @@
     grid-template-columns: 240px 1fr;
     gap: 1.5rem;
     height: calc(100vh - 110px);
+    /* Dynamic viewport units settle when iOS Safari shows/hides its URL
+       bar — without them the chat thread re-flows on every scroll, which
+       reads as a "wobble" in the PWA. */
+    height: calc(100dvh - 110px);
     max-width: 80rem;
     margin: 0 auto;
 }
@@ -146,9 +150,14 @@
 
 /* === Mobile (≤768px): single-column shell, sidebar slides in from left === */
 @media (max-width: 768px) {
+    /* No keyboard on touch — hide the keyboard-shortcut hint to free up
+       horizontal space and stop it from wrapping to two lines. */
+    .composer-hint { display: none; }
+
     .coach-shell {
         grid-template-columns: 1fr;
         height: calc(100vh - 80px);
+        height: calc(100dvh - 80px);
     }
 
     .sidebar-toggle-btn {
@@ -357,6 +366,11 @@
     overflow-y: auto;
     padding: 1.5rem 0 1rem;
     scroll-behavior: smooth;
+    /* Trap iOS Safari rubber-band scroll inside the thread so the page
+       behind doesn't move when the user reaches the top/bottom. Removes
+       the "wobble" feel of the PWA when scrolling. */
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .coach-thread::-webkit-scrollbar { width: 6px; }
@@ -746,7 +760,10 @@
     outline: none !important;
     resize: none !important;
     color: var(--c-ink) !important;
-    font-size: 0.95rem !important;
+    /* 16px is the iOS Safari threshold below which a focused input
+       triggers an auto-zoom + viewport wobble. Keep at 16 even though
+       0.95rem read slightly tighter on desktop — the trade-off is worth it. */
+    font-size: 16px !important;
     line-height: 1.55 !important;
     padding: 0 !important;
     font-weight: 400 !important;
