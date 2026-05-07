@@ -11,6 +11,17 @@ use Stringable;
 
 class CreateAction implements Tool
 {
+    /**
+     * @param  ?int  $activeGoalId  Goal the new action belongs to. Passed
+     *                              in by FinanceCoach so the action lands
+     *                              in the workspace the user is currently
+     *                              looking at. If null, the Action model's
+     *                              creating hook falls back to the user's
+     *                              default goal (covers cron/email flows
+     *                              where there's no active sidebar goal).
+     */
+    public function __construct(protected ?int $activeGoalId = null) {}
+
     public function description(): Stringable|string
     {
         return 'Cria uma nova ação no plano do Rogers. '
@@ -24,7 +35,7 @@ class CreateAction implements Tool
 
     public function handle(Request $request): Stringable|string
     {
-        $action = Action::create([
+        $payload = [
             'title' => $request['title'],
             'description' => $request['description'] ?? null,
             'category' => $request['category'] ?? 'financeiro',
@@ -33,7 +44,13 @@ class CreateAction implements Tool
             'difficulty' => $request['difficulty'] ?? 'medio',
             'deadline' => $this->parseDeadline($request['deadline'] ?? null),
             'status' => 'pendente',
-        ]);
+        ];
+
+        if ($this->activeGoalId !== null) {
+            $payload['goal_id'] = $this->activeGoalId;
+        }
+
+        $action = Action::create($payload);
 
         return sprintf(
             'Ação criada com ID %d: "%s" (categoria: %s, prioridade: %s, prazo: %s).',

@@ -2,6 +2,7 @@
 
 use App\Ai\Tools\CreateAction;
 use App\Models\Action;
+use App\Models\Goal;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;
 
@@ -9,6 +10,29 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
     $this->tool = new CreateAction;
+});
+
+it('stamps the active goal id when one is passed in', function () {
+    $fitness = Goal::create(['label' => 'fitness', 'name' => 'Fitness']);
+
+    $tool = new CreateAction($fitness->id);
+    $tool->handle(new Request(['title' => 'Caminhada 30min']));
+
+    $action = Action::where('title', 'Caminhada 30min')->first();
+    expect($action->goal_id)->toBe($fitness->id);
+});
+
+it('falls back to the user default goal when no active goal is provided', function () {
+    // The user already has a default Goal from the UserObserver. With no
+    // goal id passed to the tool, Action::creating fills it via
+    // User::defaultGoal() — this is the legacy behaviour that the fix
+    // must keep intact for cron/email flows.
+    $defaultGoal = $this->user->defaultGoal();
+
+    $this->tool->handle(new Request(['title' => 'Sem goal explícito']));
+
+    $action = Action::where('title', 'Sem goal explícito')->first();
+    expect($action->goal_id)->toBe($defaultGoal->id);
 });
 
 it('creates an action with required title only', function () {

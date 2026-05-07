@@ -226,9 +226,11 @@ class FinanceCoach implements Agent, Conversational, HasTools
 
     public function tools(): iterable
     {
+        $activeGoalId = $this->resolveActiveGoal()?->id;
+
         return [
             new ListActions,
-            new CreateAction,
+            new CreateAction($activeGoalId),
             new UpdateAction,
             new CreateGoal,
             new RememberFact,
