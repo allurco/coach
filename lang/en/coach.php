@@ -24,6 +24,7 @@ return [
 
     'composer' => [
         'placeholder' => 'say something',
+        'attach' => 'Attach file',
     ],
 
     'conversations' => [

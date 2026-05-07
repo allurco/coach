@@ -41,6 +41,10 @@
     grid-template-columns: 240px 1fr;
     gap: 1.5rem;
     height: calc(100vh - 110px);
+    /* Dynamic viewport units settle when iOS Safari shows/hides its URL
+       bar — without them the chat thread re-flows on every scroll, which
+       reads as a "wobble" in the PWA. */
+    height: calc(100dvh - 110px);
     max-width: 80rem;
     margin: 0 auto;
 }
@@ -146,9 +150,14 @@
 
 /* === Mobile (≤768px): single-column shell, sidebar slides in from left === */
 @media (max-width: 768px) {
+    /* No keyboard on touch — hide the keyboard-shortcut hint to free up
+       horizontal space and stop it from wrapping to two lines. */
+    .composer-hint { display: none; }
+
     .coach-shell {
         grid-template-columns: 1fr;
         height: calc(100vh - 80px);
+        height: calc(100dvh - 80px);
     }
 
     .sidebar-toggle-btn {
@@ -250,12 +259,13 @@
 .conv-item {
     width: 100%;
     text-align: left;
-    padding: 0.6rem 0.75rem;
+    padding: 0.6rem 0.75rem 0.6rem calc(0.75rem - 3px);
     background: transparent;
     border: 1px solid transparent;
+    border-left: 3px solid transparent;
     border-radius: 8px;
     cursor: pointer;
-    transition: background .15s ease;
+    transition: background .15s ease, border-color .15s ease, transform .12s ease;
     display: block;
     margin-bottom: 0.2rem;
 }
@@ -264,10 +274,17 @@
     background: var(--c-bg-alt);
 }
 
+.conv-item:active {
+    transform: scale(0.985);
+}
+
 .conv-item.active {
     background: var(--c-bg-alt);
     border-color: var(--c-line);
+    border-left-color: var(--c-accent);
 }
+
+.conv-item.active .conv-item-title { color: var(--c-ink); font-weight: 600; }
 
 .conv-item-title {
     font-size: 0.82rem;
@@ -349,6 +366,11 @@
     overflow-y: auto;
     padding: 1.5rem 0 1rem;
     scroll-behavior: smooth;
+    /* Trap iOS Safari rubber-band scroll inside the thread so the page
+       behind doesn't move when the user reaches the top/bottom. Removes
+       the "wobble" feel of the PWA when scrolling. */
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .coach-thread::-webkit-scrollbar { width: 6px; }
@@ -423,6 +445,19 @@
     margin-bottom: 1.25rem;
     display: flex;
     gap: 0.85rem;
+    animation: msg-in 220ms cubic-bezier(0.21, 0.95, 0.4, 1) both;
+}
+
+/* Limit the entrance animation to user/error bubbles + the in-flight
+   thinking bubble. Once a message is committed (no longer streaming),
+   we don't want it to re-animate on Livewire diffs. */
+@keyframes msg-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .msg { animation: none; }
 }
 
 .msg-avatar {
@@ -480,6 +515,39 @@
     color: var(--c-accent);
     animation: blink 1s ease-in-out infinite;
     margin-left: 2px;
+}
+
+/* While the agent is queued/awaiting first token, render pulsing dots in
+   the empty bubble. The dots are a sibling of .streaming-content so we can
+   swap them out with a CSS sibling selector once any content streams in. */
+.streaming-content:empty::after { display: none; }
+
+.thinking-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 0;
+    height: 1.2rem;
+    vertical-align: middle;
+}
+
+.thinking-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--c-accent);
+    opacity: 0.4;
+    animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+
+.thinking-dots span:nth-child(2) { animation-delay: 0.18s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.36s; }
+
+.streaming-content:not(:empty) ~ .thinking-dots { display: none; }
+
+@keyframes thinking-pulse {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.35; }
+    40%          { transform: scale(1);   opacity: 1; }
 }
 
 .tool-pills {
@@ -667,10 +735,15 @@
     background: var(--c-bg);
     border: 1px solid var(--c-line);
     border-radius: 16px;
-    padding: 0.9rem 1rem;
+    padding: 0.65rem 1rem 0.55rem;
     margin-bottom: 0.5rem;
     transition: border-color .15s ease, box-shadow .15s ease;
 }
+
+/* The Filament schema container reserves a 24px grid gap between every
+   field, including the now-collapsed FilePond — kill it so the textarea
+   sits flush against the actions row. */
+.coach-page .composer .fi-sc { gap: 0 !important; }
 
 .composer:focus-within {
     border-color: var(--c-ink);
@@ -687,7 +760,10 @@
     outline: none !important;
     resize: none !important;
     color: var(--c-ink) !important;
-    font-size: 0.95rem !important;
+    /* 16px is the iOS Safari threshold below which a focused input
+       triggers an auto-zoom + viewport wobble. Keep at 16 even though
+       0.95rem read slightly tighter on desktop — the trade-off is worth it. */
+    font-size: 16px !important;
     line-height: 1.55 !important;
     padding: 0 !important;
     font-weight: 400 !important;
@@ -708,42 +784,44 @@
     color: var(--c-muted) !important;
 }
 
-/* FilePond container */
+/* FilePond container — drop-zone is replaced by the composer-attach-btn,
+   so the FilePond UI is collapsed entirely when no files are attached and
+   only expands to show the file list once one is selected. */
 .coach-page .composer .filepond--root {
     margin-top: 0.5rem;
     background: transparent !important;
-    border: 1px dashed var(--c-line) !important;
+    border: 1px solid var(--c-line) !important;
     border-radius: 10px !important;
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
 }
 
-.coach-page .composer .filepond--root.filepond--hopper {
-    min-height: 44px !important;
+.coach-page .composer .filepond--drop-label,
+.coach-page .composer .filepond--label-action {
+    display: none !important;
 }
 
-/* When files exist, switch to solid border + alt background */
-.coach-page .composer .filepond--root.filepond--hopper:has(.filepond--item) {
-    border-style: solid !important;
+/* Visually hide the upload widget when no files are selected — but
+   keep it laid out (just zero-sized off-flow) so FilePond doesn't
+   detect a hidden parent and unmount itself. The hidden file input
+   is still clickable from the composer-attach-btn. */
+.coach-page .composer .fi-fo-file-upload:not(:has(.filepond--item)) {
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.coach-page .composer .filepond--root:has(.filepond--item) {
     background: var(--c-bg-alt) !important;
 }
 
-.coach-page .composer .filepond--panel-root,
-.coach-page .composer .filepond--drop-label {
+.coach-page .composer .filepond--panel-root {
     background: transparent !important;
     border: none !important;
-}
-
-.coach-page .composer .filepond--drop-label,
-.coach-page .composer .filepond--drop-label label {
-    color: var(--c-muted) !important;
-    font-size: 0.78rem !important;
-    font-weight: 400 !important;
-}
-
-.coach-page .composer .filepond--label-action {
-    color: var(--c-accent) !important;
-    text-decoration: none !important;
-    border-bottom: 1px dotted var(--c-accent) !important;
 }
 
 /* File list items — visible! */
@@ -807,14 +885,42 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 0.7rem;
-    padding-top: 0.7rem;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--c-line);
+}
+
+.composer-attach-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--c-line);
+    background: transparent;
+    color: var(--c-muted);
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+    flex-shrink: 0;
+}
+
+.composer-attach-btn:hover {
+    color: var(--c-accent);
+    border-color: var(--c-accent);
+    background: var(--c-bg-alt);
+}
+
+.composer-attach-btn:active {
+    transform: scale(0.94);
 }
 
 .composer-hint {
     font-size: 0.7rem;
     color: var(--c-muted);
+    flex: 1;
+    text-align: center;
 }
 
 .composer-hint kbd {
@@ -844,6 +950,13 @@
 
 .send-btn:hover:not(:disabled) { background: var(--c-accent); }
 .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Loading state needs to stay legible — user is mid-action, not blocked
+   by validation. Bump opacity so the spinner reads clearly. */
+.send-btn:disabled:has(.btn-spinner) {
+    opacity: 0.85;
+    cursor: progress;
+}
 
 /* ------------------------------------------------------------ */
 /*  Coach brand (logo) — used in topbar, login, anywhere brand */
@@ -1548,13 +1661,45 @@
     color: var(--c-ink);
 }
 
+/* Primary action defaults to the brand accent (creation, confirmation,
+   any "do it" CTA). Success-modifier preserves the green for "I just
+   completed an action" flow where green carries semantic meaning. */
 .complete-modal-confirm {
-    background: #059669;
+    background: var(--c-accent);
     color: white;
+    position: relative;
 }
 
 .complete-modal-confirm:hover {
-    background: #047857;
+    background: color-mix(in srgb, var(--c-accent) 88%, white);
+}
+
+.complete-modal-confirm--success { background: #059669; }
+.complete-modal-confirm--success:hover { background: #047857; }
+
+.complete-modal-confirm:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}
+
+/* Inline spinner used inside buttons during Livewire round-trips. Pair
+   with <span wire:loading.remove wire:target="..."> for the label and
+   <span wire:loading wire:target="..." class="btn-spinner"> for this. */
+.btn-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+}
+
+/* Dark variant — for buttons whose label text is dark (cancel, secondary). */
+.btn-spinner--ink {
+    border-color: rgba(0, 0, 0, 0.18);
+    border-top-color: var(--c-ink);
 }
 
 /* ============================================================ */

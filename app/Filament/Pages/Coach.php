@@ -230,8 +230,15 @@ class Coach extends Page implements HasForms
                 Textarea::make('message')
                     ->hiddenLabel()
                     ->placeholder(__('coach.composer.placeholder'))
-                    ->rows(3)
-                    ->autofocus(),
+                    ->rows(2)
+                    ->autosize()
+                    ->autofocus()
+                    ->extraInputAttributes([
+                        // Enter sends, Shift+Enter inserts a newline (default
+                        // textarea behaviour). requestSubmit triggers the
+                        // form's wire:submit="send".
+                        'x-on:keydown.enter' => 'if (!$event.shiftKey) { $event.preventDefault(); $el.closest(\'form\').requestSubmit(); }',
+                    ]),
                 FileUpload::make('attachments')
                     ->hiddenLabel()
                     ->multiple()
@@ -418,6 +425,10 @@ class Coach extends Page implements HasForms
 
     public function send(): void
     {
+        if ($this->thinking) {
+            return;
+        }
+
         $data = $this->form->getState();
         $userMessage = trim($data['message'] ?? '');
         $attachmentPaths = $data['attachments'] ?? [];

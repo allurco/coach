@@ -24,6 +24,7 @@ return [
 
     'composer' => [
         'placeholder' => 'fala aí',
+        'attach' => 'Anexar arquivo',
     ],
 
     'conversations' => [

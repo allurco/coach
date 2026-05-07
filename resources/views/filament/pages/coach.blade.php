@@ -181,14 +181,15 @@
                         @endforeach
 
                         @if ($thinking)
-                            <div class="msg">
+                            <div class="msg msg-thinking">
                                 <div class="msg-avatar coach">C</div>
                                 <div class="msg-body">
                                     <div class="msg-name">Coach</div>
-                                    <div class="msg-content streaming-content"
-                                         wire:stream="coach-stream"
-                                         x-data="{}"
-                                         x-init="$nextTick(() => $el.closest('.coach-thread').scrollTop = $el.closest('.coach-thread').scrollHeight)"></div>
+                                    {{-- Single-line markup is intentional: msg-content carries
+                                         white-space: pre-wrap (so streamed LLM text keeps its
+                                         own newlines), which would otherwise render the indented
+                                         child spans as empty lines and inflate the bubble. --}}
+                                    <div class="msg-content" x-data="{}" x-init="$nextTick(() => $el.closest('.coach-thread').scrollTop = $el.closest('.coach-thread').scrollHeight)"><span class="streaming-content" wire:stream="coach-stream"></span><span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span></div>
                                 </div>
                             </div>
                         @endif
@@ -201,11 +202,24 @@
                         {{ $this->form }}
 
                         <div class="composer-actions">
+                            <button type="button"
+                                    class="composer-attach-btn"
+                                    @click="$root.querySelector('.filepond--browser')?.click()"
+                                    aria-label="{{ __('coach.composer.attach') }}"
+                                    title="{{ __('coach.composer.attach') }}">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            </button>
                             <span class="composer-hint">
                                 <kbd>↵</kbd> envia · <kbd>shift</kbd>+<kbd>↵</kbd> nova linha
                             </span>
-                            <button type="submit" class="send-btn" {{ $thinking ? 'disabled' : '' }}>
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            <button type="submit"
+                                    class="send-btn"
+                                    x-bind:disabled="$wire.thinking">
+                                @if ($thinking)
+                                    <span class="btn-spinner"></span>
+                                @else
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                @endif
                                 Enviar
                             </button>
                         </div>
@@ -441,8 +455,15 @@
                     <button type="button" class="complete-modal-cancel" wire:click="cancelNewGoal">
                         {{ __('coach.new_goal_modal.cancel') }}
                     </button>
-                    <button type="button" class="complete-modal-confirm" wire:click="createGoal">
-                        {{ __('coach.new_goal_modal.create') }}
+                    <button type="button"
+                            class="complete-modal-confirm"
+                            wire:click="createGoal"
+                            wire:loading.attr="disabled"
+                            wire:target="createGoal">
+                        <span wire:loading.remove wire:target="createGoal">
+                            {{ __('coach.new_goal_modal.create') }}
+                        </span>
+                        <span wire:loading wire:target="createGoal" class="btn-spinner"></span>
                     </button>
                 </div>
             </div>
@@ -477,9 +498,15 @@
                             wire:click="cancelCompleteAction">
                         {{ __('coach.complete_modal.cancel') }}
                     </button>
-                    <button type="button" class="complete-modal-confirm"
-                            wire:click="confirmCompleteAction">
-                        {{ __('coach.complete_modal.confirm') }}
+                    <button type="button"
+                            class="complete-modal-confirm complete-modal-confirm--success"
+                            wire:click="confirmCompleteAction"
+                            wire:loading.attr="disabled"
+                            wire:target="confirmCompleteAction">
+                        <span wire:loading.remove wire:target="confirmCompleteAction">
+                            {{ __('coach.complete_modal.confirm') }}
+                        </span>
+                        <span wire:loading wire:target="confirmCompleteAction" class="btn-spinner"></span>
                     </button>
                 </div>
             </div>
