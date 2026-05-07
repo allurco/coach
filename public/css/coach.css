@@ -721,10 +721,15 @@
     background: var(--c-bg);
     border: 1px solid var(--c-line);
     border-radius: 16px;
-    padding: 0.9rem 1rem;
+    padding: 0.65rem 1rem 0.55rem;
     margin-bottom: 0.5rem;
     transition: border-color .15s ease, box-shadow .15s ease;
 }
+
+/* The Filament schema container reserves a 24px grid gap between every
+   field, including the now-collapsed FilePond — kill it so the textarea
+   sits flush against the actions row. */
+.coach-page .composer .fi-sc { gap: 0 !important; }
 
 .composer:focus-within {
     border-color: var(--c-ink);
@@ -778,16 +783,19 @@
     display: none !important;
 }
 
+/* Visually hide the upload widget when no files are selected — but
+   keep it laid out (just zero-sized off-flow) so FilePond doesn't
+   detect a hidden parent and unmount itself. The hidden file input
+   is still clickable from the composer-attach-btn. */
 .coach-page .composer .fi-fo-file-upload:not(:has(.filepond--item)) {
-    margin: 0 !important;
-}
-
-.coach-page .composer .filepond--root:not(:has(.filepond--item)) {
-    min-height: 0 !important;
+    position: absolute !important;
+    width: 0 !important;
     height: 0 !important;
     margin: 0 !important;
-    border: none !important;
+    padding: 0 !important;
     overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .coach-page .composer .filepond--root:has(.filepond--item) {
@@ -861,8 +869,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
-    margin-top: 0.7rem;
-    padding-top: 0.7rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--c-line);
 }
 

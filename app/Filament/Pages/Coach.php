@@ -230,7 +230,8 @@ class Coach extends Page implements HasForms
                 Textarea::make('message')
                     ->hiddenLabel()
                     ->placeholder(__('coach.composer.placeholder'))
-                    ->rows(3)
+                    ->rows(2)
+                    ->autosize()
                     ->autofocus(),
                 FileUpload::make('attachments')
                     ->hiddenLabel()
