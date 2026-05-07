@@ -536,58 +536,41 @@ class Coach extends Page implements HasForms
                     .'NÃO PULE a análise qualitativa — é o que mais importa pro usuário.';
             }
 
-            $accumulated = '';
             $this->streamingText = '';
 
-            $toolLabels = (array) __('coach.tool_labels');
+            ['text' => $accumulated, 'tools' => $toolActivity, 'streamText' => $streamText] =
+                $this->streamOnePass($coach, $promptToSend, $documents);
 
-            $stream = $coach->stream(
-                $promptToSend,
-                attachments: $documents,
-                provider: Lab::Gemini,
-                model: 'gemini-2.5-flash',
-            );
+            // Auto-retry once if the first pass shows truncation or
+            // hallucinated tool calls. The model continues the same
+            // conversation, so it sees its prior (broken) reply and the
+            // corrective nudge below — a clean second attempt is usually
+            // enough for Gemini to finish the work.
+            $rawText = trim($accumulated !== '' ? $accumulated : (string) ($streamText ?? ''));
+            $shouldRetry = $rawText !== ''
+                && $this->decorateAssistantResponse($rawText, $toolActivity) !== $rawText;
 
-            $batch = ['name' => null, 'calls' => 0, 'ok' => 0];
-            $toolActivity = [];
+            if ($shouldRetry) {
+                Log::warning('Coach auto-retrying after broken first pass', [
+                    'goal_id' => $this->activeGoalId,
+                    'tools_called' => array_column($toolActivity, 'name'),
+                    'accumulated_tail' => mb_substr($rawText, -120),
+                ]);
 
-            $flushBatch = function () use (&$batch, &$toolActivity, $toolLabels) {
-                if ($batch['name'] === null) {
-                    return;
-                }
-                $label = $toolLabels[$batch['name']] ?? $batch['name'];
-                $count = $batch['calls'];
-                $allOk = $batch['ok'] === $count;
-                $icon = $allOk ? '✓' : '⚠';
-                $suffix = $count > 1 ? " ({$count}x)" : '';
-                $this->stream(to: 'coach-stream', content: " {$icon}{$suffix}\n\n");
-                $toolActivity[] = ['name' => $batch['name'], 'count' => $count, 'ok' => $batch['ok']];
-                $batch = ['name' => null, 'calls' => 0, 'ok' => 0];
-            };
+                $this->stream(to: 'coach-stream', content: "\n\n— _reexecutando…_ —\n\n");
 
-            foreach ($stream as $event) {
-                if ($event instanceof TextDelta) {
-                    $flushBatch();
-                    $accumulated .= $event->delta;
-                    $this->stream(to: 'coach-stream', content: $event->delta);
-                } elseif ($event instanceof ToolCall) {
-                    if ($batch['name'] !== null && $batch['name'] !== $event->toolCall->name) {
-                        $flushBatch();
-                    }
-                    if ($batch['name'] === null) {
-                        $label = $toolLabels[$event->toolCall->name] ?? $event->toolCall->name;
-                        $this->stream(to: 'coach-stream', content: "\n⏳ {$label}…");
-                        $batch['name'] = $event->toolCall->name;
-                    }
-                    $batch['calls']++;
-                } elseif ($event instanceof ToolResult) {
-                    if ($event->successful) {
-                        $batch['ok']++;
-                    }
-                }
+                $retryPrompt = '[Sistema]: Sua resposta anterior narrou ações ("criei", "adicionei", "atualizei", "marquei") '
+                    .'mas NÃO chamou as tools correspondentes (CreateAction / UpdateAction / RememberFact), '
+                    .'OU terminou no meio de uma frase. Execute AGORA as tools necessárias e finalize com texto curto. '
+                    .'NÃO narre — execute. Se for caso de listar, chame ListActions.';
+
+                ['text' => $retryAccumulated, 'tools' => $retryTools, 'streamText' => $retryStreamText] =
+                    $this->streamOnePass($coach, $retryPrompt, []);
+
+                $accumulated = $retryAccumulated;
+                $toolActivity = array_merge($toolActivity, $retryTools);
+                $streamText = $retryStreamText;
             }
-
-            $flushBatch();
 
             // Capture the conversation ID after streaming so the next turn continues it.
             $this->conversationId = $coach->currentConversation() ?? $this->conversationId;
@@ -603,10 +586,25 @@ class Coach extends Page implements HasForms
                     ->update(['goal_id' => $this->activeGoalId]);
             }
 
-            $rawText = trim($accumulated !== '' ? $accumulated : (string) ($stream->text ?? ''));
+            $rawText = trim($accumulated !== '' ? $accumulated : (string) ($streamText ?? ''));
 
             if ($rawText === '') {
                 $rawText = $this->summarizeToolActivity($toolActivity);
+            } else {
+                $rawText = $this->decorateAssistantResponse($rawText, $toolActivity);
+            }
+
+            // Diagnostic: log when the response shows signs of a Gemini
+            // truncation or hallucinated tool call so we can correlate
+            // user reports with server-side state.
+            if ($rawText !== $accumulated) {
+                Log::warning('Coach response decorated', [
+                    'conversation_id' => $this->conversationId,
+                    'goal_id' => $this->activeGoalId,
+                    'accumulated_length' => mb_strlen($accumulated),
+                    'tools_called' => array_column($toolActivity, 'name'),
+                    'accumulated_tail' => mb_substr(trim($accumulated), -120),
+                ]);
             }
 
             $this->messages[] = [
@@ -643,6 +641,122 @@ class Coach extends Page implements HasForms
     public function newConversation(): void
     {
         $this->startNewConversationInActiveGoal();
+    }
+
+    /**
+     * Single streaming pass: accumulates text deltas, batches tool
+     * calls into UI indicators, and returns the final text + activity
+     * log. Extracted so runAi() can call it twice when an auto-retry
+     * is warranted.
+     *
+     * @return array{text:string, tools:list<array{name:string,count:int,ok:int}>, streamText:?string}
+     */
+    protected function streamOnePass(FinanceCoach $coach, string $promptToSend, array $documents): array
+    {
+        $accumulated = '';
+        $toolLabels = (array) __('coach.tool_labels');
+        $batch = ['name' => null, 'calls' => 0, 'ok' => 0];
+        $toolActivity = [];
+
+        $flushBatch = function () use (&$batch, &$toolActivity, $toolLabels) {
+            if ($batch['name'] === null) {
+                return;
+            }
+            $label = $toolLabels[$batch['name']] ?? $batch['name'];
+            $count = $batch['calls'];
+            $allOk = $batch['ok'] === $count;
+            $icon = $allOk ? '✓' : '⚠';
+            $suffix = $count > 1 ? " ({$count}x)" : '';
+            $this->stream(to: 'coach-stream', content: " {$icon}{$suffix}\n\n");
+            $toolActivity[] = ['name' => $batch['name'], 'count' => $count, 'ok' => $batch['ok']];
+            $batch = ['name' => null, 'calls' => 0, 'ok' => 0];
+        };
+
+        $stream = $coach->stream(
+            $promptToSend,
+            attachments: $documents,
+            provider: Lab::Gemini,
+            model: config('coach.models.interactive'),
+        );
+
+        foreach ($stream as $event) {
+            if ($event instanceof TextDelta) {
+                $flushBatch();
+                $accumulated .= $event->delta;
+                $this->stream(to: 'coach-stream', content: $event->delta);
+            } elseif ($event instanceof ToolCall) {
+                if ($batch['name'] !== null && $batch['name'] !== $event->toolCall->name) {
+                    $flushBatch();
+                }
+                if ($batch['name'] === null) {
+                    $label = $toolLabels[$event->toolCall->name] ?? $event->toolCall->name;
+                    $this->stream(to: 'coach-stream', content: "\n⏳ {$label}…");
+                    $batch['name'] = $event->toolCall->name;
+                }
+                $batch['calls']++;
+            } elseif ($event instanceof ToolResult) {
+                if ($event->successful) {
+                    $batch['ok']++;
+                }
+            }
+        }
+
+        $flushBatch();
+
+        return [
+            'text' => $accumulated,
+            'tools' => $toolActivity,
+            'streamText' => $stream->text ?? null,
+        ];
+    }
+
+    /**
+     * Append a discreet warning when the assistant response looks
+     * truncated (ends mid-thought) or narrates an action it didn't
+     * actually execute as a tool call. Both patterns happen when
+     * Gemini stops mid-stream — the "criei" word is in the text,
+     * but no CreateAction tool fired, so the plan is unchanged.
+     *
+     * @param  list<array{name:string,count:int,ok:int}>  $toolActivity
+     */
+    protected function decorateAssistantResponse(string $text, array $toolActivity = []): string
+    {
+        $trimmed = trim($text);
+        if ($trimmed === '') {
+            return $text;
+        }
+
+        $toolsCalled = collect($toolActivity)->pluck('name')->all();
+
+        // A trailing colon (or em-dash) usually opens a list/sentence that
+        // was never finished — the LLM cut off before the tool call or the
+        // continuation. Check this BEFORE the narration heuristic so a
+        // truncated response gets the right hint even when its dangling
+        // text happens to mention an action verb.
+        $endsOpenEnded = preg_match('/[:\-—]\s*$/u', $trimmed) === 1;
+        if ($endsOpenEnded && empty($toolsCalled)) {
+            return $trimmed."\n\n".__('coach.errors.truncated_warning');
+        }
+
+        // Verb forms only — adjectives like "atualizado" / "concluída" can
+        // appear in normal commentary without claiming a tool ran. We only
+        // flag clear 1st/3rd-person preterite forms.
+        $createPattern = '/\b(criei|criou|adicionei|adicionou|cadastrei|cadastrou)\b/iu';
+        $updatePattern = '/\b(atualizei|atualizou|marquei|conclu[íi]|adiei|adiou)\b/iu';
+        $rememberPattern = '/\b(salvei|guardei|anotei|memorizei)\b/iu';
+
+        $missingCreate = preg_match($createPattern, $trimmed) === 1
+            && ! in_array('CreateAction', $toolsCalled, true);
+        $missingUpdate = preg_match($updatePattern, $trimmed) === 1
+            && ! in_array('UpdateAction', $toolsCalled, true);
+        $missingRemember = preg_match($rememberPattern, $trimmed) === 1
+            && ! in_array('RememberFact', $toolsCalled, true);
+
+        if ($missingCreate || $missingUpdate || $missingRemember) {
+            return $trimmed."\n\n".__('coach.errors.narrated_no_tool');
+        }
+
+        return $text;
     }
 
     protected function summarizeToolActivity(array $activity): string

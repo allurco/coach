@@ -55,6 +55,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Gemini models
+    |--------------------------------------------------------------------------
+    |
+    | Two slots so we can use a more reliable model for the interactive
+    | Filament chat (where multi-tool turns can hallucinate or truncate
+    | on flash) and a cheap/fast model for the cron pings + email reply
+    | flows where responses are short and single-shot.
+    |
+    */
+    'models' => [
+        'interactive' => env('COACH_MODEL_INTERACTIVE', 'gemini-2.5-pro'),
+        'background' => env('COACH_MODEL_BACKGROUND', 'gemini-2.5-flash'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Initial admin user (used by the database seeder)
     |--------------------------------------------------------------------------
     */

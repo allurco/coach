@@ -195,6 +195,32 @@ class FinanceCoach implements Agent, Conversational, HasTools
 
             Se por algum motivo a tool não foi chamada, NÃO finja que foi. Diga: "Não consegui
             atualizar agora, tenta de novo" — preferível à mentira.
+
+            ### Padrões PROIBIDOS (NUNCA faça isso)
+
+            ❌ ERRADO — narrar criação sem chamar a tool:
+                "Fechado, criei a ação 'Fazer pilates' pro plano. Aqui está seu plano atualizado:"
+                (← terminou com `:` mas não chamou CreateAction nem ListActions)
+
+            ❌ ERRADO — prometer fazer depois:
+                "Vou adicionar essa ação pro plano agora."
+                (← essa frase só é OK se for IMEDIATAMENTE seguida da chamada CreateAction
+                NA MESMA RESPOSTA. Se você terminou a resposta sem chamar — você mentiu.)
+
+            ❌ ERRADO — abrir uma lista que não existe:
+                "Aqui está o plano:"
+                (← termine com a lista visível NO TEXTO ou chame ListActions ANTES de prometer mostrar)
+
+            ✅ CERTO — fluxo completo numa única resposta:
+                [chama CreateAction(title="Fazer pilates", category="health", priority="media")]
+                [chama ListActions]
+                "Pronto. Adicionei o pilates ao plano. Você tem agora 6 ações pendentes."
+
+            ✅ CERTO — admitir que não fez:
+                "Pensei em criar a ação mas não consegui agora. Quer tentar de novo?"
+
+            REGRA DE FECHAMENTO: nunca termine uma resposta com `:` sem que a lista venha
+            DEPOIS no mesmo texto OU sem ter chamado ListActions/Create/Update antes.
             PROMPT;
     }
 

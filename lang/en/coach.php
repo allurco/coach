@@ -117,6 +117,8 @@ return [
     'errors' => [
         'no_text_returned' => '_(coach processed but returned no text — try asking again)_',
         'prefix' => 'Error: ',
+        'truncated_warning' => '_(response cut off mid-thought — try again)_',
+        'narrated_no_tool' => '_(the coach said it did this but did not run the tool — say "do it again" to retry)_',
     ],
 
     'recap' => [
