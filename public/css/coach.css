@@ -762,42 +762,41 @@
     color: var(--c-muted) !important;
 }
 
-/* FilePond container */
+/* FilePond container — drop-zone is replaced by the composer-attach-btn,
+   so the FilePond UI is collapsed entirely when no files are attached and
+   only expands to show the file list once one is selected. */
 .coach-page .composer .filepond--root {
     margin-top: 0.5rem;
     background: transparent !important;
-    border: 1px dashed var(--c-line) !important;
+    border: 1px solid var(--c-line) !important;
     border-radius: 10px !important;
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
 }
 
-.coach-page .composer .filepond--root.filepond--hopper {
-    min-height: 44px !important;
+.coach-page .composer .filepond--drop-label,
+.coach-page .composer .filepond--label-action {
+    display: none !important;
 }
 
-/* When files exist, switch to solid border + alt background */
-.coach-page .composer .filepond--root.filepond--hopper:has(.filepond--item) {
-    border-style: solid !important;
+.coach-page .composer .fi-fo-file-upload:not(:has(.filepond--item)) {
+    margin: 0 !important;
+}
+
+.coach-page .composer .filepond--root:not(:has(.filepond--item)) {
+    min-height: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+}
+
+.coach-page .composer .filepond--root:has(.filepond--item) {
     background: var(--c-bg-alt) !important;
 }
 
-.coach-page .composer .filepond--panel-root,
-.coach-page .composer .filepond--drop-label {
+.coach-page .composer .filepond--panel-root {
     background: transparent !important;
     border: none !important;
-}
-
-.coach-page .composer .filepond--drop-label,
-.coach-page .composer .filepond--drop-label label {
-    color: var(--c-muted) !important;
-    font-size: 0.78rem !important;
-    font-weight: 400 !important;
-}
-
-.coach-page .composer .filepond--label-action {
-    color: var(--c-accent) !important;
-    text-decoration: none !important;
-    border-bottom: 1px dotted var(--c-accent) !important;
 }
 
 /* File list items — visible! */
@@ -861,14 +860,42 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.6rem;
     margin-top: 0.7rem;
     padding-top: 0.7rem;
     border-top: 1px solid var(--c-line);
 }
 
+.composer-attach-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--c-line);
+    background: transparent;
+    color: var(--c-muted);
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+    flex-shrink: 0;
+}
+
+.composer-attach-btn:hover {
+    color: var(--c-accent);
+    border-color: var(--c-accent);
+    background: var(--c-bg-alt);
+}
+
+.composer-attach-btn:active {
+    transform: scale(0.94);
+}
+
 .composer-hint {
     font-size: 0.7rem;
     color: var(--c-muted);
+    flex: 1;
+    text-align: center;
 }
 
 .composer-hint kbd {
