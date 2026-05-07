@@ -181,14 +181,19 @@
                         @endforeach
 
                         @if ($thinking)
-                            <div class="msg">
+                            <div class="msg msg-thinking">
                                 <div class="msg-avatar coach">C</div>
                                 <div class="msg-body">
                                     <div class="msg-name">Coach</div>
-                                    <div class="msg-content streaming-content"
-                                         wire:stream="coach-stream"
+                                    <div class="msg-content"
                                          x-data="{}"
-                                         x-init="$nextTick(() => $el.closest('.coach-thread').scrollTop = $el.closest('.coach-thread').scrollHeight)"></div>
+                                         x-init="$nextTick(() => $el.closest('.coach-thread').scrollTop = $el.closest('.coach-thread').scrollHeight)">
+                                        <span class="streaming-content"
+                                              wire:stream="coach-stream"></span>
+                                        <span class="thinking-dots" aria-hidden="true">
+                                            <span></span><span></span><span></span>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         @endif

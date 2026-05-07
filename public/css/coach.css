@@ -482,6 +482,39 @@
     margin-left: 2px;
 }
 
+/* While the agent is queued/awaiting first token, render pulsing dots in
+   the empty bubble. The dots are a sibling of .streaming-content so we can
+   swap them out with a CSS sibling selector once any content streams in. */
+.streaming-content:empty::after { display: none; }
+
+.thinking-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 0;
+    height: 1.2rem;
+    vertical-align: middle;
+}
+
+.thinking-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--c-accent);
+    opacity: 0.4;
+    animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+
+.thinking-dots span:nth-child(2) { animation-delay: 0.18s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.36s; }
+
+.streaming-content:not(:empty) ~ .thinking-dots { display: none; }
+
+@keyframes thinking-pulse {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.35; }
+    40%          { transform: scale(1);   opacity: 1; }
+}
+
 .tool-pills {
     display: flex;
     flex-wrap: wrap;
