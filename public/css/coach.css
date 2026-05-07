@@ -1450,7 +1450,21 @@
     padding: 3rem 1.5rem;
     text-align: center;
     color: var(--c-muted);
-    font-size: 0.88rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.plan-empty-icon {
+    color: color-mix(in srgb, var(--c-muted) 60%, transparent);
+    margin-bottom: 0.2rem;
+}
+
+.plan-empty-copy {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    max-width: 22rem;
 }
 
 .plan-empty-link {
