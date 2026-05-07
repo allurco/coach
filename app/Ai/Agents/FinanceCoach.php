@@ -11,6 +11,8 @@ use App\Ai\Tools\WebFetch;
 use App\Ai\Tools\WebSearch;
 use App\Models\Action;
 use App\Models\CoachMemory;
+use App\Models\Goal;
+use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -21,6 +23,15 @@ use Stringable;
 class FinanceCoach implements Agent, Conversational, HasTools
 {
     use Promptable, RemembersConversations;
+
+    protected ?int $activeGoalId = null;
+
+    public function forGoal(?int $goalId): static
+    {
+        $this->activeGoalId = $goalId;
+
+        return $this;
+    }
 
     public function instructions(): Stringable|string
     {
@@ -188,10 +199,13 @@ class FinanceCoach implements Agent, Conversational, HasTools
     }
 
     /**
-     * Returns the active focus areas (goals) for the user, with built-in
-     * specialization guidance for known labels (finance, legal, emotional,
-     * health, fitness, learning). Returns a neutral prompt asking the agent
-     * to discover the goal when none is set.
+     * Returns the active focus area for the user — the single Goal driving
+     * this conversation, plus built-in specialization guidance for known
+     * labels. Resolves in this order:
+     *   1. The goal explicitly set via forGoal($id)
+     *   2. The user's most recently-touched non-archived goal
+     * Returns a neutral prompt when no goal is resolvable or when the goal
+     * label is 'general' (the placeholder for "no specialization yet").
      */
     protected function goalContext(): string
     {
@@ -199,31 +213,47 @@ class FinanceCoach implements Agent, Conversational, HasTools
             return (string) __('coach.goal_context.empty');
         }
 
-        $goals = CoachMemory::where('kind', 'goal')
-            ->where('is_active', true)
-            ->orderBy('created_at')
-            ->get();
+        $goal = $this->resolveActiveGoal();
 
-        if ($goals->isEmpty()) {
+        if ($goal === null || $goal->label === 'general') {
             return (string) __('coach.goal_context.empty');
         }
 
-        $lines = [(string) __('coach.goal_context.header')];
+        $lines = [
+            (string) __('coach.goal_context.header'),
+            "- [{$goal->label}] {$goal->name}",
+        ];
 
-        foreach ($goals as $goal) {
-            $lines[] = "- [{$goal->label}] {$goal->summary}";
+        $specKey = "coach.specializations.{$goal->label}";
+        $spec = (string) __($specKey);
 
-            $specKey = "coach.specializations.{$goal->label}";
-            $spec = (string) __($specKey);
-
-            // __() returns the key itself when no translation exists; only
-            // include if a real translation came back.
-            if ($spec !== $specKey) {
-                $lines[] = $spec;
-            }
+        if ($spec !== $specKey) {
+            $lines[] = $spec;
         }
 
         return implode("\n", $lines);
+    }
+
+    protected function resolveActiveGoal(): ?Goal
+    {
+        if ($this->activeGoalId !== null) {
+            return Goal::find($this->activeGoalId);
+        }
+
+        if ($this->conversationId !== null) {
+            $goalId = DB::table('agent_conversations')
+                ->where('id', $this->conversationId)
+                ->value('goal_id');
+
+            if ($goalId !== null) {
+                return Goal::find($goalId);
+            }
+        }
+
+        return Goal::where('is_archived', false)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->first();
     }
 
     protected function userContext(): string

@@ -469,6 +469,8 @@ class Coach extends Page implements HasForms
                 $coach = $coach->forUser(auth()->user());
             }
 
+            $coach = $coach->forGoal($this->activeGoalId);
+
             $documents = [];
             foreach ($attachmentPaths as $relativePath) {
                 if (! Storage::disk('local')->exists($relativePath)) {
