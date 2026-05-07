@@ -607,6 +607,21 @@ class Coach extends Page implements HasForms
 
             if ($rawText === '') {
                 $rawText = $this->summarizeToolActivity($toolActivity);
+            } else {
+                $rawText = $this->decorateAssistantResponse($rawText, $toolActivity);
+            }
+
+            // Diagnostic: log when the response shows signs of a Gemini
+            // truncation or hallucinated tool call so we can correlate
+            // user reports with server-side state.
+            if ($rawText !== $accumulated) {
+                Log::warning('Coach response decorated', [
+                    'conversation_id' => $this->conversationId,
+                    'goal_id' => $this->activeGoalId,
+                    'accumulated_length' => mb_strlen($accumulated),
+                    'tools_called' => array_column($toolActivity, 'name'),
+                    'accumulated_tail' => mb_substr(trim($accumulated), -120),
+                ]);
             }
 
             $this->messages[] = [
@@ -643,6 +658,55 @@ class Coach extends Page implements HasForms
     public function newConversation(): void
     {
         $this->startNewConversationInActiveGoal();
+    }
+
+    /**
+     * Append a discreet warning when the assistant response looks
+     * truncated (ends mid-thought) or narrates an action it didn't
+     * actually execute as a tool call. Both patterns happen when
+     * Gemini stops mid-stream — the "criei" word is in the text,
+     * but no CreateAction tool fired, so the plan is unchanged.
+     *
+     * @param  list<array{name:string,count:int,ok:int}>  $toolActivity
+     */
+    protected function decorateAssistantResponse(string $text, array $toolActivity = []): string
+    {
+        $trimmed = trim($text);
+        if ($trimmed === '') {
+            return $text;
+        }
+
+        $toolsCalled = collect($toolActivity)->pluck('name')->all();
+
+        // A trailing colon (or em-dash) usually opens a list/sentence that
+        // was never finished — the LLM cut off before the tool call or the
+        // continuation. Check this BEFORE the narration heuristic so a
+        // truncated response gets the right hint even when its dangling
+        // text happens to mention an action verb.
+        $endsOpenEnded = preg_match('/[:\-—]\s*$/u', $trimmed) === 1;
+        if ($endsOpenEnded && empty($toolsCalled)) {
+            return $trimmed."\n\n".__('coach.errors.truncated_warning');
+        }
+
+        // Verb forms only — adjectives like "atualizado" / "concluída" can
+        // appear in normal commentary without claiming a tool ran. We only
+        // flag clear 1st/3rd-person preterite forms.
+        $createPattern = '/\b(criei|criou|adicionei|adicionou|cadastrei|cadastrou)\b/iu';
+        $updatePattern = '/\b(atualizei|atualizou|marquei|conclu[íi]|adiei|adiou)\b/iu';
+        $rememberPattern = '/\b(salvei|guardei|anotei|memorizei)\b/iu';
+
+        $missingCreate = preg_match($createPattern, $trimmed) === 1
+            && ! in_array('CreateAction', $toolsCalled, true);
+        $missingUpdate = preg_match($updatePattern, $trimmed) === 1
+            && ! in_array('UpdateAction', $toolsCalled, true);
+        $missingRemember = preg_match($rememberPattern, $trimmed) === 1
+            && ! in_array('RememberFact', $toolsCalled, true);
+
+        if ($missingCreate || $missingUpdate || $missingRemember) {
+            return $trimmed."\n\n".__('coach.errors.narrated_no_tool');
+        }
+
+        return $text;
     }
 
     protected function summarizeToolActivity(array $activity): string
