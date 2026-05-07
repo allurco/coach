@@ -2,6 +2,7 @@
 
     <div class="coach-page"
          x-data="{ planOpen: false, sidebarOpen: false }"
+         x-effect="document.body.classList.toggle('coach-overlay-locked', planOpen || sidebarOpen)"
          @keydown.escape.window="planOpen = false; sidebarOpen = false">
         <div class="coach-shell">
 
