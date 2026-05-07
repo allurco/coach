@@ -209,8 +209,14 @@
                             <span class="composer-hint">
                                 <kbd>↵</kbd> envia · <kbd>shift</kbd>+<kbd>↵</kbd> nova linha
                             </span>
-                            <button type="submit" class="send-btn" {{ $thinking ? 'disabled' : '' }}>
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            <button type="submit"
+                                    class="send-btn"
+                                    x-bind:disabled="$wire.thinking">
+                                @if ($thinking)
+                                    <span class="btn-spinner"></span>
+                                @else
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                @endif
                                 Enviar
                             </button>
                         </div>
@@ -446,8 +452,15 @@
                     <button type="button" class="complete-modal-cancel" wire:click="cancelNewGoal">
                         {{ __('coach.new_goal_modal.cancel') }}
                     </button>
-                    <button type="button" class="complete-modal-confirm" wire:click="createGoal">
-                        {{ __('coach.new_goal_modal.create') }}
+                    <button type="button"
+                            class="complete-modal-confirm"
+                            wire:click="createGoal"
+                            wire:loading.attr="disabled"
+                            wire:target="createGoal">
+                        <span wire:loading.remove wire:target="createGoal">
+                            {{ __('coach.new_goal_modal.create') }}
+                        </span>
+                        <span wire:loading wire:target="createGoal" class="btn-spinner"></span>
                     </button>
                 </div>
             </div>
@@ -482,9 +495,15 @@
                             wire:click="cancelCompleteAction">
                         {{ __('coach.complete_modal.cancel') }}
                     </button>
-                    <button type="button" class="complete-modal-confirm"
-                            wire:click="confirmCompleteAction">
-                        {{ __('coach.complete_modal.confirm') }}
+                    <button type="button"
+                            class="complete-modal-confirm complete-modal-confirm--success"
+                            wire:click="confirmCompleteAction"
+                            wire:loading.attr="disabled"
+                            wire:target="confirmCompleteAction">
+                        <span wire:loading.remove wire:target="confirmCompleteAction">
+                            {{ __('coach.complete_modal.confirm') }}
+                        </span>
+                        <span wire:loading wire:target="confirmCompleteAction" class="btn-spinner"></span>
                     </button>
                 </div>
             </div>

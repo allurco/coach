@@ -418,6 +418,10 @@ class Coach extends Page implements HasForms
 
     public function send(): void
     {
+        if ($this->thinking) {
+            return;
+        }
+
         $data = $this->form->getState();
         $userMessage = trim($data['message'] ?? '');
         $attachmentPaths = $data['attachments'] ?? [];

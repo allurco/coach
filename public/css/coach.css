@@ -250,12 +250,13 @@
 .conv-item {
     width: 100%;
     text-align: left;
-    padding: 0.6rem 0.75rem;
+    padding: 0.6rem 0.75rem 0.6rem calc(0.75rem - 3px);
     background: transparent;
     border: 1px solid transparent;
+    border-left: 3px solid transparent;
     border-radius: 8px;
     cursor: pointer;
-    transition: background .15s ease;
+    transition: background .15s ease, border-color .15s ease, transform .12s ease;
     display: block;
     margin-bottom: 0.2rem;
 }
@@ -264,10 +265,17 @@
     background: var(--c-bg-alt);
 }
 
+.conv-item:active {
+    transform: scale(0.985);
+}
+
 .conv-item.active {
     background: var(--c-bg-alt);
     border-color: var(--c-line);
+    border-left-color: var(--c-accent);
 }
+
+.conv-item.active .conv-item-title { color: var(--c-ink); font-weight: 600; }
 
 .conv-item-title {
     font-size: 0.82rem;
@@ -423,6 +431,19 @@
     margin-bottom: 1.25rem;
     display: flex;
     gap: 0.85rem;
+    animation: msg-in 220ms cubic-bezier(0.21, 0.95, 0.4, 1) both;
+}
+
+/* Limit the entrance animation to user/error bubbles + the in-flight
+   thinking bubble. Once a message is committed (no longer streaming),
+   we don't want it to re-animate on Livewire diffs. */
+@keyframes msg-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .msg { animation: none; }
 }
 
 .msg-avatar {
@@ -877,6 +898,13 @@
 
 .send-btn:hover:not(:disabled) { background: var(--c-accent); }
 .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Loading state needs to stay legible — user is mid-action, not blocked
+   by validation. Bump opacity so the spinner reads clearly. */
+.send-btn:disabled:has(.btn-spinner) {
+    opacity: 0.85;
+    cursor: progress;
+}
 
 /* ------------------------------------------------------------ */
 /*  Coach brand (logo) — used in topbar, login, anywhere brand */
@@ -1581,13 +1609,45 @@
     color: var(--c-ink);
 }
 
+/* Primary action defaults to the brand accent (creation, confirmation,
+   any "do it" CTA). Success-modifier preserves the green for "I just
+   completed an action" flow where green carries semantic meaning. */
 .complete-modal-confirm {
-    background: #059669;
+    background: var(--c-accent);
     color: white;
+    position: relative;
 }
 
 .complete-modal-confirm:hover {
-    background: #047857;
+    background: color-mix(in srgb, var(--c-accent) 88%, white);
+}
+
+.complete-modal-confirm--success { background: #059669; }
+.complete-modal-confirm--success:hover { background: #047857; }
+
+.complete-modal-confirm:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}
+
+/* Inline spinner used inside buttons during Livewire round-trips. Pair
+   with <span wire:loading.remove wire:target="..."> for the label and
+   <span wire:loading wire:target="..." class="btn-spinner"> for this. */
+.btn-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+}
+
+/* Dark variant — for buttons whose label text is dark (cancel, secondary). */
+.btn-spinner--ink {
+    border-color: rgba(0, 0, 0, 0.18);
+    border-top-color: var(--c-ink);
 }
 
 /* ============================================================ */
