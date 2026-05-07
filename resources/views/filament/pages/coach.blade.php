@@ -195,7 +195,28 @@
                 </div>
 
                 {{-- Composer --}}
-                <form wire:submit="send">
+                {{-- Optimistic user-message insert: render the message in the
+                     thread the moment Send is clicked, BEFORE the Livewire
+                     round-trip. The matching server-rendered .msg arrives
+                     ~150-300ms later and a Livewire morph hook removes the
+                     optimistic placeholder, so there's no duplicate. --}}
+                <form wire:submit="send"
+                      @submit="
+                          const ta = $el.querySelector('textarea');
+                          const text = (ta?.value || '').trim();
+                          if (!text) return;
+                          const thread = document.querySelector('.coach-thread');
+                          if (!thread) return;
+                          const time = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                          const div = document.createElement('div');
+                          div.className = 'msg msg-optimistic';
+                          div.dataset.optimistic = '1';
+                          div.innerHTML = `<div class='msg-avatar user'>R</div><div class='msg-body'><div class='msg-name'>Você <span class='time'>${time}</span></div><div class='msg-content'></div></div>`;
+                          div.querySelector('.msg-content').textContent = text;
+                          thread.appendChild(div);
+                          thread.scrollTop = thread.scrollHeight;
+                          if (ta) ta.value = '';
+                      ">
                     <div class="composer">
                         {{ $this->form }}
 
@@ -528,6 +549,16 @@
                     ta.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
+        });
+
+        // Sweep optimistic user-message placeholders after every Livewire
+        // morph. By the time send() has committed, the real .msg is in
+        // the rendered thread, so any [data-optimistic] sibling is a
+        // stale duplicate and gets removed.
+        document.addEventListener('livewire:init', () => {
+            Livewire.hook('morph.updated', () => {
+                document.querySelectorAll('[data-optimistic]').forEach(el => el.remove());
+            });
         });
     </script>
 </x-filament-panels::page>
