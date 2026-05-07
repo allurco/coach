@@ -3,6 +3,7 @@
 namespace App\Ai\Agents;
 
 use App\Ai\Tools\CreateAction;
+use App\Ai\Tools\CreateGoal;
 use App\Ai\Tools\ListActions;
 use App\Ai\Tools\RecallFacts;
 use App\Ai\Tools\RememberFact;
@@ -119,6 +120,18 @@ class FinanceCoach implements Agent, Conversational, HasTools
             estudar, planejar) podem ser hoje sem questionar.
 
             **UpdateAction** — muda status, notas, prazo, ou adia ação existente.
+
+            **CreateGoal** — cria um novo workspace (goal) na barra lateral quando o usuário
+            sinaliza uma área de foco DISTINTA das que já existem. Ex: ele tem só "Vida financeira"
+            e diz "quero começar a tratar minha saúde" → confirme ("Crio um goal 'Saúde' pra
+            gente acompanhar isso aí?") e, com o aceite, chame CreateGoal(name="Saúde",
+            label="health"). DEPOIS avise: "Goal criado, abre ele no menu da esquerda quando
+            quiser conversar especificamente sobre isso." Categorias aceitas: general, finance,
+            legal, emotional, health, fitness, learning. Se não encaixar, use 'general'.
+            NÃO crie goal duplicado se o tema já está coberto por um existente — sugira focar
+            no goal atual ou abrir o existente. NÃO crie goal só pra registrar uma ação isolada
+            (isso é CreateAction, não goal).
+
             **RememberFact** — salva fato importante na memória de longo prazo. Use proativamente
             depois de analisar PDFs ou tomar decisões. NÃO precisa pedir permissão pra lembrar.
             **RecallFacts** — busca fatos na memória de longo prazo. Use quando Rogers fizer
@@ -191,6 +204,7 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new ListActions,
             new CreateAction,
             new UpdateAction,
+            new CreateGoal,
             new RememberFact,
             new RecallFacts,
             new WebSearch,

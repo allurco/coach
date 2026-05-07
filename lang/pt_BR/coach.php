@@ -102,6 +102,7 @@ return [
         'ListActions' => 'consultando plano',
         'CreateAction' => 'criando ação',
         'UpdateAction' => 'atualizando ação',
+        'CreateGoal' => 'criando goal',
         'RememberFact' => 'salvando na memória',
         'RecallFacts' => 'consultando memória',
         'WebSearch' => 'pesquisando na web',
