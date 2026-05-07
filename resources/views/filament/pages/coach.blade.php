@@ -67,9 +67,6 @@
                         @endphp
                         <div class="coach-title">
                             {{ $activeGoal['name'] ?? 'Coach' }}
-                            @if ($conversationId)
-                                <span class="pulse-dot"></span>
-                            @endif
                         </div>
                         <div class="coach-status">
                             @if ($activeGoal)
@@ -384,7 +381,12 @@
                     </div>
                 @empty
                     <div class="plan-empty">
-                        {{ __('coach.plan.empty', ['status' => $planFilter !== 'todas' ? $planFilter : '']) }}
+                        <div class="plan-empty-icon" aria-hidden="true">
+                            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M9 11h6"/><path d="M9 15h4"/><path d="M8 4V2.5"/><path d="M16 4V2.5"/></svg>
+                        </div>
+                        <div class="plan-empty-copy">
+                            {{ __('coach.plan.empty_'.($planFilter !== 'todas' ? $planFilter : 'todas')) }}
+                        </div>
                         @if ($planFilter !== 'todas')
                             <button type="button" wire:click="setPlanFilter('todas')" class="plan-empty-link">{{ __('coach.plan.view_all') }}</button>
                         @endif

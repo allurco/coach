@@ -23,6 +23,14 @@
 
 .coach-page { color: var(--c-ink); }
 
+/* Belt-and-braces against any element accidentally extending the page
+   beyond the viewport on mobile — kills the residual horizontal scroll
+   we saw when the plan-drawer opens at narrow widths. NOTE: do NOT
+   apply overflow-x to .coach-page itself — when one axis is non-visible
+   the spec forces the other to "auto", which steals the scroll from
+   .coach-thread. Stick to html/body. */
+html, body { overflow-x: hidden; }
+
 .fi-page-header,
 .fi-header-heading { display: none !important; }
 
@@ -315,6 +323,12 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    /* Grid items default to min-height: auto = content size, so without
+       this the chat thread blows past the viewport and the page scrolls
+       instead of the thread. Forcing min-height: 0 lets the grid row
+       constraint (.coach-shell height) cap the column, so .coach-thread
+       can take its allotted slice and scroll its overflow internally. */
+    min-height: 0;
 }
 
 /* Header */
@@ -1450,7 +1464,21 @@
     padding: 3rem 1.5rem;
     text-align: center;
     color: var(--c-muted);
-    font-size: 0.88rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.plan-empty-icon {
+    color: color-mix(in srgb, var(--c-muted) 60%, transparent);
+    margin-bottom: 0.2rem;
+}
+
+.plan-empty-copy {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    max-width: 22rem;
 }
 
 .plan-empty-link {
