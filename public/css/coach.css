@@ -31,6 +31,30 @@
    .coach-thread. Stick to html/body. */
 html, body { overflow-x: hidden; }
 
+/* Lock background scroll while any overlay is open. The Alpine state
+   on .coach-page toggles .coach-overlay-locked when sidebar/plan is
+   open; the :has() rule covers Livewire-driven modals (new goal,
+   complete action, history) since their overlay element appears in
+   the DOM only while shown. Both branches kill body scroll AND
+   touch-pan, so the chat behind doesn't drift on iOS overscroll. */
+body.coach-overlay-locked,
+body:has(.complete-modal-overlay) {
+    overflow: hidden;
+    touch-action: none;
+    overscroll-behavior: none;
+}
+
+body.coach-overlay-locked .coach-thread,
+body:has(.complete-modal-overlay) .coach-thread {
+    overflow: hidden !important;
+    touch-action: none;
+}
+
+/* Drawer scroll containment so rubber-band inside the flyout doesn't
+   bleed to whatever's behind. */
+.plan-drawer,
+.coach-sidebar { overscroll-behavior: contain; }
+
 .fi-page-header,
 .fi-header-heading { display: none !important; }
 
