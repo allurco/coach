@@ -232,7 +232,13 @@ class Coach extends Page implements HasForms
                     ->placeholder(__('coach.composer.placeholder'))
                     ->rows(2)
                     ->autosize()
-                    ->autofocus(),
+                    ->autofocus()
+                    ->extraInputAttributes([
+                        // Enter sends, Shift+Enter inserts a newline (default
+                        // textarea behaviour). requestSubmit triggers the
+                        // form's wire:submit="send".
+                        'x-on:keydown.enter' => 'if (!$event.shiftKey) { $event.preventDefault(); $el.closest(\'form\').requestSubmit(); }',
+                    ]),
                 FileUpload::make('attachments')
                     ->hiddenLabel()
                     ->multiple()
