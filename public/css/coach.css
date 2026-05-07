@@ -23,6 +23,13 @@
 
 .coach-page { color: var(--c-ink); }
 
+/* Belt-and-braces against any element accidentally extending the page
+   beyond the viewport on mobile — kills the residual horizontal scroll
+   we saw when the plan-drawer opens at narrow widths. */
+.coach-page,
+.coach-page body,
+.coach-page html { overflow-x: hidden !important; }
+
 .fi-page-header,
 .fi-header-heading { display: none !important; }
 

@@ -68,7 +68,7 @@ class AdminPanelProvider extends PanelProvider
                     $cssVersion = file_exists($cssPath) ? filemtime($cssPath) : '';
 
                     return <<<HTML
-                        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+                        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
                         <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
                         <meta name="theme-color" content="#fafaf7" media="(prefers-color-scheme: light)">
                         <meta name="apple-mobile-web-app-capable" content="yes">
