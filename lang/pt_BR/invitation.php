@@ -21,6 +21,23 @@ return [
         'sign_off' => 'Até daqui a pouco,',
     ],
 
+    'error' => [
+        'title' => 'Convite — Coach.',
+        'cta' => 'Ir pra tela de login',
+        'used' => [
+            'title' => 'Esse convite já foi usado',
+            'body' => 'Você já definiu sua senha por aqui. É só fazer login normalmente com seu email.',
+        ],
+        'expired' => [
+            'title' => 'Convite expirado',
+            'body' => 'Esse convite tinha validade de 7 dias. Pede pro admin que te convidou enviar um novo.',
+        ],
+        'not_found' => [
+            'title' => 'Convite inválido',
+            'body' => 'Esse link de convite não existe ou foi gerado com um token diferente. Confere o email mais recente que você recebeu.',
+        ],
+    ],
+
     'page' => [
         'title' => 'Definir senha — Coach.',
         'greeting' => 'Oi :name, define uma senha pra entrar e a gente começa.',
