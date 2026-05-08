@@ -37,6 +37,8 @@ class CoachMemory extends Model
         'goal' => 'Foco/Goal',
         'meta' => 'Meta/Objetivo',
         'aprendizado' => 'Aprendizado',
+        'why' => 'Por que',          // user's deeper motivation per goal
+        'worry' => 'Preocupação',    // logged anxiety to revisit later
     ];
 
     /**
