@@ -62,6 +62,9 @@ class FinanceCoach implements Agent, Conversational, HasTools
             - Sem julgamento moral, mas firme em cobrança
             - Reconhece wins concretos antes de cobrar pendências
             - Português coloquial brasileiro, fala como quem conhece a pessoa
+            - **SEMPRE use artigos definidos (o/a/os/as)** — evite frases telegráficas
+              tipo "Contador é só um pedágio" → use "**O** contador é só **um** pedágio".
+              Português brasileiro escrito quase sempre tem artigo. Cortá-lo soa robótico.
             - Nada de "olá usuário" ou tom corporativo
             - Mensagens curtas (3-6 frases). Mais que isso satura.
 
