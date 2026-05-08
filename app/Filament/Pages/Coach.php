@@ -105,10 +105,15 @@ class Coach extends Page implements HasForms
 
     public function mount(): void
     {
+        // mount() is hot — it runs on every full page load (login redirect,
+        // refresh, deep link). Order matters:
+        //   1. form->fill()        cheap, in-memory
+        //   2. loadGoals()         single query (sidebar)
+        //   3. activateDefaultGoal cascades into setActiveGoal which already
+        //      calls loadPlan(), so we don't call loadPlan() again here.
         $this->form->fill();
         $this->loadGoals();
         $this->activateDefaultGoal();
-        $this->loadPlan();
     }
 
     /**
@@ -124,7 +129,32 @@ class Coach extends Page implements HasForms
             return;
         }
 
-        $this->setActiveGoal($defaultGoal->id);
+        // setActiveGoal does its own Goal::find. Set the id directly here
+        // and call the inner work to skip the redundant lookup.
+        $this->activateGoal($defaultGoal);
+    }
+
+    /**
+     * Inner setActiveGoal that takes an already-loaded Goal model — skips
+     * the extra Goal::find($id) query that setActiveGoal does. Used by
+     * activateDefaultGoal on mount and by setActiveGoal after a sidebar
+     * click.
+     */
+    protected function activateGoal(Goal $goal): void
+    {
+        $this->activeGoalId = $goal->id;
+        $latest = $goal->latestConversation();
+
+        if ($latest) {
+            $this->loadConversation($latest->id);
+        } else {
+            $this->messages = [];
+            $this->conversationId = null;
+        }
+
+        $this->historyOpen = false;
+        $this->goalHistory = [];
+        $this->loadPlan();
     }
 
     public function loadPlan(): void
@@ -301,19 +331,7 @@ class Coach extends Page implements HasForms
             return;
         }
 
-        $this->activeGoalId = $goal->id;
-        $latest = $goal->latestConversation();
-
-        if ($latest) {
-            $this->loadConversation($latest->id);
-        } else {
-            $this->messages = [];
-            $this->conversationId = null;
-        }
-
-        $this->historyOpen = false;
-        $this->goalHistory = [];
-        $this->loadPlan();
+        $this->activateGoal($goal);
     }
 
     public function startNewConversationInActiveGoal(): void
