@@ -60,11 +60,13 @@ class UsersTable
                             'invited_at' => now(),
                         ])->save();
 
-                        Mail::to($user->email)->send(new UserInvitation(
-                            user: $user,
-                            acceptUrl: route('invitation.show', $user->invitation_token),
-                            invitedByName: auth()->user()?->name,
-                        ));
+                        Mail::to($user->email)
+                            ->locale($user->locale ?? config('app.locale'))
+                            ->send(new UserInvitation(
+                                user: $user,
+                                acceptUrl: route('invitation.show', $user->invitation_token),
+                                invitedByName: auth()->user()?->name,
+                            ));
 
                         Notification::make()
                             ->title(__('users.notifications.invite_resent_title'))

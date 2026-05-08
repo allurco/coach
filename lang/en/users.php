@@ -15,6 +15,8 @@ return [
     'form' => [
         'name' => 'Name',
         'email' => 'Email',
+        'locale' => 'Language',
+        'locale_help' => 'The language the coach uses with this person (invitation email and UI).',
         'is_admin' => 'Admin',
         'is_admin_help' => 'Admins can invite and manage other users.',
     ],

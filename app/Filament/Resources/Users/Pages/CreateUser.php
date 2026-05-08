@@ -31,15 +31,18 @@ class CreateUser extends CreateRecord
             'email' => $data['email'],
             'password' => null,
             'is_admin' => $data['is_admin'] ?? false,
+            'locale' => $data['locale'] ?? config('app.locale'),
             'invitation_token' => Str::random(64),
             'invited_at' => now(),
         ]);
 
-        Mail::to($user->email)->send(new UserInvitation(
-            user: $user,
-            acceptUrl: route('invitation.show', $user->invitation_token),
-            invitedByName: auth()->user()?->name,
-        ));
+        Mail::to($user->email)
+            ->locale($user->locale ?? config('app.locale'))
+            ->send(new UserInvitation(
+                user: $user,
+                acceptUrl: route('invitation.show', $user->invitation_token),
+                invitedByName: auth()->user()?->name,
+            ));
 
         Notification::make()
             ->title(__('users.notifications.invite_sent_title'))
