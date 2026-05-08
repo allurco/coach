@@ -4,8 +4,8 @@ return [
     'mail' => [
         'subject' => 'Você foi convidado pro Coach.',
         'heading' => 'Bem-vindo ao Coach.',
-        'invited_by' => '**:inviter** te convidou pra usar o Coach. — um coach de accountability com IA, self-hosted, que te ajuda a perseguir metas reais sem perder o fio.',
-        'invited_anon' => 'Você foi convidado pra usar o Coach. — um coach de accountability com IA, self-hosted, que te ajuda a perseguir metas reais sem perder o fio.',
+        'invited_by' => '**:inviter** te convidou pra usar o Coach. — um coach de accountability com IA que te ajuda a perseguir metas reais sem perder o fio.',
+        'invited_anon' => 'Você foi convidado pra usar o Coach. — um coach de accountability com IA que te ajuda a perseguir metas reais sem perder o fio.',
         'what_it_is' => 'Funciona pra dinheiro, saúde, fitness, aprendizado, projetos — qualquer área onde a peça que falta é alguém que não cansa de perguntar *"você fez isso hoje mesmo?"*. Cada área de foco vira um workspace seu. As decisões viram ações com prazo. O coach lembra do que vocês conversaram.',
         'privacy' => 'Sua conta é isolada — só você (e o admin que te convidou) tem acesso aos seus dados.',
         'cta_intro' => 'Pra começar, define sua senha clicando no botão abaixo:',
