@@ -1,0 +1,75 @@
+<h1>Coach. — after launch</h1>
+
+<p><em>Updates since the launch: each goal is now its own workspace, the agent opens goals from chat, and ~20 small commits of UX polish.</em></p>
+
+<p>I shipped <a href="https://github.com/allurco/coach">Coach.</a> a few days ago and immediately started using it every day. I also immediately started feeling what was missing. This post is what happened since.</p>
+
+<h2>Goals became workspaces</h2>
+
+<p>The first version had one big plan and one long conversation. After two weeks the conversation was a knot — health questions tangled with finance questions, the agent couldn't decide which persona to wear, and the plan listed actions from contexts that had nothing to do with each other.</p>
+
+<p>The fix was to model <strong>goals as workspaces</strong>. Each goal is now a sidebar entry that owns its own conversation, its own plan actions, and the prompt that tells the agent how to behave.</p>
+
+<p>A <code>label</code> field (<code>finance</code>, <code>fitness</code>, <code>emotional</code>, <code>learning</code>, <code>health</code>, <code>legal</code>, <code>general</code>) picks the specialization: finance becomes hard math without tax advice, emotional validates first then proposes, fitness leans on consistency over intensity. <code>general</code> means "I haven't decided yet, ask me where to focus".</p>
+
+<p>Switching workspaces is one click. Each carries its own "latest conversation" + history, so nothing gets lost when you change topic.</p>
+
+<h2>The agent opens goals via chat</h2>
+
+<p>You used to click "+ new" and fill a modal. Now you talk. I added a <code>CreateGoal(name, label)</code> tool to the agent's toolbox. If you say <em>"I want to start tracking my mental health"</em>, the agent confirms, calls <code>CreateGoal</code>, and the new workspace appears in the sidebar — without you leaving the chat.</p>
+
+<p>This connects to memory: the agent sees your other goals, knows when something similar already exists, and suggests using the existing one instead of duplicating.</p>
+
+<h2>The hardest bug</h2>
+
+<p>The worst bug I shipped to production was the agent <strong>narrating an action it never executed</strong>. You'd say <em>"add X to the plan"</em>, it would reply <em>"done, added X, here's your updated plan:"</em>, the response would cut off after the colon, and the action would never appear because the tool never fired. The model hallucinated the verb.</p>
+
+<p>The fix was three layers:</p>
+
+<ol>
+  <li><strong>Detect.</strong> A <code>decorateAssistantResponse()</code> pass scans the final reply for past-tense action verbs and checks whether the matching tool actually fired in this turn. If not, it appends an italic warning and logs the conversation id at WARN level for postmortem.</li>
+  <li><strong>Auto-retry.</strong> When the first pass looks broken, <code>Coach.php</code> automatically runs a second stream pass with a corrective system nudge ("execute now, don't narrate"). Same conversation, so the model sees its own broken reply and the order to fix it.</li>
+  <li><strong>Reinforce the prompt.</strong> Explicit ❌/✅ patterns showing the exact failure mode, plus a closing rule: never end a response with a colon unless the list either appears in the text or a tool was already called.</li>
+</ol>
+
+<p>I also moved from Flash to Pro for the interactive chat. Pro is slower (4-5s to first token versus 1-2s) but ~10x more reliable on multi-tool turns. The cron jobs stay on Flash — single-shot and short, Flash handles them.</p>
+
+<h2>Polish</h2>
+
+<p>The core flow worked, but the app <em>felt</em> cheap. A few weeks of small commits later it stopped feeling cheap:</p>
+
+<ul>
+  <li><strong>Pulsing dots in the assistant bubble</strong> the moment you click Send. The bubble appears in 88ms instead of staying empty for 1300ms while the model warms up.</li>
+  <li><strong>Optimistic user-message insert</strong> — your message hits the thread in 18ms via Alpine, before the Livewire round-trip completes. A morph hook removes the placeholder when the server-rendered version arrives; no flicker, no duplicate.</li>
+  <li><strong>Active-goal indicator</strong> in the sidebar — a 3px orange left-border + bg tint + bold title. You always know which workspace you're in.</li>
+  <li><strong>Compacted composer</strong> — the upload drop-zone collapses to a small clip-icon button when no files are attached, freeing 130 vertical pixels for the chat.</li>
+  <li><strong>Mobile/PWA</strong> — viewport locked against iOS pinch-zoom + URL-bar wobble, dynamic viewport units, overscroll containment, scroll-lock when overlays open.</li>
+  <li><strong>Brand consistency</strong> — every primary CTA uses the orange accent; green is reserved for "complete an action" where it carries semantic meaning.</li>
+</ul>
+
+<h2>Small things that turned out nice</h2>
+
+<p><strong>Email replies thread the conversation.</strong> Every scheduled ping carries a <code>Reply-To</code> with subaddressing — <code>reply+&lt;conversationId&gt;@coach...</code>. When you reply from your phone, the inbound webhook extracts the UUID, logs you in via <code>auth()-&gt;login()</code> so global scopes activate, and continues the same conversation. The agent sees the email body as if you typed it in the chat.</p>
+
+<p><strong>Memory has structure.</strong> <code>CoachMemory</code> stores facts with a <code>kind</code> and <code>label</code>. The agent saves proactively after analyzing a document or making a decision, so two months later you can still ask about that topic without re-attaching anything.</p>
+
+<p><strong>i18n is real.</strong> Every user-facing string lives in <code>lang/{pt_BR,en}/</code>. Tests pass in both locales — CI runs with <code>APP_LOCALE=en</code> while local dev runs <code>pt_BR</code>, so any string asserted in Portuguese would fail in CI.</p>
+
+<p><strong>178 tests.</strong> TDD on every new feature: tool date parsing, goal-scoped action creation, multi-tenant isolation, invitation token validation, Reply-To routing, webhook auth, response-decorator detection. Pest 4, runs in &lt;5 seconds.</p>
+
+<h2>Stack</h2>
+
+<p>No big change underneath: <strong>Laravel 13</strong> + <strong>PHP 8.4</strong>, <strong>Filament v5</strong> for the chat page, <strong>Livewire 4</strong> with token streaming, <strong>laravel/ai SDK</strong> with <strong>Gemini 2.5</strong> (Pro for interactive, Flash for crons), <strong>Resend</strong> for transactional email, <strong>Pest 4</strong> for tests, <strong>SQLite</strong> locally + <strong>MySQL</strong> in production, <strong>Tailwind v4</strong> + a hand-tuned <code>coach.css</code> for the orange-accent minimalist look.</p>
+
+<h2>What's next</h2>
+
+<ul>
+  <li>Per-goal custom specialization prompts (editable from the UI, not just the seven built-in labels)</li>
+  <li>An auto-switch when the agent creates a goal mid-conversation (ask if you want to move there or stay)</li>
+  <li>Per-goal weekly briefings instead of one global recap</li>
+  <li>A small mobile-only tweak to the plan flyout for very long action titles</li>
+</ul>
+
+<hr>
+
+<p>Repo: <a href="https://github.com/allurco/coach">github.com/allurco/coach</a>. MIT, self-host, bring your own Gemini key. It's been stable in daily use as my own coach for a while now; if you want to use it for any goal other than money, just create the workspace and the agent adapts.</p>
