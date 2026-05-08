@@ -1,0 +1,102 @@
+<h1>Coach: an AI accountability buddy that actually does the thing</h1>
+
+<p><em>A self-hosted, multi-tenant AI coach that lives between you and your goals. Built in Laravel, written for me, open-sourced because the missing piece was never the model.</em></p>
+
+<h2>The itch</h2>
+
+<p>I started Coach because I needed someone to ask me, every morning, <em>"did you actually pay that bill yesterday?"</em>. My finances were tangled — overdraft, parcelamento, INSS atrasado, business and personal money living in the same checking account. I had a spreadsheet. The spreadsheet did not care if I read it.</p>
+
+<p>What I wanted was a chat where I could:</p>
+<ul>
+  <li>drop a PDF of an Itaú invoice and get a structured read in 30 seconds;</li>
+  <li>say <em>"vou ligar pro contador hoje"</em> and have an action with a deadline appear in my plan;</li>
+  <li>get a 7am email each weekday with the one most-urgent thing, then reply to it from my phone and have the reply continue the same conversation server-side;</li>
+  <li>not lose context after closing the tab.</li>
+</ul>
+
+<p>I tried ChatGPT and Claude with prompts. Both forget. Neither will email me at 7am. Both will happily lie about creating a calendar event they never created.</p>
+
+<h2>The shape</h2>
+
+<p>Coach is a Laravel 13 + Filament v5 app. The chat lives in a Filament page; Livewire 4 streams the model's tokens straight into the bubble. The agent is built on the official <code>laravel/ai</code> SDK with the Gemini provider — Gemini 2.5 Pro for the interactive chat, Flash for the cron jobs.</p>
+
+<p>The agent has eight tools:</p>
+<ul>
+  <li><code>ListActions</code>, <code>CreateAction</code>, <code>UpdateAction</code> — read and mutate the plan;</li>
+  <li><code>CreateGoal</code> — open a new workspace from a chat phrase like <em>"quero começar a tratar minha saúde mental"</em>;</li>
+  <li><code>RememberFact</code>, <code>RecallFacts</code> — long-term memory that survives across conversations;</li>
+  <li><code>WebSearch</code>, <code>WebFetch</code> — Tavily-powered when I need fresh data.</li>
+</ul>
+
+<p>Multi-tenant isolation is enforced by Eloquent global scopes on every user-owned model. Each user gets their own plan, memories, goals, and conversations — bulletproof from the start, because the alternative is a leak waiting to happen.</p>
+
+<h2>Goals as workspaces</h2>
+
+<p>The first version had one big plan and one long conversation. After a few weeks the conversation was a mess — health questions tangled with finance questions, the model couldn't decide which persona to wear, the plan flyout listed actions from contexts that had nothing to do with each other.</p>
+
+<p>The fix was to model <strong>goals as workspaces</strong>: each goal has a sidebar entry, owns its own conversation history, owns its own actions in the plan, and tells the agent how to behave. A <code>label</code> like <code>finance</code>, <code>fitness</code>, <code>emotional</code>, <code>learning</code> picks the specialization prompt — finance gets hard math, emotional gets empathy-first, fitness gets consistency-over-intensity. <code>general</code> means "no specialization yet, ask me where to focus".</p>
+
+<p>The agent itself can create goals via the <code>CreateGoal</code> tool. If you say <em>"I want to start tracking my running"</em>, the agent confirms, calls <code>CreateGoal(name: "Running", label: "fitness")</code>, and the goal appears in the sidebar without you touching the UI. The whole loop — from intent to a new clean workspace — is conversational.</p>
+
+<h2>The hardest bug</h2>
+
+<p>The single most painful issue I shipped was an <em>agent narrating an action it never executed</em>. The user would say <em>"adiciona pilates ao meu plano"</em>, the agent would reply <em>"feito, adicionei o pilates, aqui está seu plano atualizado:"</em>, the response would cut off after the colon, and the action would never appear because <code>CreateAction</code> never fired. The model hallucinated the verb.</p>
+
+<p>The fix was three layers:</p>
+<ol>
+  <li><strong>Detect</strong> — a <code>decorateAssistantResponse()</code> pass scans the final reply for preterite verbs (<em>criei</em>, <em>adicionei</em>, <em>marquei</em>, <em>concluí</em>) and checks whether the matching tool actually fired in this turn. If not, it appends a small italic warning and logs the conversation id at WARN level for postmortem.</li>
+  <li><strong>Auto-retry</strong> — when the first pass looks broken, <code>Coach.php</code> automatically runs a second stream pass with a corrective system nudge ("execute now, don't narrate"). Same conversation, so the model sees its own broken reply and the order to fix it. Pro almost always nails the second attempt.</li>
+  <li><strong>Reinforce the prompt</strong> — explicit ❌ / ✅ patterns showing the exact failure mode, plus a closing rule that forbids ending a response with a colon unless the list either appears in the text or a tool was already called.</li>
+</ol>
+
+<p>I also moved from <code>gemini-2.5-flash</code> to <code>gemini-2.5-pro</code> for the interactive chat. Pro is slower (4-5s to first token versus 1-2s) but ~10x more reliable on multi-tool turns. The cron jobs stay on Flash because they're single-shot and short.</p>
+
+<h2>The polish layer</h2>
+
+<p>The core flow worked, but the app <em>felt</em> cheap. A few weeks of small UX commits later it stopped feeling cheap:</p>
+
+<ul>
+  <li><strong>Pulsing dots in the assistant bubble</strong> as soon as you click Send — fills the 1-3s gap before Gemini emits its first token. The bubble appears in 88ms instead of staying empty for 1300ms.</li>
+  <li><strong>Optimistic user-message insert</strong> — your message hits the thread in 18ms via Alpine, before the Livewire round-trip completes. A morph hook removes the placeholder when the server-rendered version arrives, no flicker, no duplicate.</li>
+  <li><strong>Active-goal indicator</strong> in the sidebar — a 3px orange left-border + bg tint + bold title. You always know which workspace you're in.</li>
+  <li><strong>Compacted composer</strong> — the FilePond drop-zone collapses to a small clip-icon button when no files are attached, freeing 130 vertical pixels for the chat.</li>
+  <li><strong>Mobile/PWA</strong> — viewport locked against iOS pinch-zoom + URL-bar wobble, dynamic viewport units, overscroll containment, scroll-lock when overlays open.</li>
+  <li><strong>Brand consistency</strong> — every primary CTA uses the orange accent; the green is reserved for "complete an action" where it carries semantic meaning.</li>
+</ul>
+
+<h2>What's interesting under the hood</h2>
+
+<p><strong>Email replies thread the conversation.</strong> Every scheduled ping carries a <code>Reply-To</code> with subaddressing — <code>reply+&lt;conversationId&gt;@coach.allur.co</code>. When you reply from your phone, Resend's inbound webhook hits <code>/webhooks/coach-email</code>; the controller extracts the UUID, logs you in via <code>auth()-&gt;login()</code> so global scopes activate, and continues the same conversation. The agent sees the email body as if you typed it in the chat.</p>
+
+<p><strong>Memory has structure.</strong> <code>CoachMemory</code> stores facts with a <code>kind</code> (<em>perfil</em>, <em>fatura</em>, <em>contrato</em>, etc.) and a <code>label</code>. The agent saves proactively after analyzing a PDF or making a decision, so two months later <em>"como estava aquela Santander de maio?"</em> still works without the original document.</p>
+
+<p><strong>i18n is real.</strong> Every user-facing string is in <code>lang/{pt_BR,en}/</code>. Tests pass in both locales — CI runs with <code>APP_LOCALE=en</code> while local dev runs <code>pt_BR</code>, and any string asserted in Portuguese would fail in CI.</p>
+
+<p><strong>178 tests.</strong> TDD on every new feature: tool date-parsing, goal-scoped action creation, multi-tenant isolation (Alice never sees Bob's plan), invitation token validation, Reply-To routing, webhook auth, response-decorator detection. Pest 4, runs in &lt;5 seconds.</p>
+
+<h2>Stack</h2>
+
+<ul>
+  <li><strong>Laravel 13</strong> + <strong>PHP 8.4</strong></li>
+  <li><strong>Filament v5</strong> for the admin panel and chat page</li>
+  <li><strong>Livewire 4</strong> with token streaming</li>
+  <li><strong>laravel/ai SDK</strong> + <strong>Gemini 2.5</strong> (Pro for interactive, Flash for cron)</li>
+  <li><strong>Resend</strong> for transactional email and inbound replies</li>
+  <li><strong>Tailwind v4</strong> + a hand-tuned <code>coach.css</code> for the orange-accent minimalist look</li>
+  <li><strong>Pest 4</strong> for tests</li>
+  <li><strong>SQLite</strong> locally, <strong>MySQL</strong> in production</li>
+  <li><strong>Forge</strong> + <strong>Cloudflare</strong> for hosting</li>
+</ul>
+
+<h2>What's next</h2>
+
+<ul>
+  <li>Per-goal custom specialization prompts (editable from the UI, not just the seven built-in labels)</li>
+  <li>An auto-switch tool — when the agent creates a goal mid-conversation, ask the user if they want to move there</li>
+  <li>Per-goal weekly briefings instead of one global recap</li>
+  <li>A small mobile-only tweak to the plan flyout for very long action titles</li>
+</ul>
+
+<p>If any of this is useful to you, the repo is at <a href="https://github.com/allurco/coach">github.com/allurco/coach</a> — MIT, self-host, bring your own Gemini key. It's been stable in daily use as my own coach for a while now; I've shipped maybe 30 features-and-fixes since the first commit and the test suite is green every time.</p>
+
+<p><em>Original use case: financial recovery. Now: anything you'd want a quiet, persistent, sometimes-too-honest accountability buddy for.</em></p>
