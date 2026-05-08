@@ -16,7 +16,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'is_admin', 'invitation_token', 'invited_at', 'accepted_invitation_at'])]
+#[Fillable(['name', 'email', 'password', 'is_admin', 'locale', 'invitation_token', 'invited_at', 'accepted_invitation_at'])]
 #[Hidden(['password', 'remember_token', 'invitation_token'])]
 #[ObservedBy([UserObserver::class])]
 class User extends Authenticatable implements FilamentUser

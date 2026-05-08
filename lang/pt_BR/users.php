@@ -15,6 +15,8 @@ return [
     'form' => [
         'name' => 'Nome',
         'email' => 'E-mail',
+        'locale' => 'Idioma',
+        'locale_help' => 'Em qual idioma o coach se comunica com essa pessoa (email de convite e UI).',
         'is_admin' => 'Admin',
         'is_admin_help' => 'Admins podem convidar e gerenciar outros usuários.',
     ],
