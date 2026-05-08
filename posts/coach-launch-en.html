@@ -1,0 +1,75 @@
+<h1>Coach.: an open-source AI accountability coach you self-host</h1>
+
+<p><em>I built an AI to coach me out of financial trouble. It turned into a general accountability framework, and I open-sourced it.</em></p>
+
+<p>I built an AI accountability coach for myself, and just open-sourced it at <a href="https://github.com/allurco/coach">github.com/allurco/coach</a>.</p>
+
+<p>It started as a financial coach — that was my problem at the time — but the framework is goal-agnostic. Anywhere the missing piece is a system that doesn't get tired of asking <em>"did you actually do that today?"</em>, this fits: getting out of debt, training for something, learning a language, shipping a side project, breaking a habit.</p>
+
+<h2>Why</h2>
+
+<p>A few months ago I had a structural deficit. Income was fine, the math wasn't. I needed someone — or something — that wouldn't get tired of asking <em>"did you actually pay that today?"</em> every morning.</p>
+
+<p>A human consultant felt heavy: scheduling, emotional load, the cost. A note-taking app wouldn't push back. So I started building a thing that does both: keeps the plan, and pings me about it.</p>
+
+<p>The first version was just a Laravel page with a chat connected to a model. It got useful fast enough that I kept adding to it — PDF analysis of statements/invoices, action tracking with deadlines, scheduled email pings, and a memory layer so it remembered what we'd already decided.</p>
+
+<p>After a few weeks of using it daily, I figured anyone in a similar mess might want the same tool. So I rewrote it for multi-tenancy and made the repo public.</p>
+
+<h2>What it actually does</h2>
+
+<p>Open the app, type in plain Portuguese (or English) what's going on. The Coach:</p>
+
+<ul>
+  <li><strong>Interviews you on first contact</strong> — figures out the income/expense picture, identifies traps (high-rate revolving debt, compounded installments), proposes 2-3 concrete actions for the week.</li>
+  <li><strong>Reads PDFs</strong> you upload — invoices, statements, bills. Gives you a structured table + qualitative analysis (e.g. "this looks like a business expense; consider moving it to your business card").</li>
+  <li><strong>Tracks your plan</strong> — actions with deadlines, priorities, categories. You mark them done as you go. The Coach pings about what's stuck.</li>
+  <li><strong>Sends a morning brief</strong> ("Today: pay the high-rate debt before it generates more interest"), a weekly recap on Sunday evening, and a stuck-action nudge mid-week.</li>
+  <li><strong>Replies via email work</strong> — answer the morning brief from your phone and the Coach updates the plan. The reply threads back to the same conversation via subaddressing on the Reply-To.</li>
+  <li><strong>Remembers across conversations</strong> — long-term memory of facts you consolidated weeks ago. So when you say "that May invoice", it knows what you mean without you re-uploading.</li>
+</ul>
+
+<h2>Why open source</h2>
+
+<p>Two reasons.</p>
+
+<p><strong>One</strong>, financial trouble is way more common than people admit, and the apps in this space are either banking-aggregator surveillance (your data → ad targeting) or sterile budget calculators that miss the human part. Someone running their own Coach on their own infra keeps their data private and gets a tool that's actually opinionated.</p>
+
+<p><strong>Two</strong>, I'm using this thing every day. Open-sourcing it forces me to keep it in a state where someone else could actually clone and run it — which is the bar I want for software I rely on.</p>
+
+<h2>Stack</h2>
+
+<ul>
+  <li><strong>Laravel 13</strong> + <strong>PHP 8.4</strong> for the backend</li>
+  <li><strong>Filament v5</strong> for the admin/chat UI (chat-first, no dashboard)</li>
+  <li><strong>Laravel AI SDK</strong> with <strong>Gemini 2.5</strong> as the model</li>
+  <li><strong>Livewire 4 streaming</strong> so the Coach types in real time</li>
+  <li><strong>Resend</strong> for outgoing email + inbound webhook</li>
+  <li><strong>Pest</strong> for tests (covering tools, multi-tenant isolation, and the rest)</li>
+  <li><strong>SQLite</strong> local, <strong>MySQL</strong> in production</li>
+  <li><strong>Tailwind v4</strong> + custom CSS for the conversation experience</li>
+</ul>
+
+<p>The whole thing is self-hosted. There's no SaaS dependency beyond the Gemini API key (free tier covers a single user) and Resend (free tier covers a single domain).</p>
+
+<h2>Multi-tenant from day one</h2>
+
+<p>When I rewrote for sharing, I went row-level: every action and every memory belongs to a <code>user_id</code>, with global scopes ensuring cross-tenant access is impossible. There's no public registration — admins invite users from the avatar menu, and each invitee sets their own password via a one-time link. Closed-loop.</p>
+
+<h2>How to try it</h2>
+
+<pre><code>git clone git@github.com:allurco/coach.git
+cd coach
+composer install &amp;&amp; npm install &amp;&amp; npm run build
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite
+php artisan migrate --seed</code></pre>
+
+<p>That's it locally. The seeder prints a one-time admin password. Open the app, log in, start typing about your situation. The Coach goes into onboarding mode, interviews you, and starts building your plan from scratch.</p>
+
+<p>For production deploy on Forge or Cloud, the README walks through DNS for Resend (the gotcha is <em>don't put receiving MX on a domain already running Google Workspace</em>), Cloudflare SSL settings (use Full, not Flexible — Flexible breaks session cookies), and the PHP 8.4 requirement.</p>
+
+<hr>
+
+<p>If you build something on top of it, or fix a bug, PR away. The repo is at <a href="https://github.com/allurco/coach">github.com/allurco/coach</a>. MIT license.</p>
