@@ -4,8 +4,8 @@ return [
     'mail' => [
         'subject' => 'You\'ve been invited to Coach.',
         'heading' => 'Welcome to Coach.',
-        'invited_by' => '**:inviter** invited you to use Coach. — a self-hosted AI accountability coach that helps you pursue real goals without losing the thread.',
-        'invited_anon' => 'You\'ve been invited to use Coach. — a self-hosted AI accountability coach that helps you pursue real goals without losing the thread.',
+        'invited_by' => '**:inviter** invited you to use Coach. — an AI accountability coach that helps you pursue real goals without losing the thread.',
+        'invited_anon' => 'You\'ve been invited to use Coach. — an AI accountability coach that helps you pursue real goals without losing the thread.',
         'what_it_is' => 'Works for money, health, fitness, learning, side projects — anywhere the missing piece is someone who doesn\'t get tired of asking *"did you actually do that today?"*. Each focus area becomes a workspace of yours. Decisions become actions with deadlines. The coach remembers what you\'ve talked about.',
         'privacy' => 'Your account is isolated — only you (and the admin who invited you) have access to your data.',
         'cta_intro' => 'To get started, set your password by clicking the button below:',
