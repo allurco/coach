@@ -21,6 +21,23 @@ return [
         'sign_off' => 'See you soon,',
     ],
 
+    'error' => [
+        'title' => 'Invitation — Coach.',
+        'cta' => 'Go to the login page',
+        'used' => [
+            'title' => 'This invitation was already used',
+            'body' => 'You already set your password here. Just sign in normally with your email.',
+        ],
+        'expired' => [
+            'title' => 'Invitation expired',
+            'body' => 'This invitation was valid for 7 days. Ask the admin who invited you to send a new one.',
+        ],
+        'not_found' => [
+            'title' => 'Invalid invitation',
+            'body' => 'This invitation link doesn\'t exist or was generated with a different token. Check the most recent email you received.',
+        ],
+    ],
+
     'page' => [
         'title' => 'Set password — Coach.',
         'greeting' => 'Hi :name, set a password to sign in and we\'ll get started.',

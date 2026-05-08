@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Pages\Coach;
 use App\Mail\UserInvitation;
 use App\Models\User;
 use Filament\Panel;
@@ -107,10 +108,21 @@ it('cannot reuse the same invitation token twice', function () {
     $this->post(route('invitation.accept', $user->invitation_token), [
         'password' => 'my-new-strong-password',
         'password_confirmation' => 'my-new-strong-password',
-    ])->assertRedirect('/');
+    ])->assertRedirect(Coach::getUrl());
 
-    // Token has been cleared; second visit should 404.
-    $this->get(route('invitation.show', 'tok-once'))->assertStatus(404);
+    // Token's been cleared; a second visit now distinguishes "already
+    // used" (some user did accept an invitation) from "never existed",
+    // so the controller returns 410 with a friendly explainer page
+    // pointing the user at /login.
+    $response = $this->get(route('invitation.show', 'tok-once'));
+    $response->assertStatus(410);
+    $response->assertSee(__('invitation.error.used.title'));
+});
+
+it('shows a friendly page for unknown tokens, not a bare abort', function () {
+    $response = $this->get(route('invitation.show', 'no-such-token'));
+    $response->assertStatus(404);
+    $response->assertSee(__('invitation.error.not_found.title'));
 });
 
 it('users with a pending invitation cannot access the panel', function () {
