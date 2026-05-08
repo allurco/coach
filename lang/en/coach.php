@@ -5,14 +5,31 @@ return [
         'coach' => 'Coach',
     ],
 
-    'greeting_first' => 'Hey! What are you looking for a coach for today?',
-    'greeting_second' => 'How can I help you be the best version of yourself?',
+    'greeting_first' => 'Hey, :name! What are you looking for a coach for today?',
+    'greeting_first_anon' => 'Hey! What are you looking for a coach for today?',
+    'greeting_second' => 'You talk, I push back, I remember. Works for money, health, fitness, learning, side projects — or just thinking out loud. Your data stays in your account.',
+
+    'welcome' => [
+        'how_label' => 'How it works',
+        'concepts' => [
+            ['icon' => '🎯', 'title' => 'Goals', 'body' => 'Each focus area becomes a workspace in the sidebar. The agent specializes for it.'],
+            ['icon' => '📋', 'title' => 'Plan', 'body' => 'The concrete actions we decide together — with deadlines, priorities, and follow-up.'],
+            ['icon' => '🧠', 'title' => 'Memory', 'body' => 'I remember facts you consolidated in past conversations, no need to re-attach.'],
+        ],
+    ],
 
     'suggestions' => [
         ['label' => 'I need clarity', 'prompt' => "I'm a bit lost and need clarity on what's going on in my life."],
         ['label' => 'I want to make a change', 'prompt' => 'I want to change something important in my life and I don\'t know where to start.'],
         ['label' => 'I have a goal', 'prompt' => 'I have a big goal to reach and I want to map out a plan.'],
         ['label' => "I'm stuck", 'prompt' => "I've been stuck for a while and want to break through."],
+    ],
+
+    'suggestions_first' => [
+        ['label' => '🏦 sort out my finances', 'prompt' => 'I want to sort out my finances. Can you interview me to understand my situation and help me build a plan?'],
+        ['label' => '🏃 start a health routine', 'prompt' => 'I want to start a health/fitness routine. Help me figure out where to begin.'],
+        ['label' => '📚 structure my learning', 'prompt' => 'I want to learn something new in a structured way. Help me map a path.'],
+        ['label' => '🧠 think out loud', 'prompt' => 'I need to think out loud about something difficult. Listen and help me organize my thoughts.'],
     ],
 
     'suggestions_active' => [

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Ai\Agents\FinanceCoach;
 use App\Models\Action;
+use App\Models\CoachMemory;
 use App\Models\Goal;
 use BackedEnum;
 use Carbon\Carbon;
@@ -89,6 +90,17 @@ class Coach extends Page implements HasForms
     public function getMaxContentWidth(): string
     {
         return 'full';
+    }
+
+    /**
+     * True the very first time someone lands on Coach: zero plan
+     * actions and zero consolidated memories. The empty-state UI
+     * uses this to swap the abstract greeting for a "what is this
+     * thing" welcome card + use-case-oriented suggestions.
+     */
+    public function isFirstTimer(): bool
+    {
+        return Action::count() === 0 && CoachMemory::count() === 0;
     }
 
     public function mount(): void

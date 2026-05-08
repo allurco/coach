@@ -5,14 +5,31 @@ return [
         'coach' => 'Coach',
     ],
 
-    'greeting_first' => 'Opa! Pra que você tá buscando um coach hoje?',
-    'greeting_second' => 'Como posso te ajudar a ser a melhor versão de você?',
+    'greeting_first' => 'Opa, :name! Pra que você tá buscando um coach hoje?',
+    'greeting_first_anon' => 'Opa! Pra que você tá buscando um coach hoje?',
+    'greeting_second' => 'Você fala, eu cobro, eu lembro. Funciono pra dinheiro, saúde, fitness, aprendizado, projetos — ou só pra pensar em voz alta. Seus dados ficam só na sua conta.',
+
+    'welcome' => [
+        'how_label' => 'Como funciona',
+        'concepts' => [
+            ['icon' => '🎯', 'title' => 'Goals', 'body' => 'Cada área de foco vira um workspace na barra lateral. O agente se especializa pra ele.'],
+            ['icon' => '📋', 'title' => 'Plano', 'body' => 'As ações concretas que a gente decide juntos — com prazo, prioridade, e cobrança.'],
+            ['icon' => '🧠', 'title' => 'Memória', 'body' => 'Eu lembro fatos que você consolidou em conversas passadas, sem você reanexar nada.'],
+        ],
+    ],
 
     'suggestions' => [
         ['label' => 'preciso de clareza', 'prompt' => 'Tô meio perdido(a) e preciso de clareza sobre o que tá acontecendo na minha vida.'],
         ['label' => 'quero virar a chave', 'prompt' => 'Quero mudar algo importante na minha vida e não sei por onde começar.'],
         ['label' => 'tenho um objetivo', 'prompt' => 'Tenho um objetivo grande pra alcançar e quero traçar um plano.'],
         ['label' => 'tô estagnado', 'prompt' => 'Tô estagnado(a) há um tempo e quero destravar.'],
+    ],
+
+    'suggestions_first' => [
+        ['label' => '🏦 organizar minha vida financeira', 'prompt' => 'Quero organizar minha vida financeira. Pode me entrevistar pra entender minha situação e a gente montar um plano?'],
+        ['label' => '🏃 começar uma rotina de saúde', 'prompt' => 'Quero começar uma rotina de saúde/fitness. Me ajuda a estruturar por onde começar.'],
+        ['label' => '📚 estruturar um aprendizado', 'prompt' => 'Quero aprender algo novo de forma estruturada. Me ajuda a montar um caminho.'],
+        ['label' => '🧠 pensar em voz alta', 'prompt' => 'Tô precisando pensar em voz alta sobre algo difícil. Me escuta e me ajuda a organizar a cabeça.'],
     ],
 
     'suggestions_active' => [

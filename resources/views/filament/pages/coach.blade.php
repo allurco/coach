@@ -109,16 +109,43 @@
                     @if (empty($messages))
                         @php
                             $hasPlan = ! empty($planActions);
-                            $suggestionsKey = $hasPlan ? 'coach.suggestions_active' : 'coach.suggestions';
+                            // First-timer = literally never used Coach: no plan
+                            // actions and no consolidated memories yet. The
+                            // welcome card + use-case suggestions are heavier
+                            // and only earn their space the first time.
+                            $isFirstTimer = $this->isFirstTimer();
+                            $suggestionsKey = match (true) {
+                                $isFirstTimer => 'coach.suggestions_first',
+                                $hasPlan => 'coach.suggestions_active',
+                                default => 'coach.suggestions',
+                            };
+                            $userFirstName = trim(explode(' ', auth()->user()?->name ?? '')[0] ?? '');
                         @endphp
                         <div class="msg coach-greeting-msg">
                             <div class="msg-avatar coach">C</div>
                             <div class="msg-body">
                                 <div class="msg-name">Coach</div>
                                 <div class="msg-content greeting-content">
-                                    <p class="greeting-line-1">{{ __('coach.greeting_first') }}</p>
+                                    <p class="greeting-line-1">{{ $userFirstName !== '' ? __('coach.greeting_first', ['name' => $userFirstName]) : __('coach.greeting_first_anon') }}</p>
                                     <p class="greeting-line-2">{{ __('coach.greeting_second') }}</p>
                                 </div>
+
+                                @if ($isFirstTimer)
+                                    <div class="welcome-cards">
+                                        <div class="welcome-cards-label">{{ __('coach.welcome.how_label') }}</div>
+                                        <div class="welcome-cards-grid">
+                                            @foreach (__('coach.welcome.concepts') as $concept)
+                                                <div class="welcome-card">
+                                                    <span class="welcome-card-icon" aria-hidden="true">{{ $concept['icon'] }}</span>
+                                                    <div class="welcome-card-text">
+                                                        <div class="welcome-card-title">{{ $concept['title'] }}</div>
+                                                        <div class="welcome-card-body">{{ $concept['body'] }}</div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <div class="quick-replies">
                                     @foreach (__($suggestionsKey) as $s)
