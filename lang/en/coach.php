@@ -124,6 +124,7 @@ return [
         'ListActions' => 'reading plan',
         'CreateAction' => 'creating action',
         'UpdateAction' => 'updating action',
+        'MoveAction' => 'moving action between goals',
         'CreateGoal' => 'creating goal',
         'RememberFact' => 'saving to memory',
         'RecallFacts' => 'reading memory',

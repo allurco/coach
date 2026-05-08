@@ -124,6 +124,7 @@ return [
         'ListActions' => 'consultando plano',
         'CreateAction' => 'criando ação',
         'UpdateAction' => 'atualizando ação',
+        'MoveAction' => 'movendo ação de goal',
         'CreateGoal' => 'criando goal',
         'RememberFact' => 'salvando na memória',
         'RecallFacts' => 'consultando memória',
