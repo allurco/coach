@@ -134,6 +134,11 @@ return [
         'WebFetch' => 'lendo página',
     ],
 
+    'budget_reminder' => [
+        'subject_recurring' => 'Hora do Plano — vamos atualizar?',
+        'subject_intro' => 'Já usou o Planejador Financeiro?',
+    ],
+
     'errors' => [
         'no_text_returned' => '_(o coach processou mas não retornou texto — pergunta de novo)_',
         'prefix' => 'Erro: ',

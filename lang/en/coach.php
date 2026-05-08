@@ -134,6 +134,11 @@ return [
         'WebFetch' => 'reading page',
     ],
 
+    'budget_reminder' => [
+        'subject_recurring' => 'Budget time — let’s update?',
+        'subject_intro' => 'Have you tried Budget Planning yet?',
+    ],
+
     'errors' => [
         'no_text_returned' => '_(coach processed but returned no text — try asking again)_',
         'prefix' => 'Error: ',
