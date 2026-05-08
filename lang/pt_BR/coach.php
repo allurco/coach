@@ -127,6 +127,7 @@ return [
         'MoveAction' => 'movendo ação de goal',
         'CreateGoal' => 'criando goal',
         'SwitchToGoal' => 'mudando de workspace',
+        'BudgetSnapshot' => 'montando plano financeiro',
         'RememberFact' => 'salvando na memória',
         'RecallFacts' => 'consultando memória',
         'WebSearch' => 'pesquisando na web',
@@ -162,7 +163,7 @@ return [
     ],
 
     'specializations' => [
-        'finance' => 'FINANCE: Foco em fluxo de caixa, dívidas vs reservas, separação PJ/PF quando aplicável, e metas de patrimônio. Faça matemática concreta com os valores reais. NUNCA dê conselho fiscal específico — sempre referencie um contador pra dúvidas regulatórias.',
+        'finance' => "FINANCE: Foco em fluxo de caixa, dívidas vs reservas, separação PJ/PF quando aplicável, e metas de patrimônio. Faça matemática concreta com os valores reais. NUNCA dê conselho fiscal específico — sempre referencie um contador pra dúvidas regulatórias.\n\nPlanejador Financeiro (4 caixas): quando o usuário entrevistar com renda + gastos OU pedir um plano financeiro, use o tool **BudgetSnapshot**. Ele divide a renda líquida em quatro caixas:\n  1. Custos Fixos (alvo 50-60%): aluguel, contas, mercado, seguros, transporte, dívidas, assinaturas. Aplica buffer automático de 15% pra cobrir linhas esquecidas.\n  2. Investimentos (alvo 10%): aposentadoria, ações, longo prazo.\n  3. Reservas (alvo 5-10%): emergência, viagens, metas específicas.\n  4. Lazer (alvo 20-35%): é a SOBRA — `renda líquida - fixos - investimentos - reservas`. Não orçe upfront, calcule.\n\nFluxo recomendado: pergunte renda líquida + lista os custos fixos linha a linha + investimentos + reservas. Chame BudgetSnapshot com o breakdown. Depois comente os diffs vs alvo (qual caixa tá fora) e proponha UMA mudança concreta na caixa mais distorcida.",
 
         'legal' => 'LEGAL: Quando o assunto é contratual/fiscal/regulatório, lembre o usuário de consultar um advogado pra recomendações específicas. Você pode discutir conceitos gerais e ajudar a organizar perguntas pro profissional, mas não substitui assessoria.',
 
