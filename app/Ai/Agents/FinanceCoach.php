@@ -8,6 +8,7 @@ use App\Ai\Tools\ListActions;
 use App\Ai\Tools\MoveAction;
 use App\Ai\Tools\RecallFacts;
 use App\Ai\Tools\RememberFact;
+use App\Ai\Tools\SwitchToGoal;
 use App\Ai\Tools\UpdateAction;
 use App\Ai\Tools\WebFetch;
 use App\Ai\Tools\WebSearch;
@@ -126,12 +127,18 @@ class FinanceCoach implements Agent, Conversational, HasTools
             sinaliza uma área de foco DISTINTA das que já existem. Ex: ele tem só "Vida financeira"
             e diz "quero começar a tratar minha saúde" → confirme ("Crio um goal 'Saúde' pra
             gente acompanhar isso aí?") e, com o aceite, chame CreateGoal(name="Saúde",
-            label="health"). DEPOIS avise: "Goal criado, abre ele no menu da esquerda quando
-            quiser conversar especificamente sobre isso." Categorias aceitas: general, finance,
-            legal, emotional, health, fitness, learning. Se não encaixar, use 'general'.
-            NÃO crie goal duplicado se o tema já está coberto por um existente — sugira focar
-            no goal atual ou abrir o existente. NÃO crie goal só pra registrar uma ação isolada
-            (isso é CreateAction, não goal).
+            label="health"). DEPOIS pergunte: "Quer que eu mova essa conversa pra lá agora?".
+            Se confirmar, chame SwitchToGoal(goal_id={id_do_novo_goal}). Categorias aceitas:
+            general, finance, legal, emotional, health, fitness, learning. Se não encaixar,
+            use 'general'. NÃO crie goal duplicado se o tema já está coberto por um existente —
+            sugira focar no goal atual ou abrir o existente. NÃO crie goal só pra registrar
+            uma ação isolada (isso é CreateAction, não goal).
+
+            **SwitchToGoal** — move a conversa atual pra outro workspace. Use SOMENTE depois
+            de perguntar e o usuário confirmar. Tipicamente usado logo após CreateGoal: cria
+            o goal, pergunta, e se positivo chama essa tool com o id do goal recém criado.
+            A conversa inteira (toda a história) passa a pertencer ao goal de destino e a
+            sidebar reflete a mudança imediatamente.
 
             **MoveAction** — move uma ação existente pra outro goal. Use quando perceber que
             criou no workspace errado (ex: o usuário pediu uma ação de saúde estando no goal
@@ -241,6 +248,7 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new UpdateAction,
             new MoveAction,
             new CreateGoal,
+            new SwitchToGoal($this->conversationId),
             new RememberFact,
             new RecallFacts,
             new WebSearch,
@@ -353,20 +361,25 @@ class FinanceCoach implements Agent, Conversational, HasTools
             jurídico/fiscal, emocional, ou outra. UMA pergunta direta:
             "Pra eu te ajudar bem, em qual área você quer focar primeiro?"
 
-            **PASSO 2 — CRIAR O GOAL CERTO.**
+            **PASSO 2 — CRIAR O GOAL CERTO + OFERECER MOVER A CONVERSA.**
             Assim que a pessoa indicar a área (ex.: "tô atolado financeiramente",
             "quero começar a treinar", "quero aprender alemão"):
-            - CHAME CreateGoal IMEDIATAMENTE com name descritivo + label apropriado:
-              `finance`, `fitness`, `health`, `legal`, `emotional`, `learning`,
-              ou `general` se não encaixar.
-              Exemplos: CreateGoal(name="Sair do vermelho", label="finance"),
-                        CreateGoal(name="Voltar a treinar", label="fitness"),
-                        CreateGoal(name="Aprender alemão", label="learning").
-            - Se a pessoa mencionar VÁRIAS áreas, crie múltiplos goals (um por turno
-              é OK, não despeja 5 de uma vez). Priorize a mais urgente primeiro.
-            - DEPOIS de criar, AVISE: "Criei o goal '[X]' na barra lateral —
-              clica nele pra a gente continuar lá com foco." A pessoa precisa
-              clicar pra mudar de workspace.
+            1. CHAME CreateGoal IMEDIATAMENTE com name descritivo + label apropriado:
+               `finance`, `fitness`, `health`, `legal`, `emotional`, `learning`,
+               ou `general` se não encaixar.
+               Exemplos: CreateGoal(name="Sair do vermelho", label="finance"),
+                         CreateGoal(name="Voltar a treinar", label="fitness"),
+                         CreateGoal(name="Aprender alemão", label="learning").
+            2. DEPOIS de criar, PERGUNTE: "Criei o goal '[X]' na barra lateral.
+               Quer que eu mova essa conversa pra lá agora pra a gente focar?"
+            3. Se a pessoa CONFIRMAR ("sim", "vamos", "bora", "pode mover"):
+               CHAME SwitchToGoal(goal_id={id_do_goal_recém_criado}). Depois
+               diga uma frase curta confirmando: "Movi a conversa pra '[X]'.
+               Bora.".
+            4. Se a pessoa NÃO quiser mover ("não, depois", "fica aqui mesmo"):
+               respeite, fique no goal atual.
+            - Se a pessoa mencionar VÁRIAS áreas, crie um goal por turno (não
+              despeja 5 de uma vez). Priorize a mais urgente.
 
             **PASSO 3 — INTERVISTAR DENTRO DO ESCOPO.**
             Com o goal criado, faça perguntas específicas da área pra entender
@@ -468,6 +481,9 @@ class FinanceCoach implements Agent, Conversational, HasTools
             - **CreateGoal** — cria um workspace novo. PRIMEIRA tool a usar
               quando descobrir a área de foco. Aceita label: finance, fitness,
               health, legal, emotional, learning, general.
+            - **SwitchToGoal** — move a conversa atual pra outro goal. Use
+              SOMENTE depois de perguntar e o usuário confirmar. Aceita
+              goal_id (geralmente o id retornado pelo CreateGoal anterior).
             - **CreateAction** — cria ação no plano (sempre confirme antes).
               A ação cai no goal ATIVO da conversa.
             - **MoveAction** — move ação criada por engano pro goal certo.

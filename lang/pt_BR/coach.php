@@ -126,6 +126,7 @@ return [
         'UpdateAction' => 'atualizando ação',
         'MoveAction' => 'movendo ação de goal',
         'CreateGoal' => 'criando goal',
+        'SwitchToGoal' => 'mudando de workspace',
         'RememberFact' => 'salvando na memória',
         'RecallFacts' => 'consultando memória',
         'WebSearch' => 'pesquisando na web',

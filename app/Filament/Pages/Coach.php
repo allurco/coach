@@ -598,6 +598,20 @@ class Coach extends Page implements HasForms
                     ->update(['goal_id' => $this->activeGoalId]);
             }
 
+            // SwitchToGoal tool may have re-pointed the conversation at a
+            // different goal during this turn. Re-read the conversation's
+            // goal_id and sync activeGoalId so the sidebar highlight, plan
+            // flyout, and CreateAction default all follow the move.
+            if ($this->conversationId !== null) {
+                $convGoalId = DB::table('agent_conversations')
+                    ->where('id', $this->conversationId)
+                    ->value('goal_id');
+
+                if ($convGoalId !== null && $convGoalId !== $this->activeGoalId) {
+                    $this->activeGoalId = $convGoalId;
+                }
+            }
+
             $rawText = trim($accumulated !== '' ? $accumulated : (string) ($streamText ?? ''));
 
             if ($rawText === '') {
