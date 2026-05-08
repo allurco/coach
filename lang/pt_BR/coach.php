@@ -127,6 +127,8 @@ return [
         'MoveAction' => 'movendo ação de goal',
         'CreateGoal' => 'criando goal',
         'SwitchToGoal' => 'mudando de workspace',
+        'LogWhy' => 'guardando o porquê',
+        'LogWorry' => 'registrando preocupação',
         'RememberFact' => 'salvando na memória',
         'RecallFacts' => 'consultando memória',
         'WebSearch' => 'pesquisando na web',

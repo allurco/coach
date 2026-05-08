@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Agents\FinanceCoach;
+use App\Models\CoachMemory;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -186,3 +187,65 @@ it('does not allow forGoal() to load another users goal (global scope blocks it)
         ->toBe((string) __('coach.goal_context.empty'))
         ->not->toContain('OTHER user');
 });
+
+it('surfaces the user’s latest "why" for the active goal so the agent can quote it back', function () {
+    $goal = Goal::create(['label' => 'finance', 'name' => 'Sair do vermelho']);
+
+    CoachMemory::create([
+        'kind' => 'why',
+        'label' => 'why',
+        'summary' => 'Quero dormir tranquilo sabendo que minhas contas estão em dia.',
+        'goal_id' => $goal->id,
+        'is_active' => true,
+    ]);
+
+    $context = goalContextOf(setActive($goal));
+
+    expect($context)->toContain('Quero dormir tranquilo sabendo que minhas contas estão em dia.')
+        ->and($context)->toMatch('/por que.*importa|cite de volta/iu');
+});
+
+it('uses the most recent active "why" when the user has logged several', function () {
+    $goal = Goal::create(['label' => 'finance', 'name' => 'Sair do vermelho']);
+
+    $old = CoachMemory::create([
+        'kind' => 'why',
+        'label' => 'why',
+        'summary' => 'old why',
+        'goal_id' => $goal->id,
+        'is_active' => true,
+    ]);
+    // Eloquent overwrites created_at on create() — backdate it explicitly.
+    $old->forceFill(['created_at' => now()->subDays(10)])->save();
+
+    CoachMemory::create([
+        'kind' => 'why',
+        'label' => 'why',
+        'summary' => 'new why',
+        'goal_id' => $goal->id,
+        'is_active' => true,
+    ]);
+
+    $context = goalContextOf(setActive($goal));
+
+    expect($context)->toContain('new why')
+        ->not->toContain('old why');
+});
+
+it('does not surface a "why" tied to another goal', function () {
+    $finance = Goal::create(['label' => 'finance', 'name' => 'Finance']);
+    $health = Goal::create(['label' => 'health', 'name' => 'Health']);
+
+    CoachMemory::create([
+        'kind' => 'why',
+        'label' => 'why',
+        'summary' => 'health-specific motivation',
+        'goal_id' => $health->id,
+        'is_active' => true,
+    ]);
+
+    $context = goalContextOf(setActive($finance));
+
+    expect($context)->not->toContain('health-specific motivation');
+});
+
