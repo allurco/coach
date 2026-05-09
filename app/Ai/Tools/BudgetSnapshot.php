@@ -3,6 +3,7 @@
 namespace App\Ai\Tools;
 
 use App\Models\Budget;
+use Carbon\Carbon;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
@@ -36,7 +37,7 @@ class BudgetSnapshot implements Tool
             return 'Erro: renda líquida (net_income) inválida — precisa ser maior que zero.';
         }
 
-        $month = (string) ($request['month'] ?? now()->format('Y-m'));
+        $month = $this->normalizeMonth($request['month'] ?? null);
         $fixedCosts = $this->normalizeBreakdown($request['fixed_costs'] ?? []);
         $investments = $this->normalizeBreakdown($request['investments'] ?? []);
         $savings = $this->normalizeBreakdown($request['savings'] ?? []);
@@ -64,31 +65,105 @@ class BudgetSnapshot implements Tool
             'notes' => $notes,
         ]);
 
-        return $this->renderMarkdown($budget, $netIncome, $fixedCosts, $fixedSubtotal,
-            $fixedTotal, $bufferPct, $investments, $investmentsTotal,
-            $savings, $savingsTotal, $leisure, $month);
+        // Return a placeholder reference rather than the rendered markdown.
+        // coach_budgets is the source of truth — the chat persists the
+        // placeholder, and view-time rendering expands it from the row.
+        // The agent's next turn still gets the input args via tool_calls,
+        // so it can reason about the snapshot without the markdown.
+        return self::placeholderFor($budget->id);
+    }
+
+    public static function placeholderFor(int $budgetId): string
+    {
+        return '{{budget:'.$budgetId.'}}';
+    }
+
+    /**
+     * Expand `{{budget:N}}` placeholders found in $text into the rendered
+     * markdown table for that snapshot. Missing snapshots fall back to a
+     * discreet italic note so old conversations never break.
+     */
+    public static function expandPlaceholders(string $text): string
+    {
+        return (string) preg_replace_callback(
+            '/\{\{budget:(\d+)\}\}/',
+            function (array $m): string {
+                $budget = Budget::find((int) $m[1]);
+
+                return $budget
+                    ? (new self)->renderForBudget($budget)
+                    : '_(snapshot indisponível)_';
+            },
+            $text,
+        );
     }
 
     public function schema(JsonSchema $schema): array
     {
+        // Gemini's function-calling rejects bare `object()` schemas without
+        // declared properties. The breakdowns are dynamic (any number of
+        // line items with any labels), so we accept JSON strings and parse
+        // them server-side. Tests can still pass plain arrays — handle()
+        // accepts both shapes.
         return [
             'net_income' => $schema->number()->required(),
             'month' => $schema->string(),
-            'fixed_costs' => $schema->object(),
-            'investments' => $schema->object(),
-            'savings' => $schema->object(),
+            'fixed_costs' => $schema->string()
+                ->description('JSON object as string with {"label": amount} pairs, e.g. {"Aluguel": 1500, "Mercado": 800}'),
+            'investments' => $schema->string()
+                ->description('JSON object as string with {"label": amount} pairs'),
+            'savings' => $schema->string()
+                ->description('JSON object as string with {"label": amount} pairs'),
             'notes' => $schema->string(),
         ];
     }
 
     /**
-     * Normalize a breakdown to [label => float-amount] pairs.
+     * Coerce whatever the agent passed for "month" into the canonical
+     * YYYY-MM shape so cron lookups and unique constraints work. Accepts
+     * "2026-05", "05/2026", "May 2026", or null (current month).
+     */
+    protected function normalizeMonth($raw): string
+    {
+        $raw = trim((string) ($raw ?? ''));
+        if ($raw === '') {
+            return now()->format('Y-m');
+        }
+
+        // Already in canonical shape.
+        if (preg_match('/^(\d{4})-(\d{2})$/', $raw)) {
+            return $raw;
+        }
+
+        // MM/YYYY (the most common Gemini variant in PT-BR).
+        if (preg_match('/^(\d{2})\/(\d{4})$/', $raw, $m)) {
+            return $m[2].'-'.$m[1];
+        }
+
+        // Fall back to Carbon parsing for natural-language months.
+        try {
+            return Carbon::parse($raw)->format('Y-m');
+        } catch (\Throwable) {
+            return now()->format('Y-m');
+        }
+    }
+
+    /**
+     * Normalize a breakdown to [label => float-amount] pairs. Accepts:
+     *   - PHP array (test calls)
+     *   - JSON-encoded string (Gemini tool calls — see schema())
+     *   - null / empty / invalid → []
      *
      * @param  mixed  $raw
      * @return array<string,float>
      */
     protected function normalizeBreakdown($raw): array
     {
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : [];
+        }
+
         if (! is_array($raw)) {
             return [];
         }
@@ -106,71 +181,121 @@ class BudgetSnapshot implements Tool
         return $result;
     }
 
-    protected function renderMarkdown(
-        Budget $budget,
-        float $netIncome,
-        array $fixedCosts,
-        float $fixedSubtotal,
-        float $fixedTotal,
-        int $bufferPct,
-        array $investments,
-        float $investmentsTotal,
-        array $savings,
-        float $savingsTotal,
-        float $leisure,
-        string $month,
-    ): string {
-        $lines = [];
-        $lines[] = "🧾 **Plano de Gastos · {$month}**";
-        $lines[] = '';
-        $lines[] = 'Renda líquida: **R$ '.number_format($netIncome, 2, ',', '.').'**';
-        $lines[] = '';
+    /**
+     * Render a budget row to markdown — called both when the tool fires
+     * (live stream) and when expanding `{{budget:N}}` placeholders later.
+     * Reads everything off the Budget model so historical snapshots
+     * always reflect the latest layout.
+     */
+    public function renderForBudget(Budget $budget): string
+    {
+        $netIncome = (float) $budget->net_income;
+        $fixedCosts = is_array($budget->fixed_costs_breakdown) ? $budget->fixed_costs_breakdown : [];
+        $fixedSubtotal = (float) $budget->fixed_costs_subtotal;
+        $fixedTotal = (float) $budget->fixed_costs_total;
+        $bufferPct = Budget::FIXED_COSTS_BUFFER_PCT;
+        $investments = is_array($budget->investments_breakdown) ? $budget->investments_breakdown : [];
+        $investmentsTotal = (float) $budget->investments_total;
+        $savings = is_array($budget->savings_breakdown) ? $budget->savings_breakdown : [];
+        $savingsTotal = (float) $budget->savings_total;
+        $leisure = (float) $budget->leisure_amount;
+        $month = (string) $budget->month;
 
-        // Fixed costs
-        $fixedPct = $netIncome > 0 ? ($fixedTotal / $netIncome) * 100 : 0;
-        $lines[] = '📊 **Custos Fixos: R$ '.number_format($fixedTotal, 2, ',', '.').'** ('
-            .number_format($fixedPct, 0).'% — alvo 50-60% '.$this->statusIcon('fixed_costs', $fixedPct).')';
-        foreach ($fixedCosts as $label => $amount) {
-            $lines[] = '  - '.$label.': R$ '.number_format($amount, 2, ',', '.');
-        }
-        if ($fixedSubtotal > 0) {
-            $lines[] = '  - _Subtotal: R$ '.number_format($fixedSubtotal, 2, ',', '.').'_';
-            $lines[] = '  - _Buffer '.$bufferPct.'%: R$ '.number_format($fixedTotal - $fixedSubtotal, 2, ',', '.').'_';
-        }
-        $lines[] = '';
+        $brl = fn (float $v) => 'R$ '.number_format($v, 2, ',', '.');
+        $pct = fn (float $v) => $netIncome > 0 ? round(($v / $netIncome) * 100) : 0;
 
-        // Investments
-        $invPct = $netIncome > 0 ? ($investmentsTotal / $netIncome) * 100 : 0;
-        $lines[] = '💰 **Investimentos: R$ '.number_format($investmentsTotal, 2, ',', '.').'** ('
-            .number_format($invPct, 0).'% — alvo 10% '.$this->statusIcon('investments', $invPct).')';
-        foreach ($investments as $label => $amount) {
-            $lines[] = '  - '.$label.': R$ '.number_format($amount, 2, ',', '.');
-        }
-        $lines[] = '';
+        $fixedPct = $pct($fixedTotal);
+        $invPct = $pct($investmentsTotal);
+        $savPct = $pct($savingsTotal);
+        $leisurePct = $pct($leisure);
 
-        // Savings
-        $savPct = $netIncome > 0 ? ($savingsTotal / $netIncome) * 100 : 0;
-        $lines[] = '🎯 **Reservas: R$ '.number_format($savingsTotal, 2, ',', '.').'** ('
-            .number_format($savPct, 0).'% — alvo 5-10% '.$this->statusIcon('savings', $savPct).')';
-        foreach ($savings as $label => $amount) {
-            $lines[] = '  - '.$label.': R$ '.number_format($amount, 2, ',', '.');
-        }
-        $lines[] = '';
+        $title = '🧾 **Plano de Gastos — '.$this->prettyMonth($month).'**';
+        $income = '_Renda líquida:_ **'.$brl($netIncome).'**';
 
-        // Leisure (the leftover)
-        $leisurePct = $netIncome > 0 ? ($leisure / $netIncome) * 100 : 0;
+        // 3-column compact layout — Atual/Alvo merged into one cell so
+        // the table fits inside the chat bubble without horizontal
+        // overflow. Status icon trails the Atual/Alvo text.
+        $row = function (string $label, float $value, int $pct, string $alvo, string $bucket) use ($brl) {
+            $icon = $this->statusIcon($bucket, $pct);
+            $cell = $pct.'% / '.$alvo.($icon !== '' ? ' '.$icon : '');
+
+            return '| '.$label.' | '.$brl($value).' | '.$cell.' |';
+        };
+        $leisureCell = $leisure < 0
+            ? '— / 20-35% ⚠'
+            : $leisurePct.'% / 20-35% '.$this->statusIcon('leisure', $leisurePct);
+        $table = [
+            '| Caixa | Valor | Atual / Alvo |',
+            '| --- | ---: | :--- |',
+            $row('📊 Custos Fixos', $fixedTotal, $fixedPct, '50-60%', 'fixed_costs'),
+            $row('💰 Investimentos', $investmentsTotal, $invPct, '10%', 'investments'),
+            $row('🎯 Reservas', $savingsTotal, $savPct, '5-10%', 'savings'),
+            '| 🍕 Lazer (sobra) | '.$brl($leisure).' | '.$leisureCell.' |',
+        ];
+
+        $sections = [$title, '', $income, '', implode("\n", $table)];
+
         if ($leisure < 0) {
-            $lines[] = '🍕 **Lazer: R$ '.number_format($leisure, 2, ',', '.').'** ⚠ DÉFICIT — buckets excedem a renda em '
-                .'R$ '.number_format(abs($leisure), 2, ',', '.');
-        } else {
-            $lines[] = '🍕 **Lazer (sobra): R$ '.number_format($leisure, 2, ',', '.').'** ('
-                .number_format($leisurePct, 0).'% — alvo 20-35% '.$this->statusIcon('leisure', $leisurePct).')';
+            $sections[] = '';
+            $sections[] = '> ⚠ **Déficit de '.$brl(abs($leisure)).'** — as caixas planejadas estouram a renda. A gente precisa cortar antes de continuar.';
         }
 
-        $lines[] = '';
-        $lines[] = '_(snapshot id: '.$budget->id.')_';
+        // Plain-markdown breakdowns. Avoid raw HTML (`<details>`, `<sub>`)
+        // because the chat's Str::markdown pipeline strips it for safety —
+        // bold headers + bullet lists render cleanly on any path.
+        if (! empty($fixedCosts) || $fixedSubtotal > 0) {
+            $sections[] = '';
+            $sections[] = '**📊 Custos Fixos — detalhes**';
+            $sections[] = '';
+            foreach ($fixedCosts as $label => $amount) {
+                $sections[] = '- '.$label.': '.$brl($amount);
+            }
+            if ($fixedSubtotal > 0) {
+                $sections[] = '- _Subtotal: '.$brl($fixedSubtotal).'_';
+                $sections[] = '- _Buffer '.$bufferPct.'%: '.$brl($fixedTotal - $fixedSubtotal).' (cobre as linhas que você esqueceu)_';
+            }
+        }
 
-        return implode("\n", $lines);
+        if (! empty($investments)) {
+            $sections[] = '';
+            $sections[] = '**💰 Investimentos — detalhes**';
+            $sections[] = '';
+            foreach ($investments as $label => $amount) {
+                $sections[] = '- '.$label.': '.$brl($amount);
+            }
+        }
+
+        if (! empty($savings)) {
+            $sections[] = '';
+            $sections[] = '**🎯 Reservas — detalhes**';
+            $sections[] = '';
+            foreach ($savings as $label => $amount) {
+                $sections[] = '- '.$label.': '.$brl($amount);
+            }
+        }
+
+        $sections[] = '';
+        $sections[] = '_snapshot #'.$budget->id.'_';
+
+        return implode("\n", $sections);
+    }
+
+    /**
+     * Convert "2026-05" → "Maio/2026" (PT-BR) for headline rendering.
+     */
+    protected function prettyMonth(string $iso): string
+    {
+        if (! preg_match('/^(\d{4})-(\d{2})$/', $iso, $m)) {
+            return $iso;
+        }
+        $names = [
+            '01' => 'Janeiro', '02' => 'Fevereiro', '03' => 'Março',
+            '04' => 'Abril',   '05' => 'Maio',      '06' => 'Junho',
+            '07' => 'Julho',   '08' => 'Agosto',    '09' => 'Setembro',
+            '10' => 'Outubro', '11' => 'Novembro',  '12' => 'Dezembro',
+        ];
+
+        return ($names[$m[2]] ?? $m[2]).'/'.$m[1];
     }
 
     /**
