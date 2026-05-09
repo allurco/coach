@@ -25,3 +25,12 @@ Schedule::command('coach:stuck-check')
     ->timezone('America/Fortaleza')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Lembrete mensal do Planejador Financeiro: dia 28 às 19h.
+// Só pra users com pelo menos um goal ativo de finance.
+Schedule::command('coach:monthly-budget-reminder')
+    ->monthlyOn(28, '19:00')
+    ->timezone('America/Fortaleza')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->emailOutputOnFailure(env('COACH_NOTIFICATION_EMAIL'));

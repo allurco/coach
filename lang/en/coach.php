@@ -127,12 +127,18 @@ return [
         'MoveAction' => 'moving action between goals',
         'CreateGoal' => 'creating goal',
         'SwitchToGoal' => 'switching workspace',
+        'BudgetSnapshot' => 'building budget plan',
         'LogWhy' => 'saving the why',
         'LogWorry' => 'logging worry',
         'RememberFact' => 'saving to memory',
         'RecallFacts' => 'reading memory',
         'WebSearch' => 'searching the web',
         'WebFetch' => 'reading page',
+    ],
+
+    'budget_reminder' => [
+        'subject_recurring' => 'Budget time — let’s update?',
+        'subject_intro' => 'Have you tried Budget Planning yet?',
     ],
 
     'errors' => [
@@ -164,7 +170,7 @@ return [
     ],
 
     'specializations' => [
-        'finance' => 'FINANCE: Focus on cash flow, debts vs reserves, business/personal separation when relevant, and net worth goals. Do real math with real numbers. NEVER give specific tax advice — always refer to an accountant for regulatory questions.',
+        'finance' => "FINANCE: Focus on cash flow, debts vs reserves, business/personal separation when relevant, and net worth goals. Do real math with real numbers. NEVER give specific tax advice — always refer to an accountant for regulatory questions.\n\nBudget Planning (4 buckets): when the user interviews you with income + expenses OR asks for a financial plan, use the **BudgetSnapshot** tool. It splits net income into four buckets:\n  1. Fixed Costs (target 50-60%): rent, utilities, groceries, insurance, transport, debts, subscriptions. Applies an automatic 15% buffer for forgotten line items.\n  2. Investments (target 10%): retirement, stocks, long-term.\n  3. Savings (target 5-10%): emergency fund, vacation, specific goals.\n  4. Leisure (target 20-35%): the LEFTOVER — `net income - fixed - investments - savings`. Don't budget upfront; compute.\n\nRecommended flow: ask for net income + list fixed costs line by line + investments + savings. When the user names a month ('June plan', 'for July'), pass `month` as `YYYY-MM` or `MM/YYYY` — don't leave it blank, or the snapshot defaults to the current month. Call BudgetSnapshot with the breakdown. The tool's table is rendered into the chat automatically — **do not repeat the numbers or rewrite the table**. After the call, comment in 1-2 sentences on which bucket is off-target and propose ONE concrete change. The tool output is the snapshot of record; your sentences are the coaching on top of it.",
 
         'legal' => 'LEGAL: When the topic is contractual/tax/regulatory, remind the user to consult a lawyer for specific recommendations. You can discuss general concepts and help organize questions for the professional, but you do not replace legal counsel.',
 

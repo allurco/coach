@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Ai\Agents\FinanceCoach;
+use App\Ai\Tools\BudgetSnapshot;
 use App\Models\Action;
 use App\Models\CoachMemory;
 use App\Models\Goal;
@@ -438,10 +439,12 @@ class Coach extends Page implements HasForms
                 }
             }
 
+            $renderable = $isAssistant ? BudgetSnapshot::expandPlaceholders($content) : $content;
+
             return [
                 'role' => $isAssistant ? 'assistant' : 'user',
                 'content' => $content,
-                'content_html' => $isAssistant ? Str::markdown($content, [
+                'content_html' => $isAssistant ? Str::markdown($renderable, [
                     'html_input' => 'escape',
                     'allow_unsafe_links' => false,
                 ]) : null,
@@ -674,10 +677,30 @@ class Coach extends Page implements HasForms
                 ]);
             }
 
+            // The AI SDK persists the bare model text in
+            // agent_conversation_messages.content. We overwrite that with
+            // $rawText so verbatim-injected tool output (e.g. the
+            // BudgetSnapshot table) and any decorator warnings survive a
+            // page reload or goal switch — otherwise the table is only
+            // visible during the live stream and disappears afterward.
+            if ($this->conversationId !== null && $rawText !== '' && $rawText !== ($streamText ?? '')) {
+                $latestAssistantId = DB::table('agent_conversation_messages')
+                    ->where('conversation_id', $this->conversationId)
+                    ->where('role', 'assistant')
+                    ->orderByDesc('created_at')
+                    ->value('id');
+                if ($latestAssistantId !== null) {
+                    DB::table('agent_conversation_messages')
+                        ->where('id', $latestAssistantId)
+                        ->update(['content' => $rawText, 'updated_at' => now()]);
+                }
+            }
+
+            $renderable = BudgetSnapshot::expandPlaceholders($rawText);
             $this->messages[] = [
                 'role' => 'assistant',
                 'content' => $rawText,
-                'content_html' => Str::markdown($rawText, [
+                'content_html' => Str::markdown($renderable, [
                     'html_input' => 'escape',
                     'allow_unsafe_links' => false,
                 ]),
@@ -722,10 +745,18 @@ class Coach extends Page implements HasForms
     {
         $accumulated = '';
         $toolLabels = (array) __('coach.tool_labels');
-        $batch = ['name' => null, 'calls' => 0, 'ok' => 0];
+        // Tools whose markdown output should be rendered verbatim in the
+        // chat. The agent tends to paraphrase, but for these the structured
+        // output IS the message — we want the user to see the actual table.
+        $verbatimTools = ['BudgetSnapshot'];
+        $batch = ['name' => null, 'calls' => 0, 'ok' => 0, 'verbatim' => []];
         $toolActivity = [];
+        // Verbatim payloads collected across all batches in this pass —
+        // persisted into this pass's assistant message so the placeholder
+        // survives an auto-retry that drops it from $accumulated.
+        $passVerbatims = [];
 
-        $flushBatch = function () use (&$batch, &$toolActivity, $toolLabels) {
+        $flushBatch = function () use (&$batch, &$toolActivity, &$accumulated, &$passVerbatims, $toolLabels) {
             if ($batch['name'] === null) {
                 return;
             }
@@ -735,8 +766,18 @@ class Coach extends Page implements HasForms
             $icon = $allOk ? '✓' : '⚠';
             $suffix = $count > 1 ? " ({$count}x)" : '';
             $this->stream(to: 'coach-stream', content: " {$icon}{$suffix}\n\n");
+            foreach ($batch['verbatim'] as $payload) {
+                // Persist the raw placeholder so coach_budgets remains the
+                // source of truth at view time. But the live stream needs
+                // the expanded markdown — the user is watching the bubble
+                // fill in, and a literal `{{budget:5}}` would flash by.
+                $expanded = BudgetSnapshot::expandPlaceholders($payload);
+                $this->stream(to: 'coach-stream', content: $expanded."\n\n");
+                $accumulated .= $payload."\n\n";
+                $passVerbatims[] = $payload;
+            }
             $toolActivity[] = ['name' => $batch['name'], 'count' => $count, 'ok' => $batch['ok']];
-            $batch = ['name' => null, 'calls' => 0, 'ok' => 0];
+            $batch = ['name' => null, 'calls' => 0, 'ok' => 0, 'verbatim' => []];
         };
 
         $stream = $coach->stream(
@@ -764,11 +805,35 @@ class Coach extends Page implements HasForms
             } elseif ($event instanceof ToolResult) {
                 if ($event->successful) {
                     $batch['ok']++;
+                    $name = $event->toolResult->name;
+                    if (in_array($name, $verbatimTools, true) && $batch['name'] === $name) {
+                        $batch['verbatim'][] = (string) $event->toolResult->result;
+                    }
                 }
             }
         }
 
         $flushBatch();
+
+        // Anchor the verbatim placeholders to THIS pass's assistant
+        // message. The SDK has already persisted $stream->text into
+        // agent_conversation_messages.content; we prepend our placeholders
+        // so a follow-up auto-retry (which writes its own message and may
+        // overwrite later) can't strip the snapshot from the conversation.
+        $conversationId = $this->conversationId ?? $coach->currentConversation();
+        if (! empty($passVerbatims) && $conversationId !== null) {
+            $latest = DB::table('agent_conversation_messages')
+                ->where('conversation_id', $conversationId)
+                ->where('role', 'assistant')
+                ->orderByDesc('created_at')
+                ->first(['id', 'content']);
+            if ($latest !== null) {
+                $merged = implode("\n\n", $passVerbatims)."\n\n".(string) $latest->content;
+                DB::table('agent_conversation_messages')
+                    ->where('id', $latest->id)
+                    ->update(['content' => $merged, 'updated_at' => now()]);
+            }
+        }
 
         return [
             'text' => $accumulated,

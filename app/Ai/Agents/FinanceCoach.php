@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Tools\BudgetSnapshot;
 use App\Ai\Tools\CreateAction;
 use App\Ai\Tools\CreateGoal;
 use App\Ai\Tools\ListActions;
@@ -282,6 +283,7 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new MoveAction,
             new CreateGoal,
             new SwitchToGoal($this->conversationId),
+            new BudgetSnapshot($activeGoalId),
             new LogWhy($activeGoalId),
             new LogWorry($activeGoalId),
             new RememberFact,
