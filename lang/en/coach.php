@@ -128,6 +128,8 @@ return [
         'CreateGoal' => 'creating goal',
         'SwitchToGoal' => 'switching workspace',
         'BudgetSnapshot' => 'building budget plan',
+        'LogWhy' => 'saving the why',
+        'LogWorry' => 'logging worry',
         'RememberFact' => 'saving to memory',
         'RecallFacts' => 'reading memory',
         'WebSearch' => 'searching the web',

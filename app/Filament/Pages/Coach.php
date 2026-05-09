@@ -502,6 +502,29 @@ class Coach extends Page implements HasForms
         }
 
         try {
+            // Defense against a client-side race: if the cached
+            // conversationId points to a conversation in a different goal
+            // than the current activeGoalId (e.g. user clicked a goal and
+            // submitted a message before the wire:click round-trip
+            // finished), drop the stale conversation id so a fresh one is
+            // started in the active goal. Without this, the new turn lands
+            // in the previous workspace and the activeGoalId-aware tools
+            // (CreateAction, LogWhy, LogWorry) stamp the wrong goal.
+            if ($this->conversationId !== null && $this->activeGoalId !== null) {
+                $convGoalId = DB::table('agent_conversations')
+                    ->where('id', $this->conversationId)
+                    ->value('goal_id');
+
+                if ($convGoalId !== null && $convGoalId !== $this->activeGoalId) {
+                    Log::info('Coach drift detected — dropping stale conversation', [
+                        'cached_conversation_id' => $this->conversationId,
+                        'cached_conversation_goal_id' => $convGoalId,
+                        'active_goal_id' => $this->activeGoalId,
+                    ]);
+                    $this->conversationId = null;
+                }
+            }
+
             $coach = new FinanceCoach;
 
             if ($this->conversationId) {
