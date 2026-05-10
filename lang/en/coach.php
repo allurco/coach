@@ -132,6 +132,7 @@ return [
         'LogWorry' => 'logging worry',
         'RememberFact' => 'saving to memory',
         'RecallFacts' => 'reading memory',
+        'ShareViaEmail' => 'sending email',
         'WebSearch' => 'searching the web',
         'WebFetch' => 'reading page',
     ],
@@ -223,6 +224,23 @@ return [
     'goal_context' => [
         'empty' => 'The user has no focus set yet (no focus defined). Before creating actions or giving specific advice, ask which area they want to tackle first — can be finance, legal, emotional, health, fitness, learning, or other. Save the answer with RememberFact(kind="goal", label="<area>", summary="<what they want to work on>").',
         'header' => 'Active focus area(s) for the user (specializations that should guide your replies):',
+    ],
+
+    'placeholders' => [
+        'budget_missing' => '_(snapshot unavailable)_',
+        'plan_empty' => '_(plan empty — no actions in flight)_',
+        'plan_header' => '**📋 Current plan**',
+    ],
+
+    'share' => [
+        'default_subject' => 'Shared from my Coach',
+        'success' => 'Sent to :email (with a copy to you).',
+        'errors' => [
+            'unauthenticated' => 'Error: user not authenticated.',
+            'empty_body' => 'Error: email body cannot be empty.',
+            'unknown_recipient' => 'Error: ":value" is not a valid email nor a saved contact.',
+            'rate_limited' => 'Send limit reached — try again in :minutes minute(s).',
+        ],
     ],
 
     'specializations' => [
