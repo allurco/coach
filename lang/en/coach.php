@@ -164,6 +164,62 @@ return [
         'sent_indicator' => '(attachment sent)',
     ],
 
+    'tips' => [
+        'dismiss_label' => 'Dismiss tip',
+        'pick_focus_area' => [
+            'title' => 'Which area do you want to focus on first?',
+            'prompt' => 'Which area should I start with?',
+        ],
+        'set_up_budget' => [
+            'title' => 'Set up your monthly budget',
+            'prompt' => "Let's build my budget for this month.",
+        ],
+        'refresh_budget' => [
+            'title' => 'Refresh this month’s budget',
+            'prompt' => "Let's refresh the budget for this month.",
+        ],
+        'add_first_action' => [
+            'title' => 'Pin down the first concrete step',
+            'prompt' => 'Help me set the first concrete action for this goal.',
+        ],
+        'review_overdue' => [
+            'title' => 'You have an overdue action',
+            'prompt' => 'Anything overdue? Let’s tackle or push it.',
+        ],
+        'log_first_win' => [
+            'title' => 'Log how that one went',
+            'prompt' => 'I completed an action — I want to log how it went.',
+        ],
+        'trim_heavy_plan' => [
+            'title' => 'Plan is heavy — want to trim it?',
+            'prompt' => 'I think I have too many actions open. Help me trim it.',
+        ],
+        'add_second_goal' => [
+            'title' => 'Open a second focus area',
+            'prompt' => 'I want to open a second goal for another area of life.',
+        ],
+        'revisit_dormant_goal' => [
+            'title' => 'This goal has gone quiet',
+            'prompt' => 'This goal has been quiet — help me get unstuck.',
+        ],
+        'log_the_why' => [
+            'title' => 'Why does this goal matter to you?',
+            'prompt' => 'I want to log why this goal matters to me.',
+        ],
+        'revisit_worry' => [
+            'title' => 'That worry — did it materialize?',
+            'prompt' => 'Let’s revisit that worry I logged — did it materialize?',
+        ],
+        'save_contact' => [
+            'title' => 'Save a contact to share things with later',
+            'prompt' => 'I want to save a contact (accountant, partner) so I can share stuff later.',
+        ],
+        'share_plan' => [
+            'title' => 'Email your plan to someone',
+            'prompt' => 'I want to email my plan to someone.',
+        ],
+    ],
+
     'goal_context' => [
         'empty' => 'The user has no focus set yet (no focus defined). Before creating actions or giving specific advice, ask which area they want to tackle first — can be finance, legal, emotional, health, fitness, learning, or other. Save the answer with RememberFact(kind="goal", label="<area>", summary="<what they want to work on>").',
         'header' => 'Active focus area(s) for the user (specializations that should guide your replies):',

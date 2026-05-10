@@ -164,6 +164,62 @@ return [
         'sent_indicator' => '(anexo enviado)',
     ],
 
+    'tips' => [
+        'dismiss_label' => 'Dispensar dica',
+        'pick_focus_area' => [
+            'title' => 'Em que área quer focar primeiro?',
+            'prompt' => 'Em que área eu deveria começar?',
+        ],
+        'set_up_budget' => [
+            'title' => 'Monta seu plano financeiro',
+            'prompt' => 'Quero montar meu plano financeiro do mês.',
+        ],
+        'refresh_budget' => [
+            'title' => 'Atualiza o orçamento do mês',
+            'prompt' => 'Bora atualizar o orçamento desse mês.',
+        ],
+        'add_first_action' => [
+            'title' => 'Cria a primeira ação concreta',
+            'prompt' => 'Me ajuda a definir a primeira ação concreta desse goal.',
+        ],
+        'review_overdue' => [
+            'title' => 'Tem ação atrasada',
+            'prompt' => 'Tem ação atrasada? Vamos resolver ou adiar.',
+        ],
+        'log_first_win' => [
+            'title' => 'Registra como foi essa conclusão',
+            'prompt' => 'Conclui uma ação — quero registrar como foi.',
+        ],
+        'trim_heavy_plan' => [
+            'title' => 'Plano lotado — bora enxugar?',
+            'prompt' => 'Acho que tenho ações demais. Me ajuda a enxugar.',
+        ],
+        'add_second_goal' => [
+            'title' => 'Abrir uma segunda área de foco',
+            'prompt' => 'Quero abrir um segundo goal pra outra área da vida.',
+        ],
+        'revisit_dormant_goal' => [
+            'title' => 'Esse goal anda parado',
+            'prompt' => 'Esse goal anda parado — me ajuda a destravar.',
+        ],
+        'log_the_why' => [
+            'title' => 'Por que esse goal importa pra você?',
+            'prompt' => 'Quero registrar por que esse goal importa pra mim.',
+        ],
+        'revisit_worry' => [
+            'title' => 'Aquela preocupação — materializou?',
+            'prompt' => 'Vamos revisitar aquela preocupação que registrei — ela materializou?',
+        ],
+        'save_contact' => [
+            'title' => 'Salva um contato pra compartilhar depois',
+            'prompt' => 'Quero salvar um contato (contador, parceiro) pra compartilhar coisas depois.',
+        ],
+        'share_plan' => [
+            'title' => 'Compartilha seu plano por email',
+            'prompt' => 'Quero compartilhar meu plano por email com alguém.',
+        ],
+    ],
+
     'goal_context' => [
         'empty' => 'O usuário ainda não tem foco definido (sem foco definido). Antes de criar ações ou dar conselho específico, pergunte qual área ele quer trabalhar primeiro — pode ser finance, legal, emotional, health, fitness, learning, ou outro tema. Salve a resposta com RememberFact(kind="goal", label="<area>", summary="<o que ele quer trabalhar>").',
         'header' => 'Foco(s) ativo(s) do usuário (especializações que devem guiar suas respostas):',

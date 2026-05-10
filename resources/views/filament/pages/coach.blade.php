@@ -54,6 +54,23 @@
             {{-- Main --}}
             <div class="coach-main">
 
+                {{-- Tip banner (one nudge max, dismissable, fires on click) --}}
+                @php($currentTip = $this->currentTip())
+                @if ($currentTip)
+                    <div class="coach-tip" role="status" aria-live="polite">
+                        <button type="button"
+                                class="coach-tip-action"
+                                wire:click="clickTip('{{ $currentTip->id() }}')">
+                            <span class="coach-tip-spark">💡</span>
+                            <span class="coach-tip-title">{{ $currentTip->title() }}</span>
+                        </button>
+                        <button type="button"
+                                class="coach-tip-dismiss"
+                                wire:click="dismissTip('{{ $currentTip->id() }}')"
+                                aria-label="{{ __('coach.tips.dismiss_label') }}">×</button>
+                    </div>
+                @endif
+
                 {{-- Header --}}
                 <div class="coach-header">
                     <button type="button" class="sidebar-toggle-btn"
