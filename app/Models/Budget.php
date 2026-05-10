@@ -84,4 +84,18 @@ class Budget extends Model
     {
         return $this->belongsTo(Goal::class);
     }
+
+    /**
+     * The user's most recent budget. Bypasses the owner global scope
+     * so this works regardless of who's authenticated when called.
+     */
+    public static function currentForUser(int $userId): ?self
+    {
+        return static::query()
+            ->withoutGlobalScope('owner')
+            ->where('user_id', $userId)
+            ->orderByDesc('month')
+            ->orderByDesc('id')
+            ->first();
+    }
 }

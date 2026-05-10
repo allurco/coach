@@ -7,6 +7,8 @@ use App\Ai\Tools\BudgetSnapshot;
 use App\Models\Action;
 use App\Models\CoachMemory;
 use App\Models\Goal;
+use App\Services\TipResolver;
+use App\Tips\Tip;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Forms\Components\FileUpload;
@@ -454,6 +456,70 @@ class Coach extends Page implements HasForms
         })->toArray();
 
         $this->conversationId = $id;
+    }
+
+    /**
+     * The one tip the user should see right now (or null). Resolved
+     * lazily per render — cheap because tip predicates only do
+     * scalar lookups (counts, existence checks).
+     */
+    public function currentTip(): ?Tip
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return null;
+        }
+
+        $goal = $this->activeGoalId ? Goal::find($this->activeGoalId) : null;
+
+        return app(TipResolver::class)->pick(
+            $user,
+            $goal,
+            (array) session('coach.tips.dismissed', []),
+        );
+    }
+
+    /**
+     * Auto-send the tip's prompt as a user message and dismiss the
+     * tip so it doesn't immediately reappear after the page rerenders.
+     * Bypasses the form: the prompt is pre-written, no input needed.
+     */
+    public function clickTip(string $tipId): void
+    {
+        if ($this->thinking) {
+            return;
+        }
+
+        $tip = app(TipResolver::class)->find($tipId);
+        if ($tip === null) {
+            return;
+        }
+
+        $prompt = $tip->prompt();
+
+        $this->messages[] = [
+            'role' => 'user',
+            'content' => $prompt,
+            'attachments' => [],
+            'time' => now()->format('H:i'),
+        ];
+
+        $this->thinking = true;
+        $this->pendingPrompt = $prompt;
+        $this->pendingAttachments = [];
+
+        $this->dismissTip($tipId);
+
+        $this->js('$wire.runAi()');
+    }
+
+    public function dismissTip(string $tipId): void
+    {
+        $dismissed = (array) session('coach.tips.dismissed', []);
+        if (! in_array($tipId, $dismissed, true)) {
+            $dismissed[] = $tipId;
+            session(['coach.tips.dismissed' => $dismissed]);
+        }
     }
 
     public function send(): void

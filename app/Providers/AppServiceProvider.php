@@ -3,6 +3,18 @@
 namespace App\Providers;
 
 use App\Notifications\ResetPassword;
+use App\Services\TipResolver;
+use App\Tips\AddFirstAction;
+use App\Tips\AddSecondGoal;
+use App\Tips\LogFirstWin;
+use App\Tips\LogTheWhy;
+use App\Tips\PickFocusArea;
+use App\Tips\RefreshBudget;
+use App\Tips\ReviewOverdue;
+use App\Tips\RevisitDormantGoal;
+use App\Tips\RevisitWorry;
+use App\Tips\SetUpBudget;
+use App\Tips\TrimHeavyPlan;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
@@ -22,6 +34,23 @@ class AppServiceProvider extends ServiceProvider
             \Filament\Auth\Notifications\ResetPassword::class,
             ResetPassword::class,
         );
+
+        // Tip catalog — adding a new tip is just appending a class here
+        // and shipping its lang keys. Order doesn't matter; the resolver
+        // sorts by priority().
+        $this->app->singleton(TipResolver::class, fn () => new TipResolver([
+            new PickFocusArea,
+            new AddFirstAction,
+            new ReviewOverdue,
+            new TrimHeavyPlan,
+            new RefreshBudget,
+            new LogTheWhy,
+            new LogFirstWin,
+            new RevisitWorry,
+            new RevisitDormantGoal,
+            new AddSecondGoal,
+            new SetUpBudget,
+        ]));
     }
 
     public function boot(): void
