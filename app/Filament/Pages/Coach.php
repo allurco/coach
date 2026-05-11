@@ -361,7 +361,7 @@ class Coach extends Page implements HasForms
     public function pendingPlanCount(): int
     {
         return $this->memoPendingPlanCount ??= collect($this->planActions)
-            ->whereIn('status', ['pendente', 'em_andamento'])
+            ->whereIn('status', Action::OPEN_STATUSES)
             ->count();
     }
 
