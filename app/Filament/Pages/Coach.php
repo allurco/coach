@@ -21,6 +21,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -970,12 +971,23 @@ class Coach extends Page implements HasForms
             $this->loadGoals();
             $this->loadPlan();
         } catch (Throwable $e) {
+            // When the upstream LLM (Gemini) rejects the request, the
+            // RequestException carries a Response with the real reason
+            // in the body — "HTTP 400" by itself is useless. Pull the
+            // body out so we can see whether it's a tool-schema issue,
+            // a content-policy block, a token-limit hit, etc.
+            $upstreamBody = null;
+            if ($e instanceof RequestException) {
+                $upstreamBody = mb_substr((string) $e->response->body(), 0, 2000);
+            }
+
             Log::error('Coach.runAi threw', [
                 'user_id' => auth()->id(),
                 'active_goal_id' => $this->activeGoalId,
                 'conversation_id' => $this->conversationId,
                 'exception_class' => $e::class,
                 'message' => $e->getMessage(),
+                'upstream_body' => $upstreamBody,
                 'file' => $e->getFile().':'.$e->getLine(),
                 'trace' => collect($e->getTrace())
                     ->take(15)
