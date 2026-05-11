@@ -25,7 +25,7 @@ class TrimHeavyPlan extends Tip
         return Action::query()
             ->withoutGlobalScope('owner')
             ->where('user_id', $user->id)
-            ->whereIn('status', ['pendente', 'em_andamento'])
+            ->whereIn('status', Action::OPEN_STATUSES)
             ->count() >= self::OPEN_ACTION_THRESHOLD;
     }
 

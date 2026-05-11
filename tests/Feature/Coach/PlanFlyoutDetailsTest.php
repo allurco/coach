@@ -99,6 +99,48 @@ it('handles null attachments without crashing', function () {
     expect($page->planActions[0]['attachments'])->toBeArray()->toBeEmpty();
 });
 
+it('flags has_details true when description, snooze, attachments or completion data is present', function () {
+    Action::create([
+        'title' => 'With description',
+        'description' => 'Some text',
+        'status' => 'pendente',
+    ]);
+    Action::create([
+        'title' => 'With completed_at',
+        'status' => 'concluido',
+        'completed_at' => now(),
+    ]);
+    Action::create([
+        'title' => 'With attachments',
+        'status' => 'pendente',
+        'attachments' => ['coach-uploads/file.pdf'],
+    ]);
+
+    $page = new Coach;
+    $page->planFilter = 'todas';
+    $page->loadPlan();
+
+    foreach ($page->planActions as $row) {
+        expect($row['has_details'])->toBeTrue();
+    }
+});
+
+it('flags has_details true even for a bare action because importance/difficulty have model defaults', function () {
+    // Documents the existing behavior: Action defaults importance='importante'
+    // and difficulty='medio', so every action carries enough metadata to show
+    // the details panel. If those defaults ever go away, this test will catch
+    // the visual side-effect.
+    Action::create([
+        'title' => 'Bare action',
+        'status' => 'pendente',
+    ]);
+
+    $page = new Coach;
+    $page->loadPlan();
+
+    expect($page->planActions[0]['has_details'])->toBeTrue();
+});
+
 it('does not leak details from another user\'s action', function () {
     $intruder = User::factory()->create();
 

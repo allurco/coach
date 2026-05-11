@@ -85,6 +85,24 @@ class Coach extends Page implements HasForms
 
     public string $completingNotes = '';
 
+    // Memoization for view helpers called multiple times per render.
+    // Private — Livewire doesn't dehydrate these, so they reset
+    // naturally on each request. Mutators run before render, so the
+    // cache is populated lazily during rendering only.
+    private ?bool $memoIsFirstTimer = null;
+
+    private ?int $memoPendingPlanCount = null;
+
+    private ?string $memoUserFirstName = null;
+
+    private ?Tip $memoTip = null;
+
+    private bool $memoTipResolved = false;
+
+    private ?array $memoActiveGoal = null;
+
+    private bool $memoActiveGoalResolved = false;
+
     public function getHeading(): string
     {
         return '';
@@ -103,7 +121,7 @@ class Coach extends Page implements HasForms
      */
     public function isFirstTimer(): bool
     {
-        return Action::count() === 0 && CoachMemory::count() === 0;
+        return $this->memoIsFirstTimer ??= Action::count() === 0 && CoachMemory::count() === 0;
     }
 
     public function mount(): void
@@ -180,30 +198,43 @@ class Coach extends Page implements HasForms
             ->orderByRaw("CASE priority WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END")
             ->limit(100)
             ->get()
-            ->map(fn (Action $a) => [
-                'id' => $a->id,
-                'title' => $a->title,
-                'category' => $a->category,
-                'priority' => $a->priority,
-                'status' => $a->status,
-                'deadline' => $a->deadline?->format('d/m/Y'),
-                'is_overdue' => $a->isOverdue(),
-                'is_due_soon' => $a->isDueSoon(),
-                'description' => $a->description,
-                'importance' => $a->importance,
-                'difficulty' => $a->difficulty,
-                'snooze_until' => $a->snooze_until?->format('d/m/Y'),
-                'result_notes' => $a->result_notes,
-                'completed_at' => $a->completed_at?->format('d/m/Y'),
-                'attachments' => collect($a->attachments ?? [])
+            ->map(function (Action $a) {
+                $attachments = collect($a->attachments ?? [])
                     ->filter(fn ($p) => is_string($p) && $p !== '')
                     ->map(fn (string $path) => [
                         'path' => $path,
                         'name' => basename($path),
                     ])
                     ->values()
-                    ->all(),
-            ])
+                    ->all();
+
+                $hasDetails = filled($a->description)
+                    || filled($a->importance)
+                    || filled($a->difficulty)
+                    || filled($a->snooze_until)
+                    || filled($a->result_notes)
+                    || filled($a->completed_at)
+                    || filled($attachments);
+
+                return [
+                    'id' => $a->id,
+                    'title' => $a->title,
+                    'category' => $a->category,
+                    'priority' => $a->priority,
+                    'status' => $a->status,
+                    'deadline' => $a->deadline?->format('d/m/Y'),
+                    'is_overdue' => $a->isOverdue(),
+                    'is_due_soon' => $a->isDueSoon(),
+                    'description' => $a->description,
+                    'importance' => $a->importance,
+                    'difficulty' => $a->difficulty,
+                    'snooze_until' => $a->snooze_until?->format('d/m/Y'),
+                    'result_notes' => $a->result_notes,
+                    'completed_at' => $a->completed_at?->format('d/m/Y'),
+                    'attachments' => $attachments,
+                    'has_details' => $hasDetails,
+                ];
+            })
             ->toArray();
     }
 
@@ -305,20 +336,58 @@ class Coach extends Page implements HasForms
     /**
      * The active goal's sidebar entry — the array shape produced by
      * loadGoals(). Returns null when no goal is active, or when the
-     * active id no longer matches any loaded goal. Called from the
-     * blade view so the variable is always defined (used to be an
-     * inline @php block, but stale compiled views on shared storage
-     * could resurrect a version where it wasn't declared).
+     * active id no longer matches any loaded goal.
      *
      * @return array{id:int,name:string,label:string,is_archived:bool,last_activity_label:?string}|null
      */
     public function activeGoal(): ?array
     {
+        if ($this->memoActiveGoalResolved) {
+            return $this->memoActiveGoal;
+        }
+        $this->memoActiveGoalResolved = true;
+
         if ($this->activeGoalId === null) {
-            return null;
+            return $this->memoActiveGoal = null;
         }
 
-        return collect($this->goals)->firstWhere('id', $this->activeGoalId);
+        return $this->memoActiveGoal = collect($this->goals)->firstWhere('id', $this->activeGoalId);
+    }
+
+    /**
+     * Open + in-progress actions in the current plan view. Drives the
+     * badge on the "Plano" button.
+     */
+    public function pendingPlanCount(): int
+    {
+        return $this->memoPendingPlanCount ??= collect($this->planActions)
+            ->whereIn('status', Action::OPEN_STATUSES)
+            ->count();
+    }
+
+    /** First word of the auth user's name, used in the greeting line. */
+    public function userFirstName(): string
+    {
+        return $this->memoUserFirstName ??= trim(explode(' ', auth()->user()?->name ?? '')[0] ?? '');
+    }
+
+    /**
+     * Which suggestion bundle to surface in the empty-thread state:
+     *   - first-timer (no plan + no memories) → onboarding-flavored
+     *   - active plan                         → action-flavored
+     *   - default                             → generic
+     */
+    public function suggestionsKey(): string
+    {
+        if ($this->isFirstTimer()) {
+            return 'coach.suggestions_first';
+        }
+
+        if (! empty($this->planActions)) {
+            return 'coach.suggestions_active';
+        }
+
+        return 'coach.suggestions';
     }
 
     public function loadGoals(): void
@@ -478,20 +547,26 @@ class Coach extends Page implements HasForms
     }
 
     /**
-     * The one tip the user should see right now (or null). Resolved
-     * lazily per render — cheap because tip predicates only do
-     * scalar lookups (counts, existence checks).
+     * The one tip the user should see right now (or null). Memoized
+     * per render — the blade hits this 4x (the @if plus three
+     * attribute reads), and each resolve costs a Goal::find() and a
+     * full catalog walk.
      */
     public function currentTip(): ?Tip
     {
+        if ($this->memoTipResolved) {
+            return $this->memoTip;
+        }
+        $this->memoTipResolved = true;
+
         $user = auth()->user();
         if (! $user) {
-            return null;
+            return $this->memoTip = null;
         }
 
         $goal = $this->activeGoalId ? Goal::find($this->activeGoalId) : null;
 
-        return app(TipResolver::class)->pick(
+        return $this->memoTip = app(TipResolver::class)->pick(
             $user,
             $goal,
             (array) session('coach.tips.dismissed', []),

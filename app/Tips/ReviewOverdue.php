@@ -23,7 +23,7 @@ class ReviewOverdue extends Tip
         return Action::query()
             ->withoutGlobalScope('owner')
             ->where('user_id', $user->id)
-            ->whereIn('status', ['pendente', 'em_andamento'])
+            ->whereIn('status', Action::OPEN_STATUSES)
             ->whereDate('deadline', '<', now()->subDays(3)->toDateString())
             ->exists();
     }

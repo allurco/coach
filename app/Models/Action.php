@@ -64,6 +64,9 @@ class Action extends Model
         'cancelado' => 'Cancelado',
     ];
 
+    /** Statuses where the action is still actionable (not closed). */
+    public const OPEN_STATUSES = ['pendente', 'em_andamento'];
+
     protected static function booted(): void
     {
         // Auto-scope every query to the authenticated user.
