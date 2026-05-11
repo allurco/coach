@@ -45,9 +45,9 @@ function seedActiveAction(int $goalId): void
 it('reports monthly slack when leisure_amount is positive', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 850]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-05', 'leisure_amount' => 850]);
 
-    $expected = __('coach.life_context.budget.surplus', ['amount' => 'R$ 850']);
+    $expected = __('coach.life_context.budget.surplus', ['amount' => 'R$ 850', 'month' => '2026-05']);
 
     expect(lifeContextOf((new FinanceCoach)->forGoal($finance->id)))
         ->toContain((string) $expected);
@@ -56,9 +56,9 @@ it('reports monthly slack when leisure_amount is positive', function () {
 it('reports a deficit when leisure_amount is negative', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => -280]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-05', 'leisure_amount' => -280]);
 
-    $expected = __('coach.life_context.budget.deficit', ['amount' => 'R$ 280']);
+    $expected = __('coach.life_context.budget.deficit', ['amount' => 'R$ 280', 'month' => '2026-05']);
 
     expect(lifeContextOf((new FinanceCoach)->forGoal($finance->id)))
         ->toContain((string) $expected);
@@ -67,10 +67,24 @@ it('reports a deficit when leisure_amount is negative', function () {
 it('reports balanced when leisure_amount is zero', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 0]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-05', 'leisure_amount' => 0]);
 
     expect(lifeContextOf((new FinanceCoach)->forGoal($finance->id)))
-        ->toContain((string) __('coach.life_context.budget.balanced'));
+        ->toContain((string) __('coach.life_context.budget.balanced', ['month' => '2026-05']));
+});
+
+it('includes the budget month so the agent can connect it to month-named actions', function () {
+    // Regression: before the month was in the signal, the agent saw
+    // "déficit de R$ 565" and a pending action "Montar orçamento de
+    // maio" and treated them as unrelated — kept asking the user to
+    // build a budget from scratch. With the month in the signal, the
+    // agent has the link.
+    $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
+    seedActiveAction($finance->id);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-06', 'leisure_amount' => -565]);
+
+    expect(lifeContextOf((new FinanceCoach)->forGoal($finance->id)))
+        ->toContain('2026-06');
 });
 
 it('reports "no budget" when the user has none', function () {
@@ -85,9 +99,9 @@ it('surfaces the budget when the active goal is fitness (cross-goal visibility)'
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     $fitness = Goal::create(['label' => 'fitness', 'name' => 'Voltar a treinar']);
     seedActiveAction($fitness->id);
-    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => -300]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-05', 'leisure_amount' => -300]);
 
-    $expected = __('coach.life_context.budget.deficit', ['amount' => 'R$ 300']);
+    $expected = __('coach.life_context.budget.deficit', ['amount' => 'R$ 300', 'month' => '2026-05']);
 
     expect(lifeContextOf((new FinanceCoach)->forGoal($fitness->id)))
         ->toContain((string) $expected);
@@ -97,9 +111,9 @@ it('surfaces the budget when the active goal is general (no-specialization)', fu
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     $general = Goal::create(['label' => 'general', 'name' => 'Geral']);
     seedActiveAction($general->id);
-    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 1200]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-05', 'leisure_amount' => 1200]);
 
-    $expected = __('coach.life_context.budget.surplus', ['amount' => 'R$ 1.200']);
+    $expected = __('coach.life_context.budget.surplus', ['amount' => 'R$ 1.200', 'month' => '2026-05']);
 
     expect(lifeContextOf((new FinanceCoach)->forGoal($general->id)))
         ->toContain((string) $expected);
@@ -108,25 +122,25 @@ it('surfaces the budget when the active goal is general (no-specialization)', fu
 it('is included in instructions() when not onboarding', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 750]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-05', 'leisure_amount' => 750]);
 
     $instructions = (string) (new FinanceCoach)->forGoal($finance->id)->instructions();
 
     expect($instructions)
         ->toContain((string) __('coach.life_context.header'))
-        ->toContain((string) __('coach.life_context.budget.surplus', ['amount' => 'R$ 750']));
+        ->toContain((string) __('coach.life_context.budget.surplus', ['amount' => 'R$ 750', 'month' => '2026-05']));
 });
 
 it('is NOT included during onboarding (Action::count() === 0)', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     // No seedActiveAction — onboarding state.
-    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 750]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'month' => '2026-05', 'leisure_amount' => 750]);
 
     $instructions = (string) (new FinanceCoach)->forGoal($finance->id)->instructions();
 
     expect($instructions)
         ->not->toContain((string) __('coach.life_context.header'))
-        ->not->toContain((string) __('coach.life_context.budget.surplus', ['amount' => 'R$ 750']));
+        ->not->toContain((string) __('coach.life_context.budget.surplus', ['amount' => 'R$ 750', 'month' => '2026-05']));
 });
 
 it('does not leak another user’s budget (multi-tenant isolation)', function () {
@@ -170,5 +184,5 @@ it('uses the most recent budget when the user has several', function () {
     ]);
 
     expect(lifeContextOf((new FinanceCoach)->forGoal($finance->id)))
-        ->toContain((string) __('coach.life_context.budget.surplus', ['amount' => 'R$ 600']));
+        ->toContain((string) __('coach.life_context.budget.surplus', ['amount' => 'R$ 600', 'month' => '2026-05']));
 });

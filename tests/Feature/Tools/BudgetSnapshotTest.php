@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Tools\BudgetSnapshot;
+use App\Models\Action;
 use App\Models\Budget;
 use App\Models\Goal;
 use App\Models\User;
@@ -141,6 +142,86 @@ it('defaults month to the current YYYY-MM when none given', function () {
     ]));
 
     expect(Budget::first()->month)->toBe(now()->format('Y-m'));
+});
+
+// Auto-close "set up budget" actions when a snapshot is persisted --------------
+
+it('auto-closes pending "montar orçamento" actions on this user when a snapshot is persisted', function () {
+    $target = Action::create([
+        'title' => 'Montar o orçamento de maio',
+        'status' => 'pendente',
+    ]);
+    $other = Action::create([
+        'title' => 'Comprar pão na padaria',
+        'status' => 'pendente',
+    ]);
+
+    (new BudgetSnapshot(null))->handle(new Request([
+        'net_income' => 5000,
+        'fixed_costs' => ['x' => 1000],
+        'investments' => [],
+        'savings' => [],
+    ]));
+
+    expect($target->fresh()->status)->toBe('concluido')
+        ->and($target->fresh()->completed_at)->not->toBeNull()
+        ->and($other->fresh()->status)->toBe('pendente');
+});
+
+it('closes EN variants like "set up budget" and "create financial plan"', function () {
+    $a1 = Action::create(['title' => 'Set up budget for May', 'status' => 'pendente']);
+    $a2 = Action::create(['title' => 'Create financial plan', 'status' => 'em_andamento']);
+
+    (new BudgetSnapshot(null))->handle(new Request([
+        'net_income' => 5000,
+        'fixed_costs' => ['x' => 1000],
+        'investments' => [],
+        'savings' => [],
+    ]));
+
+    expect($a1->fresh()->status)->toBe('concluido')
+        ->and($a2->fresh()->status)->toBe('concluido');
+});
+
+it('does not close already-concluded or cancelled actions', function () {
+    $done = Action::create([
+        'title' => 'Montar orçamento',
+        'status' => 'concluido',
+        'completed_at' => now()->subDays(3),
+        'result_notes' => 'feito antes',
+    ]);
+    $cancelled = Action::create([
+        'title' => 'Criar orçamento',
+        'status' => 'cancelado',
+    ]);
+
+    (new BudgetSnapshot(null))->handle(new Request([
+        'net_income' => 5000,
+        'fixed_costs' => ['x' => 1000],
+        'investments' => [],
+        'savings' => [],
+    ]));
+
+    expect($done->fresh()->result_notes)->toBe('feito antes')
+        ->and($cancelled->fresh()->status)->toBe('cancelado');
+});
+
+it('does not touch another user\'s matching action (multi-tenant)', function () {
+    $intruder = User::factory()->create();
+    $theirAction = Action::withoutGlobalScope('owner')->create([
+        'user_id' => $intruder->id,
+        'title' => 'Montar orçamento',
+        'status' => 'pendente',
+    ]);
+
+    (new BudgetSnapshot(null))->handle(new Request([
+        'net_income' => 5000,
+        'fixed_costs' => ['x' => 1000],
+        'investments' => [],
+        'savings' => [],
+    ]));
+
+    expect($theirAction->fresh()->status)->toBe('pendente');
 });
 
 it('is scoped to the authenticated user (multi-tenant)', function () {
