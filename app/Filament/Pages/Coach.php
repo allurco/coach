@@ -699,6 +699,14 @@ class Coach extends Page implements HasForms
 
     public function send(): void
     {
+        Log::info('Coach.send entered', [
+            'user_id' => auth()->id(),
+            'active_goal_id' => $this->activeGoalId,
+            'conversation_id' => $this->conversationId,
+            'thinking' => $this->thinking,
+            'message_count' => count($this->messages),
+        ]);
+
         if ($this->thinking) {
             return;
         }
@@ -735,6 +743,15 @@ class Coach extends Page implements HasForms
 
     public function runAi(): void
     {
+        Log::info('Coach.runAi entered', [
+            'user_id' => auth()->id(),
+            'active_goal_id' => $this->activeGoalId,
+            'conversation_id' => $this->conversationId,
+            'thinking' => $this->thinking,
+            'pending_prompt_length' => strlen((string) $this->pendingPrompt),
+            'pending_attachments' => count($this->pendingAttachments ?? []),
+        ]);
+
         $userMessage = (string) $this->pendingPrompt;
         $attachmentPaths = $this->pendingAttachments ?? [];
 
@@ -953,6 +970,19 @@ class Coach extends Page implements HasForms
             $this->loadGoals();
             $this->loadPlan();
         } catch (Throwable $e) {
+            Log::error('Coach.runAi threw', [
+                'user_id' => auth()->id(),
+                'active_goal_id' => $this->activeGoalId,
+                'conversation_id' => $this->conversationId,
+                'exception_class' => $e::class,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile().':'.$e->getLine(),
+                'trace' => collect($e->getTrace())
+                    ->take(15)
+                    ->map(fn ($f) => ($f['file'] ?? '?').':'.($f['line'] ?? '?').' '.($f['class'] ?? '').($f['type'] ?? '').($f['function'] ?? ''))
+                    ->all(),
+            ]);
+
             $this->messages[] = [
                 'role' => 'error',
                 'content' => __('coach.errors.prefix').$e->getMessage(),
