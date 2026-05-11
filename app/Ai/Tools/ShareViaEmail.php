@@ -49,9 +49,14 @@ class ShareViaEmail implements Tool
         return [
             'to' => $schema->string()->required()
                 ->description('Email literal OU label de um Contact salvo (ex: "contador").'),
+            // Gemini rejects array params without an `items` schema
+            // ("missing field" 400). Both lists carry strings (literal
+            // emails or Contact labels).
             'cc' => $schema->array()
+                ->items($schema->string())
                 ->description('Lista de emails ou labels para CC.'),
             'bcc' => $schema->array()
+                ->items($schema->string())
                 ->description('Lista de emails ou labels para BCC.'),
             'subject' => $schema->string()->required(),
             'body' => $schema->string()->required()
