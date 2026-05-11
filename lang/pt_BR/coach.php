@@ -243,6 +243,17 @@ return [
         ],
     ],
 
+    'life_context' => [
+        'header' => 'Contexto de vida (transversal a todos os goals — use pra orientar conselhos em qualquer área):',
+        'budget' => [
+            'none' => 'Financeiro: sem orçamento ainda.',
+            'surplus' => 'Financeiro: folga mensal de :amount.',
+            'deficit' => 'Financeiro: déficit mensal de :amount.',
+            'balanced' => 'Financeiro: renda e gastos batendo.',
+        ],
+        'tool_hint' => 'Quando a conversa tocar em valores grandes ou compromissos financeiros (mesmo fora do goal de finanças), chame BudgetSnapshot pra ver o detalhe antes de aconselhar.',
+    ],
+
     'specializations' => [
         'finance' => "FINANCE: Foco em fluxo de caixa, dívidas vs reservas, separação PJ/PF quando aplicável, e metas de patrimônio. Faça matemática concreta com os valores reais. NUNCA dê conselho fiscal específico — sempre referencie um contador pra dúvidas regulatórias.\n\nPlanejador Financeiro (4 caixas): quando o usuário entrevistar com renda + gastos OU pedir um plano financeiro, use o tool **BudgetSnapshot**. Ele divide a renda líquida em quatro caixas:\n  1. Custos Fixos (alvo 50-60%): aluguel, contas, mercado, seguros, transporte, dívidas, assinaturas. Aplica buffer automático de 15% pra cobrir linhas esquecidas.\n  2. Investimentos (alvo 10%): aposentadoria, ações, longo prazo.\n  3. Reservas (alvo 5-10%): emergência, viagens, metas específicas.\n  4. Lazer (alvo 20-35%): é a SOBRA — `renda líquida - fixos - investimentos - reservas`. Não orçe upfront, calcule.\n\nFluxo recomendado: pergunte renda líquida + lista os custos fixos linha a linha + investimentos + reservas. Quando o usuário mencionar um mês ('plano de junho', 'pra julho'), passe `month` no formato `YYYY-MM` ou `MM/YYYY` — não deixe vazio, senão vai pro mês corrente. Chame BudgetSnapshot com o breakdown. A tabela do tool aparece automaticamente no chat — **não repita os números nem reescreva a tabela**. Depois da chamada, comente em 1-2 frases qual caixa está fora do alvo e proponha UMA mudança concreta. O output do tool é a fotografia oficial; suas frases são o coaching em cima dela.",
 

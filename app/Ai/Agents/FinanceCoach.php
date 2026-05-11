@@ -17,6 +17,7 @@ use App\Ai\Tools\UpdateAction;
 use App\Ai\Tools\WebFetch;
 use App\Ai\Tools\WebSearch;
 use App\Models\Action;
+use App\Models\Budget;
 use App\Models\CoachMemory;
 use App\Models\Goal;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,7 @@ class FinanceCoach implements Agent, Conversational, HasTools
         $recentMemories = $this->recentMemoriesSummary();
         $userContext = $this->userContext();
         $goalContext = $this->goalContext();
+        $lifeContext = $this->lifeContext();
         $today = $this->todayContext();
         $isOnboarding = Action::count() === 0;
 
@@ -69,6 +71,9 @@ class FinanceCoach implements Agent, Conversational, HasTools
               Português brasileiro escrito quase sempre tem artigo. Cortá-lo soa robótico.
             - Nada de "olá usuário" ou tom corporativo
             - Mensagens curtas (3-6 frases). Mais que isso satura.
+
+            ## Contexto de vida (transversal a todos os goals)
+            $lifeContext
 
             ## Foco do usuário
             $goalContext
@@ -305,7 +310,7 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new MoveAction,
             new CreateGoal,
             new SwitchToGoal($this->conversationId),
-            new BudgetSnapshot($activeGoalId),
+            new BudgetSnapshot,
             new LogWhy($activeGoalId),
             new LogWorry($activeGoalId),
             new RememberFact,
@@ -314,6 +319,52 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new WebSearch,
             new WebFetch,
         ];
+    }
+
+    /**
+     * Cross-goal "life tools" context — surfaces user-level signals that
+     * matter regardless of which goal is active (financial slack/deficit
+     * today; health, emotional, legal stubs to follow). Kept terse on
+     * purpose: a one-liner per signal so token cost stays negligible
+     * across every prompt. Full detail is reached on-demand via the
+     * dedicated tool (e.g. BudgetSnapshot).
+     */
+    protected function lifeContext(): string
+    {
+        $userId = auth()->id();
+        if (! $userId) {
+            return '';
+        }
+
+        $lines = [(string) __('coach.life_context.header')];
+
+        $budget = Budget::currentForUser($userId);
+        $lines[] = '- '.$this->budgetSignal($budget);
+
+        $lines[] = '';
+        $lines[] = (string) __('coach.life_context.tool_hint');
+
+        return implode("\n", $lines);
+    }
+
+    protected function budgetSignal(?Budget $budget): string
+    {
+        if ($budget === null) {
+            return (string) __('coach.life_context.budget.none');
+        }
+
+        $delta = $budget->monthly_delta;
+        $amount = 'R$ '.number_format(abs($delta), 0, ',', '.');
+
+        if ($delta > 0) {
+            return (string) __('coach.life_context.budget.surplus', ['amount' => $amount]);
+        }
+
+        if ($delta < 0) {
+            return (string) __('coach.life_context.budget.deficit', ['amount' => $amount]);
+        }
+
+        return (string) __('coach.life_context.budget.balanced');
     }
 
     /**

@@ -13,10 +13,12 @@ use Stringable;
 class BudgetSnapshot implements Tool
 {
     /**
-     * @param  ?int  $activeGoalId  The finance goal this snapshot belongs to.
-     *                              Optional — cross-goal snapshots are valid
-     *                              (e.g. user has only "Geral" but is doing
-     *                              budget planning).
+     * @param  ?int  $activeGoalId  Optional provenance — records which goal
+     *                              the budget was first set up under, but
+     *                              has no effect on retrieval. Budgets are
+     *                              user-scoped (life-context), not
+     *                              goal-scoped — every goal sees them via
+     *                              FinanceCoach::lifeContext().
      */
     public function __construct(protected ?int $activeGoalId = null) {}
 

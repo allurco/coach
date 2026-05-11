@@ -86,7 +86,9 @@ class Budget extends Model
     }
 
     /**
-     * The user's most recent budget — sorted by month (canonical
+     * The user's most recent budget — used by the agent's life-context
+     * block so every goal sees the financial signal, not just the goal
+     * the budget was first set up under. Sorted by month (canonical
      * YYYY-MM string sort works) then id as a tiebreaker. Bypasses
      * the owner global scope so this works regardless of who's
      * authenticated when called.
@@ -99,5 +101,16 @@ class Budget extends Model
             ->orderByDesc('month')
             ->orderByDesc('id')
             ->first();
+    }
+
+    /**
+     * Monthly delta = leisure_amount. The BudgetSnapshot tool defines
+     * leisure as the leftover after fixed/investments/savings, so a
+     * positive value is slack the user has, and a negative value is
+     * a shortfall before any lifestyle spend.
+     */
+    public function getMonthlyDeltaAttribute(): float
+    {
+        return (float) $this->leisure_amount;
     }
 }
