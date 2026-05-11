@@ -4,9 +4,11 @@ namespace App\Filament\Pages;
 
 use App\Ai\Agents\FinanceCoach;
 use App\Ai\Tools\BudgetSnapshot;
+use App\Exceptions\ShareFailedException;
 use App\Models\Action;
 use App\Models\CoachMemory;
 use App\Models\Goal;
+use App\Services\Sharer;
 use App\Services\TipResolver;
 use App\Tips\Tip;
 use BackedEnum;
@@ -15,6 +17,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -84,6 +87,16 @@ class Coach extends Page implements HasForms
     public ?string $completingActionTitle = null;
 
     public string $completingNotes = '';
+
+    public ?int $sharingMessageIndex = null;
+
+    public string $shareRecipient = '';
+
+    public string $shareSubject = '';
+
+    public string $shareBody = '';
+
+    public ?string $shareError = null;
 
     // Memoization for view helpers called multiple times per render.
     // Private — Livewire doesn't dehydrate these, so they reset
@@ -297,6 +310,74 @@ class Coach extends Page implements HasForms
 
         Action::where('id', $id)->update(['snooze_until' => $until?->toDateString()]);
         $this->loadPlan();
+    }
+
+    /**
+     * Open the share modal with the body pre-filled from the assistant
+     * message at $messageIndex. Silently no-ops for invalid indices and
+     * user-authored messages — sharing your own input doesn't make
+     * sense (the recipient would get back the question, not the
+     * answer).
+     */
+    public function openShareModal(int $messageIndex): void
+    {
+        if (! isset($this->messages[$messageIndex])) {
+            return;
+        }
+
+        $msg = $this->messages[$messageIndex];
+        if (($msg['role'] ?? null) !== 'assistant') {
+            return;
+        }
+
+        $this->sharingMessageIndex = $messageIndex;
+        $this->shareRecipient = '';
+        $this->shareSubject = (string) __('coach.share_modal.default_subject', [
+            'date' => now()->format('d/m/Y'),
+        ]);
+        $this->shareBody = (string) ($msg['content'] ?? '');
+        $this->shareError = null;
+    }
+
+    public function cancelShare(): void
+    {
+        $this->sharingMessageIndex = null;
+        $this->shareRecipient = '';
+        $this->shareSubject = '';
+        $this->shareBody = '';
+        $this->shareError = null;
+    }
+
+    public function confirmShare(): void
+    {
+        if ($this->sharingMessageIndex === null) {
+            return;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            $this->shareError = (string) __('coach.share.errors.unauthenticated');
+
+            return;
+        }
+
+        try {
+            $message = app(Sharer::class)->send(
+                user: $user,
+                to: $this->shareRecipient,
+                subject: $this->shareSubject,
+                body: $this->shareBody,
+            );
+
+            Notification::make()
+                ->title($message)
+                ->success()
+                ->send();
+
+            $this->cancelShare();
+        } catch (ShareFailedException $e) {
+            $this->shareError = $e->getMessage();
+        }
     }
 
     public function form(Schema $schema): Schema

@@ -593,6 +593,33 @@ body:has(.complete-modal-overlay) .coach-thread {
     font-size: 0.7rem;
 }
 
+.msg-share-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--c-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.msg:hover .msg-share-btn,
+.msg-share-btn:focus-visible {
+    opacity: 1;
+}
+
+.msg-share-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--c-ink);
+}
+
 .msg-content {
     font-size: 0.95rem;
     line-height: 1.6;
