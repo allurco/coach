@@ -128,6 +128,7 @@ return [
         'CreateGoal' => 'criando goal',
         'SwitchToGoal' => 'mudando de workspace',
         'BudgetSnapshot' => 'montando plano financeiro',
+        'ReadBudget' => 'lendo orçamento atual',
         'LogWhy' => 'guardando o porquê',
         'LogWorry' => 'registrando preocupação',
         'RememberFact' => 'salvando na memória',
@@ -243,15 +244,24 @@ return [
         ],
     ],
 
+    'budget' => [
+        'auto_close_note' => 'Concluída automaticamente quando o snapshot #:snapshot_id foi gerado.',
+    ],
+
+    'read_budget' => [
+        'unauthenticated' => 'Erro: usuário não autenticado.',
+        'none' => 'Sem orçamento ainda — você nunca rodou o BudgetSnapshot. Pra criar um, precisamos da sua renda líquida + lista de custos fixos.',
+    ],
+
     'life_context' => [
         'header' => 'Contexto de vida (transversal a todos os goals — use pra orientar conselhos em qualquer área):',
         'budget' => [
             'none' => 'Financeiro: sem orçamento ainda.',
-            'surplus' => 'Financeiro: folga mensal de :amount.',
-            'deficit' => 'Financeiro: déficit mensal de :amount.',
-            'balanced' => 'Financeiro: renda e gastos batendo.',
+            'surplus' => 'Financeiro: orçamento de :month com folga mensal de :amount.',
+            'deficit' => 'Financeiro: orçamento de :month com déficit mensal de :amount.',
+            'balanced' => 'Financeiro: orçamento de :month com renda e gastos batendo.',
         ],
-        'tool_hint' => 'Quando a conversa tocar em valores grandes ou compromissos financeiros (mesmo fora do goal de finanças), chame BudgetSnapshot pra ver o detalhe antes de aconselhar.',
+        'tool_hint' => 'Quando a conversa tocar em valores grandes ou compromissos financeiros (mesmo fora do goal de finanças), chame BudgetSnapshot pra ver o detalhe antes de aconselhar. Se já existe orçamento (a linha acima diz qual mês), NÃO peça pro usuário criar um novo do zero — chame ReadBudget pra puxar o que existe.',
     ],
 
     'share_modal' => [

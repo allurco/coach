@@ -9,6 +9,7 @@ use App\Ai\Tools\ListActions;
 use App\Ai\Tools\LogWhy;
 use App\Ai\Tools\LogWorry;
 use App\Ai\Tools\MoveAction;
+use App\Ai\Tools\ReadBudget;
 use App\Ai\Tools\RecallFacts;
 use App\Ai\Tools\RememberFact;
 use App\Ai\Tools\ShareViaEmail;
@@ -134,6 +135,13 @@ class FinanceCoach implements Agent, Conversational, HasTools
             estudar, planejar) podem ser hoje sem questionar.
 
             **UpdateAction** — muda status, notas, prazo, ou adia ação existente.
+
+            **ReadBudget** — lê o orçamento mais recente do usuário (qualquer goal). Use
+            SEMPRE que ele perguntar sobre o budget que já existe ("como tá meu orçamento?",
+            "qual minha situação?", "o que sobrou esse mês?"). Devolve a tabela completa
+            sem pedir dados de novo. NÃO use pra criar — pra criar é BudgetSnapshot. Se
+            o contexto de vida no topo do prompt diz "orçamento de YYYY-MM", já existe um
+            — não peça pra montar do zero.
 
             **CreateGoal** — cria um novo workspace (goal) na barra lateral quando o usuário
             sinaliza uma área de foco DISTINTA das que já existem. Ex: ele tem só "Vida financeira"
@@ -311,6 +319,7 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new CreateGoal,
             new SwitchToGoal($this->conversationId),
             new BudgetSnapshot,
+            new ReadBudget,
             new LogWhy($activeGoalId),
             new LogWorry($activeGoalId),
             new RememberFact,
@@ -354,17 +363,20 @@ class FinanceCoach implements Agent, Conversational, HasTools
         }
 
         $delta = $budget->monthly_delta;
-        $amount = 'R$ '.number_format(abs($delta), 0, ',', '.');
+        $args = [
+            'month' => (string) $budget->month,
+            'amount' => 'R$ '.number_format(abs($delta), 0, ',', '.'),
+        ];
 
         if ($delta > 0) {
-            return (string) __('coach.life_context.budget.surplus', ['amount' => $amount]);
+            return (string) __('coach.life_context.budget.surplus', $args);
         }
 
         if ($delta < 0) {
-            return (string) __('coach.life_context.budget.deficit', ['amount' => $amount]);
+            return (string) __('coach.life_context.budget.deficit', $args);
         }
 
-        return (string) __('coach.life_context.budget.balanced');
+        return (string) __('coach.life_context.budget.balanced', $args);
     }
 
     /**

@@ -128,6 +128,7 @@ return [
         'CreateGoal' => 'creating goal',
         'SwitchToGoal' => 'switching workspace',
         'BudgetSnapshot' => 'building budget plan',
+        'ReadBudget' => 'reading current budget',
         'LogWhy' => 'saving the why',
         'LogWorry' => 'logging worry',
         'RememberFact' => 'saving to memory',
@@ -243,15 +244,24 @@ return [
         ],
     ],
 
+    'budget' => [
+        'auto_close_note' => 'Closed automatically when snapshot #:snapshot_id was generated.',
+    ],
+
+    'read_budget' => [
+        'unauthenticated' => 'Error: user not authenticated.',
+        'none' => 'No budget yet — you have never run BudgetSnapshot. To create one we need your net income + a list of fixed costs.',
+    ],
+
     'life_context' => [
         'header' => 'Life context (cuts across every goal — use it to inform advice in any area):',
         'budget' => [
             'none' => 'Finance: no budget set yet.',
-            'surplus' => 'Finance: monthly slack of :amount.',
-            'deficit' => 'Finance: monthly shortfall of :amount.',
-            'balanced' => 'Finance: income matches planned spend.',
+            'surplus' => 'Finance: budget for :month with a monthly slack of :amount.',
+            'deficit' => 'Finance: budget for :month with a monthly shortfall of :amount.',
+            'balanced' => 'Finance: budget for :month with income matching planned spend.',
         ],
-        'tool_hint' => 'Whenever the conversation touches big numbers or financial commitments (even outside the finance goal), call BudgetSnapshot for detail before advising.',
+        'tool_hint' => 'Whenever the conversation touches big numbers or financial commitments (even outside the finance goal), call BudgetSnapshot for detail before advising. If a budget already exists (the line above tells you which month), DO NOT ask the user to create a new one from scratch — call ReadBudget to pull what exists.',
     ],
 
     'share_modal' => [

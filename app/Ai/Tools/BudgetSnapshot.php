@@ -2,6 +2,7 @@
 
 namespace App\Ai\Tools;
 
+use App\Models\Action;
 use App\Models\Budget;
 use App\Services\PlaceholderRenderer;
 use Carbon\Carbon;
@@ -68,6 +69,8 @@ class BudgetSnapshot implements Tool
             'notes' => $notes,
         ]);
 
+        $this->autoCloseSetupActions($budget);
+
         // Return a placeholder reference rather than the rendered markdown.
         // coach_budgets is the source of truth — the chat persists the
         // placeholder, and view-time rendering expands it from the row.
@@ -79,6 +82,29 @@ class BudgetSnapshot implements Tool
     public static function placeholderFor(int $budgetId): string
     {
         return '{{budget:'.$budgetId.'}}';
+    }
+
+    /**
+     * Close pending "create budget" actions on this user when a snapshot
+     * is persisted — kills the action-zombie pattern where the agent
+     * would see a fresh budget plus a stale "Montar o orçamento" action
+     * and reset the user to step zero. Conservative match: only titles
+     * that read like budget-setup verbs, not anything that mentions
+     * "orçamento" in passing.
+     */
+    protected function autoCloseSetupActions(Budget $budget): void
+    {
+        $pattern = '/(montar|criar|set\s*up|build|create).{0,40}(or[çc]amento|budget|plano\s+financeiro|financial\s+plan)/iu';
+
+        Action::query()
+            ->whereIn('status', Action::OPEN_STATUSES)
+            ->get()
+            ->filter(fn (Action $a) => (bool) preg_match($pattern, (string) $a->title))
+            ->each(fn (Action $a) => $a->update([
+                'status' => 'concluido',
+                'completed_at' => now(),
+                'result_notes' => __('coach.budget.auto_close_note', ['snapshot_id' => $budget->id]),
+            ]));
     }
 
     /**
