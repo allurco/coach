@@ -19,7 +19,7 @@ function lifeContextOf(FinanceCoach $coach): string
     return (string) $ref->invoke($coach);
 }
 
-function makeBudget(array $overrides = []): Budget
+function makeLifeContextBudget(array $overrides = []): Budget
 {
     return Budget::create(array_merge([
         'goal_id' => null,
@@ -45,7 +45,7 @@ function seedActiveAction(int $goalId): void
 it('reports monthly slack when leisure_amount is positive', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeBudget(['goal_id' => $finance->id, 'leisure_amount' => 850]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 850]);
 
     $expected = __('coach.life_context.budget.surplus', ['amount' => 'R$ 850']);
 
@@ -56,7 +56,7 @@ it('reports monthly slack when leisure_amount is positive', function () {
 it('reports a deficit when leisure_amount is negative', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeBudget(['goal_id' => $finance->id, 'leisure_amount' => -280]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => -280]);
 
     $expected = __('coach.life_context.budget.deficit', ['amount' => 'R$ 280']);
 
@@ -67,7 +67,7 @@ it('reports a deficit when leisure_amount is negative', function () {
 it('reports balanced when leisure_amount is zero', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeBudget(['goal_id' => $finance->id, 'leisure_amount' => 0]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 0]);
 
     expect(lifeContextOf((new FinanceCoach)->forGoal($finance->id)))
         ->toContain((string) __('coach.life_context.budget.balanced'));
@@ -85,7 +85,7 @@ it('surfaces the budget when the active goal is fitness (cross-goal visibility)'
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     $fitness = Goal::create(['label' => 'fitness', 'name' => 'Voltar a treinar']);
     seedActiveAction($fitness->id);
-    makeBudget(['goal_id' => $finance->id, 'leisure_amount' => -300]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => -300]);
 
     $expected = __('coach.life_context.budget.deficit', ['amount' => 'R$ 300']);
 
@@ -97,7 +97,7 @@ it('surfaces the budget when the active goal is general (no-specialization)', fu
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     $general = Goal::create(['label' => 'general', 'name' => 'Geral']);
     seedActiveAction($general->id);
-    makeBudget(['goal_id' => $finance->id, 'leisure_amount' => 1200]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 1200]);
 
     $expected = __('coach.life_context.budget.surplus', ['amount' => 'R$ 1.200']);
 
@@ -108,7 +108,7 @@ it('surfaces the budget when the active goal is general (no-specialization)', fu
 it('is included in instructions() when not onboarding', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
-    makeBudget(['goal_id' => $finance->id, 'leisure_amount' => 750]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 750]);
 
     $instructions = (string) (new FinanceCoach)->forGoal($finance->id)->instructions();
 
@@ -120,7 +120,7 @@ it('is included in instructions() when not onboarding', function () {
 it('is NOT included during onboarding (Action::count() === 0)', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     // No seedActiveAction — onboarding state.
-    makeBudget(['goal_id' => $finance->id, 'leisure_amount' => 750]);
+    makeLifeContextBudget(['goal_id' => $finance->id, 'leisure_amount' => 750]);
 
     $instructions = (string) (new FinanceCoach)->forGoal($finance->id)->instructions();
 
@@ -158,12 +158,12 @@ it('uses the most recent budget when the user has several', function () {
     $finance = Goal::create(['label' => 'finance', 'name' => 'Vida financeira']);
     seedActiveAction($finance->id);
 
-    makeBudget([
+    makeLifeContextBudget([
         'goal_id' => $finance->id,
         'month' => '2026-04',
         'leisure_amount' => -100,
     ]);
-    makeBudget([
+    makeLifeContextBudget([
         'goal_id' => $finance->id,
         'month' => '2026-05',
         'leisure_amount' => 600,
