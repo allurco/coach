@@ -80,15 +80,12 @@
                     </button>
 
                     <div class="coach-header-text">
-                        @php
-                            $activeGoal = collect($goals)->firstWhere('id', $activeGoalId);
-                        @endphp
                         <div class="coach-title">
-                            {{ $activeGoal['name'] ?? 'Coach' }}
+                            {{ $this->activeGoal()['name'] ?? 'Coach' }}
                         </div>
                         <div class="coach-status">
-                            @if ($activeGoal)
-                                <span class="coach-status-label">{{ $activeGoal['label'] }}</span>
+                            @if ($this->activeGoal())
+                                <span class="coach-status-label">{{ $this->activeGoal()['label'] }}</span>
                                 <button type="button" class="coach-mini-btn"
                                         wire:click="newConversation"
                                         title="{{ __('coach.header.new_thread') }}">

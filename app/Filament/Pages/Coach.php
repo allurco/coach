@@ -302,6 +302,25 @@ class Coach extends Page implements HasForms
             ->statePath('data');
     }
 
+    /**
+     * The active goal's sidebar entry — the array shape produced by
+     * loadGoals(). Returns null when no goal is active, or when the
+     * active id no longer matches any loaded goal. Called from the
+     * blade view so the variable is always defined (used to be an
+     * inline @php block, but stale compiled views on shared storage
+     * could resurrect a version where it wasn't declared).
+     *
+     * @return array{id:int,name:string,label:string,is_archived:bool,last_activity_label:?string}|null
+     */
+    public function activeGoal(): ?array
+    {
+        if ($this->activeGoalId === null) {
+            return null;
+        }
+
+        return collect($this->goals)->firstWhere('id', $this->activeGoalId);
+    }
+
     public function loadGoals(): void
     {
         $user = auth()->user();
