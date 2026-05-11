@@ -85,6 +85,24 @@ class Coach extends Page implements HasForms
 
     public string $completingNotes = '';
 
+    // Memoization for view helpers called multiple times per render.
+    // Private — Livewire doesn't dehydrate these, so they reset
+    // naturally on each request. Mutators run before render, so the
+    // cache is populated lazily during rendering only.
+    private ?bool $memoIsFirstTimer = null;
+
+    private ?int $memoPendingPlanCount = null;
+
+    private ?string $memoUserFirstName = null;
+
+    private ?Tip $memoTip = null;
+
+    private bool $memoTipResolved = false;
+
+    private ?array $memoActiveGoal = null;
+
+    private bool $memoActiveGoalResolved = false;
+
     public function getHeading(): string
     {
         return '';
@@ -103,7 +121,7 @@ class Coach extends Page implements HasForms
      */
     public function isFirstTimer(): bool
     {
-        return Action::count() === 0 && CoachMemory::count() === 0;
+        return $this->memoIsFirstTimer ??= Action::count() === 0 && CoachMemory::count() === 0;
     }
 
     public function mount(): void
@@ -190,13 +208,13 @@ class Coach extends Page implements HasForms
                     ->values()
                     ->all();
 
-                $hasDetails = $a->description !== null && $a->description !== ''
-                    || $a->importance !== null && $a->importance !== ''
-                    || $a->difficulty !== null && $a->difficulty !== ''
-                    || $a->snooze_until !== null
-                    || $a->result_notes !== null && $a->result_notes !== ''
-                    || $a->completed_at !== null
-                    || ! empty($attachments);
+                $hasDetails = filled($a->description)
+                    || filled($a->importance)
+                    || filled($a->difficulty)
+                    || filled($a->snooze_until)
+                    || filled($a->result_notes)
+                    || filled($a->completed_at)
+                    || filled($attachments);
 
                 return [
                     'id' => $a->id,
@@ -324,11 +342,16 @@ class Coach extends Page implements HasForms
      */
     public function activeGoal(): ?array
     {
+        if ($this->memoActiveGoalResolved) {
+            return $this->memoActiveGoal;
+        }
+        $this->memoActiveGoalResolved = true;
+
         if ($this->activeGoalId === null) {
-            return null;
+            return $this->memoActiveGoal = null;
         }
 
-        return collect($this->goals)->firstWhere('id', $this->activeGoalId);
+        return $this->memoActiveGoal = collect($this->goals)->firstWhere('id', $this->activeGoalId);
     }
 
     /**
@@ -337,20 +360,15 @@ class Coach extends Page implements HasForms
      */
     public function pendingPlanCount(): int
     {
-        return collect($this->planActions)
+        return $this->memoPendingPlanCount ??= collect($this->planActions)
             ->whereIn('status', ['pendente', 'em_andamento'])
             ->count();
     }
 
-    /**
-     * First word of the authenticated user's name, or '' when no user
-     * or no name. Used in the greeting line.
-     */
+    /** First word of the auth user's name, used in the greeting line. */
     public function userFirstName(): string
     {
-        $name = auth()->user()?->name ?? '';
-
-        return trim(explode(' ', $name)[0] ?? '');
+        return $this->memoUserFirstName ??= trim(explode(' ', auth()->user()?->name ?? '')[0] ?? '');
     }
 
     /**
@@ -529,20 +547,26 @@ class Coach extends Page implements HasForms
     }
 
     /**
-     * The one tip the user should see right now (or null). Resolved
-     * lazily per render — cheap because tip predicates only do
-     * scalar lookups (counts, existence checks).
+     * The one tip the user should see right now (or null). Memoized
+     * per render — the blade hits this 4x (the @if plus three
+     * attribute reads), and each resolve costs a Goal::find() and a
+     * full catalog walk.
      */
     public function currentTip(): ?Tip
     {
+        if ($this->memoTipResolved) {
+            return $this->memoTip;
+        }
+        $this->memoTipResolved = true;
+
         $user = auth()->user();
         if (! $user) {
-            return null;
+            return $this->memoTip = null;
         }
 
         $goal = $this->activeGoalId ? Goal::find($this->activeGoalId) : null;
 
-        return app(TipResolver::class)->pick(
+        return $this->memoTip = app(TipResolver::class)->pick(
             $user,
             $goal,
             (array) session('coach.tips.dismissed', []),

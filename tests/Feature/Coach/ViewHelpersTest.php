@@ -61,7 +61,7 @@ it('returns an empty string when no user is authenticated', function () {
 });
 
 it('returns an empty string when the user name is empty', function () {
-    $this->user->forceFill(['name' => ''])->save();
+    $this->user->update(['name' => '']);
 
     $page = new Coach;
 
