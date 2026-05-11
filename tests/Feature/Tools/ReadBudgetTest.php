@@ -2,6 +2,7 @@
 
 use App\Ai\Tools\BudgetSnapshot;
 use App\Ai\Tools\ReadBudget;
+use App\Filament\Pages\Coach;
 use App\Models\Budget;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;
@@ -83,4 +84,14 @@ it('returns an unauth message when no user is logged in', function () {
     $result = (string) $this->tool->handle(new Request([]));
 
     expect($result)->toMatch('/aut|usu|user|login/iu');
+});
+
+it('is in Coach::VERBATIM_TOOLS so the placeholder gets injected into the chat stream', function () {
+    // Regression: ReadBudget returned the placeholder correctly, but
+    // because it was not in the verbatim list, the placeholder was
+    // only sent to the LLM (which then paraphrased into an apology
+    // about "tabela não está sendo exibida"). The verbatim path
+    // expands the placeholder and streams the markdown directly to
+    // the user — no paraphrasing layer in between.
+    expect(Coach::VERBATIM_TOOLS)->toContain('ReadBudget');
 });

@@ -1024,14 +1024,20 @@ class Coach extends Page implements HasForms
      *
      * @return array{text:string, tools:list<array{name:string,count:int,ok:int}>, streamText:?string}
      */
+    /**
+     * Tools whose result is the message body itself — instead of letting
+     * the agent paraphrase, we inject the structured output verbatim
+     * into the chat stream. Budget tables are the canonical case: the
+     * model invariably summarizes the numbers worse than rendering the
+     * table directly.
+     */
+    public const VERBATIM_TOOLS = ['BudgetSnapshot', 'ReadBudget'];
+
     protected function streamOnePass(FinanceCoach $coach, string $promptToSend, array $documents): array
     {
         $accumulated = '';
         $toolLabels = (array) __('coach.tool_labels');
-        // Tools whose markdown output should be rendered verbatim in the
-        // chat. The agent tends to paraphrase, but for these the structured
-        // output IS the message — we want the user to see the actual table.
-        $verbatimTools = ['BudgetSnapshot'];
+        $verbatimTools = self::VERBATIM_TOOLS;
         $batch = ['name' => null, 'calls' => 0, 'ok' => 0, 'verbatim' => []];
         $toolActivity = [];
         // Verbatim payloads collected across all batches in this pass —
