@@ -132,6 +132,7 @@ return [
         'LogWorry' => 'registrando preocupação',
         'RememberFact' => 'salvando na memória',
         'RecallFacts' => 'consultando memória',
+        'ShareViaEmail' => 'enviando email',
         'WebSearch' => 'pesquisando na web',
         'WebFetch' => 'lendo página',
     ],
@@ -223,6 +224,23 @@ return [
     'goal_context' => [
         'empty' => 'O usuário ainda não tem foco definido (sem foco definido). Antes de criar ações ou dar conselho específico, pergunte qual área ele quer trabalhar primeiro — pode ser finance, legal, emotional, health, fitness, learning, ou outro tema. Salve a resposta com RememberFact(kind="goal", label="<area>", summary="<o que ele quer trabalhar>").',
         'header' => 'Foco(s) ativo(s) do usuário (especializações que devem guiar suas respostas):',
+    ],
+
+    'placeholders' => [
+        'budget_missing' => '_(snapshot indisponível)_',
+        'plan_empty' => '_(plano vazio — nenhuma ação em curso)_',
+        'plan_header' => '**📋 Plano atual**',
+    ],
+
+    'share' => [
+        'default_subject' => 'Compartilhamento do meu Coach',
+        'success' => 'Enviado pra :email (com cópia pra você).',
+        'errors' => [
+            'unauthenticated' => 'Erro: usuário não autenticado.',
+            'empty_body' => 'Erro: o corpo do email não pode estar vazio.',
+            'unknown_recipient' => 'Erro: ":value" não é um email válido nem um contato salvo.',
+            'rate_limited' => 'Limite de envios atingido — tenta de novo em :minutes minuto(s).',
+        ],
     ],
 
     'specializations' => [

@@ -3,6 +3,7 @@
 namespace App\Ai\Tools;
 
 use App\Models\Budget;
+use App\Services\PlaceholderRenderer;
 use Carbon\Carbon;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
@@ -79,23 +80,14 @@ class BudgetSnapshot implements Tool
     }
 
     /**
-     * Expand `{{budget:N}}` placeholders found in $text into the rendered
-     * markdown table for that snapshot. Missing snapshots fall back to a
-     * discreet italic note so old conversations never break.
+     * Backward-compatible facade for the historical `{{budget:N}}` use
+     * case. New code should depend on `App\Services\PlaceholderRenderer`
+     * directly — that class supports the broader vocabulary (`{{plan}}`,
+     * `{{budget:current}}`, etc.) and is the canonical entry point.
      */
     public static function expandPlaceholders(string $text): string
     {
-        return (string) preg_replace_callback(
-            '/\{\{budget:(\d+)\}\}/',
-            function (array $m): string {
-                $budget = Budget::find((int) $m[1]);
-
-                return $budget
-                    ? (new self)->renderForBudget($budget)
-                    : '_(snapshot indisponível)_';
-            },
-            $text,
-        );
+        return (new PlaceholderRenderer)->render($text);
     }
 
     public function schema(JsonSchema $schema): array

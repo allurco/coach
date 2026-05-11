@@ -11,6 +11,7 @@ use App\Ai\Tools\LogWorry;
 use App\Ai\Tools\MoveAction;
 use App\Ai\Tools\RecallFacts;
 use App\Ai\Tools\RememberFact;
+use App\Ai\Tools\ShareViaEmail;
 use App\Ai\Tools\SwitchToGoal;
 use App\Ai\Tools\UpdateAction;
 use App\Ai\Tools\WebFetch;
@@ -169,6 +170,27 @@ class FinanceCoach implements Agent, Conversational, HasTools
             (geralmente não, e isso vira evidência). Aceita worry (texto) + topic (1-3
             palavras pra busca depois).
 
+            **ShareViaEmail** — envia conteúdo por email pra terceiros (contador, parceiro,
+            advogado, etc.). Args: to, cc[], bcc[], subject, body. Cada destinatário pode
+            ser um email literal OU o label de um Contact salvo (ex: "contador" → resolve
+            pro email do contato). O usuário recebe BCC automático.
+
+            **PLACEHOLDERS NO BODY** — pra dados estruturados, NÃO restate números nem
+            liste ações de cabeça. Use placeholders e o sistema renderiza com dados reais:
+            - `{{budget:current}}` → último orçamento do usuário (tabela completa)
+            - `{{budget:N}}` → snapshot específico (use o id que o BudgetSnapshot retornou)
+            - `{{plan}}` → ações em curso do usuário (pendentes + em andamento)
+
+            Exemplo: "Oi João, segue meu orçamento atual:\n\n{{budget:current}}\n\nE o
+            plano de ações em curso:\n\n{{plan}}\n\nQuero discutir contigo na próxima
+            reunião." → o sistema substitui os placeholders pelos dados reais antes de
+            enviar. Você escreve só prosa em volta.
+
+            **CONFIRMAÇÃO OBRIGATÓRIA** — antes de chamar ShareViaEmail, CONFIRME com o
+            usuário: destinatário (nome + email), assunto, e o que vai no corpo. Só
+            dispara depois do "sim, manda". Email externo é o tipo de coisa onde um bug
+            = um email pra pessoa errada. Sempre confirme.
+
             ## TINY STEP — quando o usuário trava
 
             Quando ele expressar paralisia ("não sei por onde começar", "tá pesado demais",
@@ -288,6 +310,7 @@ class FinanceCoach implements Agent, Conversational, HasTools
             new LogWorry($activeGoalId),
             new RememberFact,
             new RecallFacts,
+            new ShareViaEmail,
             new WebSearch,
             new WebFetch,
         ];

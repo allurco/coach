@@ -202,6 +202,6 @@ it('falls back gracefully when a referenced snapshot is missing', function () {
     expect($expanded)
         ->toContain('antes')
         ->toContain('depois')
-        ->toContain('snapshot indisponível')
+        ->toContain((string) __('coach.placeholders.budget_missing'))
         ->not->toContain('{{budget:');
 });

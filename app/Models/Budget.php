@@ -86,8 +86,10 @@ class Budget extends Model
     }
 
     /**
-     * The user's most recent budget. Bypasses the owner global scope
-     * so this works regardless of who's authenticated when called.
+     * The user's most recent budget — sorted by month (canonical
+     * YYYY-MM string sort works) then id as a tiebreaker. Bypasses
+     * the owner global scope so this works regardless of who's
+     * authenticated when called.
      */
     public static function currentForUser(int $userId): ?self
     {
