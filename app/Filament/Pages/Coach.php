@@ -180,30 +180,43 @@ class Coach extends Page implements HasForms
             ->orderByRaw("CASE priority WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END")
             ->limit(100)
             ->get()
-            ->map(fn (Action $a) => [
-                'id' => $a->id,
-                'title' => $a->title,
-                'category' => $a->category,
-                'priority' => $a->priority,
-                'status' => $a->status,
-                'deadline' => $a->deadline?->format('d/m/Y'),
-                'is_overdue' => $a->isOverdue(),
-                'is_due_soon' => $a->isDueSoon(),
-                'description' => $a->description,
-                'importance' => $a->importance,
-                'difficulty' => $a->difficulty,
-                'snooze_until' => $a->snooze_until?->format('d/m/Y'),
-                'result_notes' => $a->result_notes,
-                'completed_at' => $a->completed_at?->format('d/m/Y'),
-                'attachments' => collect($a->attachments ?? [])
+            ->map(function (Action $a) {
+                $attachments = collect($a->attachments ?? [])
                     ->filter(fn ($p) => is_string($p) && $p !== '')
                     ->map(fn (string $path) => [
                         'path' => $path,
                         'name' => basename($path),
                     ])
                     ->values()
-                    ->all(),
-            ])
+                    ->all();
+
+                $hasDetails = $a->description !== null && $a->description !== ''
+                    || $a->importance !== null && $a->importance !== ''
+                    || $a->difficulty !== null && $a->difficulty !== ''
+                    || $a->snooze_until !== null
+                    || $a->result_notes !== null && $a->result_notes !== ''
+                    || $a->completed_at !== null
+                    || ! empty($attachments);
+
+                return [
+                    'id' => $a->id,
+                    'title' => $a->title,
+                    'category' => $a->category,
+                    'priority' => $a->priority,
+                    'status' => $a->status,
+                    'deadline' => $a->deadline?->format('d/m/Y'),
+                    'is_overdue' => $a->isOverdue(),
+                    'is_due_soon' => $a->isDueSoon(),
+                    'description' => $a->description,
+                    'importance' => $a->importance,
+                    'difficulty' => $a->difficulty,
+                    'snooze_until' => $a->snooze_until?->format('d/m/Y'),
+                    'result_notes' => $a->result_notes,
+                    'completed_at' => $a->completed_at?->format('d/m/Y'),
+                    'attachments' => $attachments,
+                    'has_details' => $hasDetails,
+                ];
+            })
             ->toArray();
     }
 
@@ -305,10 +318,7 @@ class Coach extends Page implements HasForms
     /**
      * The active goal's sidebar entry — the array shape produced by
      * loadGoals(). Returns null when no goal is active, or when the
-     * active id no longer matches any loaded goal. Called from the
-     * blade view so the variable is always defined (used to be an
-     * inline @php block, but stale compiled views on shared storage
-     * could resurrect a version where it wasn't declared).
+     * active id no longer matches any loaded goal.
      *
      * @return array{id:int,name:string,label:string,is_archived:bool,last_activity_label:?string}|null
      */
@@ -319,6 +329,47 @@ class Coach extends Page implements HasForms
         }
 
         return collect($this->goals)->firstWhere('id', $this->activeGoalId);
+    }
+
+    /**
+     * Open + in-progress actions in the current plan view. Drives the
+     * badge on the "Plano" button.
+     */
+    public function pendingPlanCount(): int
+    {
+        return collect($this->planActions)
+            ->whereIn('status', ['pendente', 'em_andamento'])
+            ->count();
+    }
+
+    /**
+     * First word of the authenticated user's name, or '' when no user
+     * or no name. Used in the greeting line.
+     */
+    public function userFirstName(): string
+    {
+        $name = auth()->user()?->name ?? '';
+
+        return trim(explode(' ', $name)[0] ?? '');
+    }
+
+    /**
+     * Which suggestion bundle to surface in the empty-thread state:
+     *   - first-timer (no plan + no memories) → onboarding-flavored
+     *   - active plan                         → action-flavored
+     *   - default                             → generic
+     */
+    public function suggestionsKey(): string
+    {
+        if ($this->isFirstTimer()) {
+            return 'coach.suggestions_first';
+        }
+
+        if (! empty($this->planActions)) {
+            return 'coach.suggestions_active';
+        }
+
+        return 'coach.suggestions';
     }
 
     public function loadGoals(): void
