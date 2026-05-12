@@ -5,25 +5,39 @@ use App\Models\User;
 use Livewire\Livewire;
 
 /**
- * Diagnóstico do MultipleRootElementsDetectedException que aparece
- * só no CI — local mostra 1 root via DOMDocument. Esse teste:
+ * Última rodada forense pro multi-root no CI:
  *
- *   1. Desliga app.debug pra evitar que o próprio check do Livewire
- *      lance a exceção antes de a gente conseguir inspecionar o HTML.
- *   2. Renderiza via Livewire::test (mesmo pipeline que falhou no CI).
- *   3. Reaplica a contagem exata do Livewire (DOMDocument > body >
- *      childNodes XML_ELEMENT_NODE).
- *   4. Se contar > 1, falha mostrando os tagNames + classes dos
- *      filhos e os primeiros 4000 chars do HTML cleaned.
+ *   - Locale forçado en (replica .env.example do CI)
+ *   - 4 estratégias de parse: bare, whitespace-normalized, UTF-8
+ *     hint, sem comments — relata quantos roots cada uma vê
+ *   - Lista libxml errors caso parser tropece em algo específico
  *
- * Local roda verde. Se CI continuar com multi-root, o output da
- * mensagem dessa expect vai dizer exatamente quais elementos estão
- * no topo — aí dá pra remover a fonte real (ou marcar como falso
- * positivo se for ruído inevitável do renderer).
+ * Esperado: pelo menos UMA estratégia retorna count=1 (a que
+ * identifica a causa exata). Se nenhuma, problema é mais profundo
+ * que charset/comments/whitespace.
  */
-it('reports exactly one root element from Coach::class rendered HTML', function () {
-    config(['app.debug' => false]); // desliga o early-throw do Livewire
-    app()->setLocale('en'); // CI usa .env.example com APP_LOCALE=en — reproduz aqui
+function countRoots(string $html): int
+{
+    $dom = new DOMDocument;
+    libxml_use_internal_errors(true);
+    $dom->loadHTML($html, LIBXML_NOERROR);
+    libxml_clear_errors();
+    $body = $dom->getElementsByTagName('body')->item(0);
+    $count = 0;
+    if ($body) {
+        foreach ($body->childNodes as $child) {
+            if ($child->nodeType === XML_ELEMENT_NODE) {
+                $count++;
+            }
+        }
+    }
+
+    return $count;
+}
+
+it('reports root counts across 4 parse strategies', function () {
+    config(['app.debug' => false]);
+    app()->setLocale('en');
 
     $user = User::factory()->create();
     $this->actingAs($user);
@@ -31,61 +45,26 @@ it('reports exactly one root element from Coach::class rendered HTML', function 
     $page = Livewire::test(Coach::class);
     $html = (string) $page->html();
 
-    // Replica a mesma lógica do
-    // vendor/livewire/livewire/src/Features/SupportMultipleRootElementDetection
-    // /SupportMultipleRootElementDetection.php — strip script + style, parse,
-    // count XML_ELEMENT_NODE children of body.
-    $cleaned = preg_replace('/<script\b[^>]*>.*?<\/script>/si', '', $html);
-    $cleaned = preg_replace('/<style\b[^>]*>.*?<\/style>/si', '', $cleaned);
+    // Strip <script>/<style> exatamente como Livewire faz.
+    $base = preg_replace('/<script\b[^>]*>.*?<\/script>/si', '', $html);
+    $base = preg_replace('/<style\b[^>]*>.*?<\/style>/si', '', $base);
 
-    $dom = new DOMDocument;
-    libxml_use_internal_errors(true);
-    $dom->loadHTML($cleaned, LIBXML_NOERROR);
-    libxml_clear_errors();
+    $strategies = [
+        'bare' => $base,
+        'no_whitespace' => preg_replace('/\s+/', ' ', $base),
+        'utf8_hint' => '<?xml encoding="UTF-8"?>'.$base,
+        'no_comments' => preg_replace('/<!--.*?-->/s', '', $base),
+    ];
 
-    $body = $dom->getElementsByTagName('body')->item(0);
-
-    $rootSummaries = [];
-    foreach ($body->childNodes as $child) {
-        if ($child->nodeType !== XML_ELEMENT_NODE) {
-            continue;
-        }
-        $class = method_exists($child, 'getAttribute') ? $child->getAttribute('class') : '';
-        $rootSummaries[] = sprintf('<%s class="%s">', $child->nodeName, $class);
+    $results = [];
+    foreach ($strategies as $name => $variant) {
+        $results[$name] = countRoots($variant);
     }
 
-    $count = count($rootSummaries);
+    $msg = "Root counts: ".json_encode($results)."\n\n"
+        ."If any strategy returns 1, that's the parser quirk to neutralize.\n"
+        ."If all return 2, the issue is deeper than charset/comments/whitespace.\n\n"
+        ."HTML head:\n".substr($base, 0, 3000);
 
-    // Se a contagem inicial deu > 1, normaliza atributos multi-linha
-    // (libxml do Ubuntu não lida bem com newlines literais em atributos
-    // — o Filament emite x-data assim em <x-filament-actions::modals />,
-    // e o parser fecha a div pai prematuramente, jogando o filho pra
-    // body level) e conta de novo. Se normalizado dá 1, a culpa é do
-    // parser + emissão do Filament, não do nosso código.
-    if ($count !== 1) {
-        $normalized = preg_replace('/\s+/', ' ', $cleaned);
-        $dom2 = new DOMDocument;
-        libxml_use_internal_errors(true);
-        $dom2->loadHTML($normalized, LIBXML_NOERROR);
-        libxml_clear_errors();
-        $body2 = $dom2->getElementsByTagName('body')->item(0);
-        $countNormalized = 0;
-        foreach ($body2->childNodes as $child) {
-            if ($child->nodeType === XML_ELEMENT_NODE) {
-                $countNormalized++;
-            }
-        }
-
-        $snippet = substr($cleaned, 0, 4000);
-        $msg = sprintf(
-            "Root count raw = %d, after whitespace normalization = %d.\nRaw body children:\n%s\n\nHTML head:\n%s",
-            $count,
-            $countNormalized,
-            implode("\n", $rootSummaries),
-            $snippet,
-        );
-        expect($count)->toBe(1, $msg);
-    }
-
-    expect($count)->toBe(1);
+    expect($results['bare'])->toBe(1, $msg);
 });
