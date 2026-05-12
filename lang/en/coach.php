@@ -85,7 +85,7 @@ return [
         'empty' => 'No :status actions.',
         'empty_pendente' => 'Nothing pending. Breathe.',
         'empty_em_andamento' => 'Nothing in progress.',
-        'empty_concluido' => 'Nothing finished yet — let’s get started.',
+        'empty_concluido' => "Nothing finished yet — let's get started.",
         'empty_todas' => 'No actions in this goal yet. Ask the coach to create the first one.',
         'view_all' => 'View all →',
         'mark_done' => 'Mark done',
@@ -143,7 +143,7 @@ return [
     ],
 
     'budget_reminder' => [
-        'subject_recurring' => 'Budget time — let’s update?',
+        'subject_recurring' => "Budget time — let's update?",
         'subject_intro' => 'Have you tried Budget Planning yet?',
     ],
 
@@ -181,7 +181,7 @@ return [
             'prompt' => "Let's build my budget for this month.",
         ],
         'refresh_budget' => [
-            'title' => 'Refresh this month’s budget',
+            'title' => "Refresh this month's budget",
             'prompt' => "Let's refresh the budget for this month.",
         ],
         'add_first_action' => [
@@ -190,7 +190,7 @@ return [
         ],
         'review_overdue' => [
             'title' => 'You have an overdue action',
-            'prompt' => 'Anything overdue? Let’s tackle or push it.',
+            'prompt' => "Anything overdue? Let's tackle or push it.",
         ],
         'log_first_win' => [
             'title' => 'Log how that one went',
@@ -214,7 +214,7 @@ return [
         ],
         'revisit_worry' => [
             'title' => 'That worry — did it materialize?',
-            'prompt' => 'Let’s revisit that worry I logged — did it materialize?',
+            'prompt' => "Let's revisit that worry I logged — did it materialize?",
         ],
         'save_contact' => [
             'title' => 'Save a contact to share things with later',
