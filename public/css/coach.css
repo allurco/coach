@@ -1278,9 +1278,9 @@ body:has(.complete-modal-overlay) .coach-thread {
 }
 
 .drawer-headline {
-    font-size: 1.4rem;
+    font-size: 1.7rem;
     font-weight: 500;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     color: var(--c-ink);
     font-feature-settings: "ss01" 1;
     font-variant-numeric: tabular-nums;
@@ -1989,6 +1989,19 @@ body:has(.complete-modal-overlay) .coach-thread {
     .plan-item-row {
         gap: 0.4rem;
     }
+
+    /* iOS Safari auto-zooms the viewport when the user taps an input
+       whose computed font-size is below 16px. Force 16px floor on every
+       text/number input + textarea inside the Coach surface — the visual
+       weight is tuned via line-height instead. */
+    .coach-page input,
+    .coach-page textarea,
+    .coach-page select,
+    .complete-modal input,
+    .complete-modal textarea,
+    .complete-modal select {
+        font-size: 16px !important;
+    }
 }
 
 /* ============================================================ */
@@ -2357,6 +2370,100 @@ body:has(.complete-modal-overlay) .coach-thread {
 .dark .budget-section-target.is-off {
     background: rgba(217, 119, 6, 0.22);
     color: #fbbf24;
+}
+
+/* ===== Budget flyout skeleton — editorial loading state =====
+   Mirrors the final layout shape 1:1. Labels (drawer eyebrow,
+   section titles, hero label, total label, lazer label) stay
+   real because we know them statically — keeps the visual
+   handoff calm. Only the dynamic values are bar placeholders.
+
+   ZERO shimmer gradient on purpose: shimmer reads as generic
+   AI-loading. Opacity oscillation is quieter and matches the
+   editorial tone. Sections stagger via --delay so the rhythm
+   feels intentional rather than synchronized-pulsing.
+*/
+.skel-bar {
+    display: inline-block;
+    background: color-mix(in srgb, var(--c-ink) 8%, transparent);
+    border-radius: 4px;
+    animation: skel-pulse 1.4s cubic-bezier(.4, 0, .6, 1) infinite;
+    animation-delay: var(--delay, 0ms);
+    vertical-align: middle;
+}
+
+@keyframes skel-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.95; }
+}
+
+/* Heights match the real elements 1:1 so swapping skeleton →
+   content doesn't shift layout. */
+.skel-bar-headline {
+    height: 1.7rem;
+    width: 7rem;
+    border-radius: 6px;
+}
+
+.skel-bar-hero {
+    height: 1.85rem;
+    width: 11rem;
+    margin-top: 0.25rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--c-accent) 14%, transparent);
+}
+
+.skel-bar-chip {
+    height: 1.4rem;
+    width: 4.5rem;
+    border-radius: 999px;
+}
+
+.skel-bar-line {
+    height: 1.6rem;
+    width: 100%;
+    border-radius: 5px;
+}
+
+.skel-line-row {
+    /* Override the editable grid so the skeleton row is full-width. */
+    display: block;
+    padding: 0.5rem 0;
+}
+
+.skel-bar-total {
+    height: 1.05rem;
+    width: 6rem;
+    border-radius: 4px;
+}
+
+.skel-bar-leisure {
+    height: 1.65rem;
+    width: 9rem;
+    margin-top: 0.35rem;
+    border-radius: 6px;
+}
+
+.skel-bar-btn {
+    height: 2.25rem;
+    width: 7rem;
+    border-radius: 8px;
+}
+
+.skel-bar-btn-primary {
+    background: color-mix(in srgb, var(--c-ink) 22%, transparent);
+}
+
+.dark .skel-bar {
+    background: color-mix(in srgb, var(--c-ink) 14%, transparent);
+}
+
+.dark .skel-bar-hero {
+    background: color-mix(in srgb, var(--c-accent) 22%, transparent);
+}
+
+.dark .skel-bar-btn-primary {
+    background: color-mix(in srgb, var(--c-ink) 35%, transparent);
 }
 
 /* ===== Budget flyout (Stage 2: editable inline) ===== */
