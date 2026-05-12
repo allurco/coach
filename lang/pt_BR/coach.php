@@ -111,6 +111,10 @@ return [
         ],
     ],
 
+    'plan_flyout' => [
+        'eyebrow' => 'Plano',
+    ],
+
     'complete_modal' => [
         'title' => 'Concluir ação',
         'label' => 'Como você concluiu?',
@@ -246,6 +250,39 @@ return [
 
     'budget' => [
         'auto_close_note' => 'Concluída automaticamente quando o snapshot #:snapshot_id foi gerado.',
+    ],
+
+    'budget_flyout' => [
+        'toggle' => 'Budget',
+        'title' => 'Orçamento atual',
+        'subtitle' => 'Mês :month',
+        'eyebrow' => 'Orçamento',
+        'net_income' => 'Renda líquida mensal',
+        'fixed_costs' => 'Custos fixos',
+        'investments' => 'Investimentos',
+        'savings' => 'Reservas',
+        'leisure' => 'Lazer (sobra)',
+        'total' => 'Total',
+        'subtotal' => 'Subtotal',
+        'total_with_buffer' => 'Total com buffer 15%',
+        'buffer_note' => 'subtotal :subtotal · +15% buffer :buffer',
+        'empty_bucket' => 'Sem linhas — adicione abaixo.',
+        'deficit_warning' => 'Déficit de :amount — as caixas planejadas estouram a renda.',
+        'line_label_placeholder' => 'descrição',
+        'add_line' => 'adicionar linha',
+        'remove_line' => 'Remover linha',
+        'save' => 'Salvar',
+        'saved' => 'Orçamento salvo.',
+        'share' => 'Compartilhar',
+        'share_modal_title' => 'Compartilhar este orçamento',
+        'share_subject_default' => 'Meu orçamento de :month',
+        'share_body_default' => "Oi,\n\nSegue meu orçamento atual:\n\n{{budget:current}}\n\nQualquer dúvida me avisa.",
+        'share_recipient_label' => 'Para',
+        'share_recipient_placeholder' => 'email ou nome do contato salvo',
+        'share_subject_label' => 'Assunto',
+        'share_body_label' => 'Mensagem',
+        'share_send' => 'Enviar',
+        'share_cancel' => 'Cancelar',
     ],
 
     'read_budget' => [

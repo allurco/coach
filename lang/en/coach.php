@@ -85,7 +85,7 @@ return [
         'empty' => 'No :status actions.',
         'empty_pendente' => 'Nothing pending. Breathe.',
         'empty_em_andamento' => 'Nothing in progress.',
-        'empty_concluido' => 'Nothing finished yet — let’s get started.',
+        'empty_concluido' => "Nothing finished yet — let's get started.",
         'empty_todas' => 'No actions in this goal yet. Ask the coach to create the first one.',
         'view_all' => 'View all →',
         'mark_done' => 'Mark done',
@@ -109,6 +109,10 @@ return [
             'attachments' => 'Attachments',
             'no_attachments' => 'No attachments',
         ],
+    ],
+
+    'plan_flyout' => [
+        'eyebrow' => 'Plan',
     ],
 
     'complete_modal' => [
@@ -139,7 +143,7 @@ return [
     ],
 
     'budget_reminder' => [
-        'subject_recurring' => 'Budget time — let’s update?',
+        'subject_recurring' => "Budget time — let's update?",
         'subject_intro' => 'Have you tried Budget Planning yet?',
     ],
 
@@ -177,7 +181,7 @@ return [
             'prompt' => "Let's build my budget for this month.",
         ],
         'refresh_budget' => [
-            'title' => 'Refresh this month’s budget',
+            'title' => "Refresh this month's budget",
             'prompt' => "Let's refresh the budget for this month.",
         ],
         'add_first_action' => [
@@ -186,7 +190,7 @@ return [
         ],
         'review_overdue' => [
             'title' => 'You have an overdue action',
-            'prompt' => 'Anything overdue? Let’s tackle or push it.',
+            'prompt' => "Anything overdue? Let's tackle or push it.",
         ],
         'log_first_win' => [
             'title' => 'Log how that one went',
@@ -210,7 +214,7 @@ return [
         ],
         'revisit_worry' => [
             'title' => 'That worry — did it materialize?',
-            'prompt' => 'Let’s revisit that worry I logged — did it materialize?',
+            'prompt' => "Let's revisit that worry I logged — did it materialize?",
         ],
         'save_contact' => [
             'title' => 'Save a contact to share things with later',
@@ -246,6 +250,39 @@ return [
 
     'budget' => [
         'auto_close_note' => 'Closed automatically when snapshot #:snapshot_id was generated.',
+    ],
+
+    'budget_flyout' => [
+        'toggle' => 'Budget',
+        'title' => 'Current budget',
+        'subtitle' => 'Month :month',
+        'eyebrow' => 'Budget',
+        'net_income' => 'Monthly net income',
+        'fixed_costs' => 'Fixed costs',
+        'investments' => 'Investments',
+        'savings' => 'Savings',
+        'leisure' => 'Leisure (leftover)',
+        'total' => 'Total',
+        'subtotal' => 'Subtotal',
+        'total_with_buffer' => 'Total with 15% buffer',
+        'buffer_note' => 'subtotal :subtotal · +15% buffer :buffer',
+        'empty_bucket' => 'No lines yet — add one below.',
+        'deficit_warning' => 'Shortfall of :amount — planned buckets exceed income.',
+        'line_label_placeholder' => 'description',
+        'add_line' => 'add line',
+        'remove_line' => 'Remove line',
+        'save' => 'Save',
+        'saved' => 'Budget saved.',
+        'share' => 'Share',
+        'share_modal_title' => 'Share this budget',
+        'share_subject_default' => 'My budget for :month',
+        'share_body_default' => "Hi,\n\nHere's my current budget:\n\n{{budget:current}}\n\nLet me know if you have questions.",
+        'share_recipient_label' => 'To',
+        'share_recipient_placeholder' => 'email or saved contact name',
+        'share_subject_label' => 'Subject',
+        'share_body_label' => 'Message',
+        'share_send' => 'Send',
+        'share_cancel' => 'Cancel',
     ],
 
     'read_budget' => [

@@ -4,11 +4,14 @@ namespace App\Filament\Pages;
 
 use App\Ai\Agents\FinanceCoach;
 use App\Ai\Tools\BudgetSnapshot;
-use App\Exceptions\ShareFailedException;
+use App\Filament\Pages\Concerns\HasBudgetFlyout;
+use App\Filament\Pages\Concerns\HasBudgetShare;
+use App\Filament\Pages\Concerns\HasPlanFlyout;
+use App\Filament\Pages\Concerns\HasShareMessageModal;
 use App\Models\Action;
+use App\Models\Budget;
 use App\Models\CoachMemory;
 use App\Models\Goal;
-use App\Services\Sharer;
 use App\Services\TipResolver;
 use App\Tips\Tip;
 use BackedEnum;
@@ -17,7 +20,6 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -36,6 +38,10 @@ use Throwable;
 
 class Coach extends Page implements HasForms
 {
+    use HasBudgetFlyout;
+    use HasBudgetShare;
+    use HasPlanFlyout;
+    use HasShareMessageModal;
     use InteractsWithForms;
 
     protected string $view = 'filament.pages.coach';
@@ -78,26 +84,6 @@ class Coach extends Page implements HasForms
     public ?string $pendingPrompt = null;
 
     public array $pendingAttachments = [];
-
-    public array $planActions = [];
-
-    public string $planFilter = 'pendente';
-
-    public ?int $completingActionId = null;
-
-    public ?string $completingActionTitle = null;
-
-    public string $completingNotes = '';
-
-    public ?int $sharingMessageIndex = null;
-
-    public string $shareRecipient = '';
-
-    public string $shareSubject = '';
-
-    public string $shareBody = '';
-
-    public ?string $shareError = null;
 
     // Memoization for view helpers called multiple times per render.
     // Private — Livewire doesn't dehydrate these, so they reset
@@ -192,195 +178,6 @@ class Coach extends Page implements HasForms
         $this->loadPlan();
     }
 
-    public function loadPlan(): void
-    {
-        $query = Action::query();
-
-        // Scope plan to the active goal so each workspace shows only its
-        // own actions. Falls back to user-wide if no goal is active yet.
-        if ($this->activeGoalId !== null) {
-            $query->where('goal_id', $this->activeGoalId);
-        }
-
-        if ($this->planFilter !== 'todas') {
-            $query->where('status', $this->planFilter);
-        }
-
-        $this->planActions = $query
-            ->orderByRaw("CASE status WHEN 'em_andamento' THEN 0 WHEN 'pendente' THEN 1 WHEN 'concluido' THEN 2 ELSE 3 END")
-            ->orderByRaw('deadline IS NULL, deadline ASC')
-            ->orderByRaw("CASE priority WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END")
-            ->limit(100)
-            ->get()
-            ->map(function (Action $a) {
-                $attachments = collect($a->attachments ?? [])
-                    ->filter(fn ($p) => is_string($p) && $p !== '')
-                    ->map(fn (string $path) => [
-                        'path' => $path,
-                        'name' => basename($path),
-                    ])
-                    ->values()
-                    ->all();
-
-                $hasDetails = filled($a->description)
-                    || filled($a->importance)
-                    || filled($a->difficulty)
-                    || filled($a->snooze_until)
-                    || filled($a->result_notes)
-                    || filled($a->completed_at)
-                    || filled($attachments);
-
-                return [
-                    'id' => $a->id,
-                    'title' => $a->title,
-                    'category' => $a->category,
-                    'priority' => $a->priority,
-                    'status' => $a->status,
-                    'deadline' => $a->deadline?->format('d/m/Y'),
-                    'is_overdue' => $a->isOverdue(),
-                    'is_due_soon' => $a->isDueSoon(),
-                    'description' => $a->description,
-                    'importance' => $a->importance,
-                    'difficulty' => $a->difficulty,
-                    'snooze_until' => $a->snooze_until?->format('d/m/Y'),
-                    'result_notes' => $a->result_notes,
-                    'completed_at' => $a->completed_at?->format('d/m/Y'),
-                    'attachments' => $attachments,
-                    'has_details' => $hasDetails,
-                ];
-            })
-            ->toArray();
-    }
-
-    public function setPlanFilter(string $filter): void
-    {
-        $this->planFilter = $filter;
-        $this->loadPlan();
-    }
-
-    public function startCompleteAction(int $id): void
-    {
-        $action = Action::find($id);
-        if (! $action) {
-            return;
-        }
-        $this->completingActionId = $id;
-        $this->completingActionTitle = $action->title;
-        $this->completingNotes = '';
-    }
-
-    public function cancelCompleteAction(): void
-    {
-        $this->completingActionId = null;
-        $this->completingActionTitle = null;
-        $this->completingNotes = '';
-    }
-
-    public function confirmCompleteAction(): void
-    {
-        if ($this->completingActionId === null) {
-            return;
-        }
-
-        $payload = [
-            'status' => 'concluido',
-            'completed_at' => now(),
-            'snooze_until' => null,
-        ];
-
-        $notes = trim($this->completingNotes);
-        if ($notes !== '') {
-            $payload['result_notes'] = $notes;
-        }
-
-        Action::where('id', $this->completingActionId)->update($payload);
-
-        $this->cancelCompleteAction();
-        $this->loadPlan();
-    }
-
-    public function snoozeAction(int $id, string $duration): void
-    {
-        $until = match ($duration) {
-            'tomorrow' => now()->addDay(),
-            '3days' => now()->addDays(3),
-            'week' => now()->addWeek(),
-            'month' => now()->addMonth(),
-            default => null,
-        };
-
-        Action::where('id', $id)->update(['snooze_until' => $until?->toDateString()]);
-        $this->loadPlan();
-    }
-
-    /**
-     * Open the share modal with the body pre-filled from the assistant
-     * message at $messageIndex. Silently no-ops for invalid indices and
-     * user-authored messages — sharing your own input doesn't make
-     * sense (the recipient would get back the question, not the
-     * answer).
-     */
-    public function openShareModal(int $messageIndex): void
-    {
-        if (! isset($this->messages[$messageIndex])) {
-            return;
-        }
-
-        $msg = $this->messages[$messageIndex];
-        if (($msg['role'] ?? null) !== 'assistant') {
-            return;
-        }
-
-        $this->sharingMessageIndex = $messageIndex;
-        $this->shareRecipient = '';
-        $this->shareSubject = (string) __('coach.share_modal.default_subject', [
-            'date' => now()->format('d/m/Y'),
-        ]);
-        $this->shareBody = (string) ($msg['content'] ?? '');
-        $this->shareError = null;
-    }
-
-    public function cancelShare(): void
-    {
-        $this->sharingMessageIndex = null;
-        $this->shareRecipient = '';
-        $this->shareSubject = '';
-        $this->shareBody = '';
-        $this->shareError = null;
-    }
-
-    public function confirmShare(): void
-    {
-        if ($this->sharingMessageIndex === null) {
-            return;
-        }
-
-        $user = auth()->user();
-        if (! $user) {
-            $this->shareError = (string) __('coach.share.errors.unauthenticated');
-
-            return;
-        }
-
-        try {
-            $message = app(Sharer::class)->send(
-                user: $user,
-                to: $this->shareRecipient,
-                subject: $this->shareSubject,
-                body: $this->shareBody,
-            );
-
-            Notification::make()
-                ->title($message)
-                ->success()
-                ->send();
-
-            $this->cancelShare();
-        } catch (ShareFailedException $e) {
-            $this->shareError = $e->getMessage();
-        }
-    }
-
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -434,17 +231,6 @@ class Coach extends Page implements HasForms
         }
 
         return $this->memoActiveGoal = collect($this->goals)->firstWhere('id', $this->activeGoalId);
-    }
-
-    /**
-     * Open + in-progress actions in the current plan view. Drives the
-     * badge on the "Plano" button.
-     */
-    public function pendingPlanCount(): int
-    {
-        return $this->memoPendingPlanCount ??= collect($this->planActions)
-            ->whereIn('status', Action::OPEN_STATUSES)
-            ->count();
     }
 
     /** First word of the auth user's name, used in the greeting line. */
