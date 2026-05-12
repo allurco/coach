@@ -6,6 +6,7 @@ use App\Ai\Agents\FinanceCoach;
 use App\Ai\Tools\BudgetSnapshot;
 use App\Exceptions\ShareFailedException;
 use App\Models\Action;
+use App\Models\Budget;
 use App\Models\CoachMemory;
 use App\Models\Goal;
 use App\Services\Sharer;
@@ -88,6 +89,11 @@ class Coach extends Page implements HasForms
     public ?string $completingActionTitle = null;
 
     public string $completingNotes = '';
+
+    public bool $budgetOpen = false;
+
+    /** Snapshot rows for the flyout, hydrated by openBudget(). */
+    public ?array $budgetData = null;
 
     public ?int $sharingMessageIndex = null;
 
@@ -434,6 +440,55 @@ class Coach extends Page implements HasForms
         }
 
         return $this->memoActiveGoal = collect($this->goals)->firstWhere('id', $this->activeGoalId);
+    }
+
+    /**
+     * Drives whether the "Budget" header button renders. Lazy on purpose:
+     * cheap COUNT(1) query, called once per render via the public
+     * accessor in the view. No need to memoize — Eloquent's query cache
+     * would only help if we called it multiple times, and we don't.
+     */
+    public function hasBudget(): bool
+    {
+        return Budget::currentForUser((int) auth()->id()) !== null;
+    }
+
+    /**
+     * Hydrate $budgetData from the user's current snapshot and open the
+     * flyout. Silent no-op when no budget exists — the trigger button
+     * shouldn't render in that state anyway, so reaching this path
+     * means a stale client or programmatic call; either way, don't
+     * crash and don't show an empty flyout.
+     */
+    public function openBudget(): void
+    {
+        $userId = (int) auth()->id();
+        $budget = Budget::currentForUser($userId);
+        if ($budget === null) {
+            return;
+        }
+
+        $this->budgetData = [
+            'id' => $budget->id,
+            'month' => (string) $budget->month,
+            'net_income' => (float) $budget->net_income,
+            'fixed_costs_breakdown' => is_array($budget->fixed_costs_breakdown) ? $budget->fixed_costs_breakdown : [],
+            'fixed_costs_subtotal' => (float) $budget->fixed_costs_subtotal,
+            'fixed_costs_total' => (float) $budget->fixed_costs_total,
+            'investments_breakdown' => is_array($budget->investments_breakdown) ? $budget->investments_breakdown : [],
+            'investments_total' => (float) $budget->investments_total,
+            'savings_breakdown' => is_array($budget->savings_breakdown) ? $budget->savings_breakdown : [],
+            'savings_total' => (float) $budget->savings_total,
+            'leisure_amount' => (float) $budget->leisure_amount,
+            'notes' => (string) ($budget->notes ?? ''),
+        ];
+        $this->budgetOpen = true;
+    }
+
+    public function closeBudget(): void
+    {
+        $this->budgetOpen = false;
+        $this->budgetData = null;
     }
 
     /**

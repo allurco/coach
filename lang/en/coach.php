@@ -248,6 +248,22 @@ return [
         'auto_close_note' => 'Closed automatically when snapshot #:snapshot_id was generated.',
     ],
 
+    'budget_flyout' => [
+        'toggle' => 'Budget',
+        'title' => 'Current budget',
+        'subtitle' => 'Month :month',
+        'net_income' => 'Net income',
+        'fixed_costs' => 'Fixed costs',
+        'investments' => 'Investments',
+        'savings' => 'Savings',
+        'leisure' => 'Leisure (leftover)',
+        'total' => 'Total',
+        'subtotal' => 'Subtotal',
+        'total_with_buffer' => 'Total with 15% buffer',
+        'empty_bucket' => '_(no lines)_',
+        'deficit_warning' => 'Heads up: shortfall of :amount — planned buckets exceed income.',
+    ],
+
     'read_budget' => [
         'unauthenticated' => 'Error: user not authenticated.',
         'none' => 'No budget yet — you have never run BudgetSnapshot. To create one we need your net income + a list of fixed costs.',

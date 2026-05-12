@@ -2052,3 +2052,152 @@ body:has(.complete-modal-overlay) .coach-thread {
     color: var(--c-muted);
     font-size: 0.85rem;
 }
+
+/* ===== Budget flyout (Stage 1: read-only) ===== */
+
+.budget-toggle-btn {
+    /* Sibling of .plan-toggle-btn — inherits its layout, adds spacing. */
+    margin-right: 0.4rem;
+}
+
+.budget-toggle-label {
+    /* Hide label on very narrow viewports — icon-only on mobile. */
+}
+
+@media (max-width: 480px) {
+    .budget-toggle-label { display: none; }
+}
+
+.budget-drawer {
+    /* Reuses .plan-drawer base styles; just an explicit hook for future tweaks. */
+}
+
+.budget-flyout-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 1.5rem 1.5rem;
+    font-size: 0.92rem;
+}
+
+.budget-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.budget-row-headline {
+    padding: 0.9rem 0;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.budget-row-headline .budget-row-value {
+    color: var(--c-accent);
+}
+
+.budget-row-leisure {
+    padding: 0.9rem 0;
+    font-weight: 600;
+    border-top: 2px solid rgba(0, 0, 0, 0.08);
+    border-bottom: none;
+    margin-top: 0.5rem;
+}
+
+.budget-row-leisure .budget-row-value {
+    color: #059669;
+    font-size: 1.05rem;
+}
+
+.budget-row-leisure.is-deficit .budget-row-value {
+    color: #dc2626;
+}
+
+.budget-section {
+    margin-top: 1rem;
+}
+
+.budget-section-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    letter-spacing: 0.04em;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.budget-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0;
+    font-size: 0.9rem;
+}
+
+.budget-line-label {
+    color: var(--c-ink);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.budget-line-value {
+    color: var(--c-ink);
+    font-variant-numeric: tabular-nums;
+    margin-left: 0.75rem;
+    white-space: nowrap;
+}
+
+.budget-line-subtotal {
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+    padding-top: 0.55rem;
+    margin-top: 0.25rem;
+    color: var(--c-muted);
+    font-size: 0.85rem;
+}
+
+.budget-line-subtotal .budget-line-label,
+.budget-line-subtotal .budget-line-value {
+    color: var(--c-muted);
+}
+
+.budget-line-total {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    padding-top: 0.55rem;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+.budget-line-empty {
+    color: var(--c-muted);
+    font-style: italic;
+    font-size: 0.85rem;
+    padding: 0.35rem 0;
+}
+
+.budget-deficit-warning {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(220, 38, 38, 0.08);
+    border-left: 3px solid #dc2626;
+    border-radius: 4px;
+    font-size: 0.88rem;
+    color: #991b1b;
+    line-height: 1.45;
+}
+
+.dark .budget-row,
+.dark .budget-section-title,
+.dark .budget-line-subtotal,
+.dark .budget-line-total {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .budget-deficit-warning {
+    background: rgba(220, 38, 38, 0.15);
+    color: #fca5a5;
+}

@@ -1,9 +1,9 @@
 <x-filament-panels::page>
 
     <div class="coach-page"
-         x-data="{ planOpen: false, sidebarOpen: false }"
-         x-effect="document.body.classList.toggle('coach-overlay-locked', planOpen || sidebarOpen)"
-         @keydown.escape.window="planOpen = false; sidebarOpen = false">
+         x-data="{ planOpen: false, sidebarOpen: false, budgetOpen: false }"
+         x-effect="document.body.classList.toggle('coach-overlay-locked', planOpen || sidebarOpen || budgetOpen)"
+         @keydown.escape.window="planOpen = false; sidebarOpen = false; budgetOpen = false">
         <div class="coach-shell">
 
             {{-- Sidebar with chat history. Visible by default on desktop;
@@ -100,6 +100,15 @@
                             @endif
                         </div>
                     </div>
+
+                    @if ($this->hasBudget())
+                        <button type="button" class="plan-toggle-btn budget-toggle-btn"
+                                wire:click="openBudget"
+                                @click="budgetOpen = true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            <span class="budget-toggle-label">{{ __('coach.budget_flyout.toggle') }}</span>
+                        </button>
+                    @endif
 
                     <button type="button" class="plan-toggle-btn" @click="planOpen = true">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6"/><path d="M9 16h6"/></svg>
@@ -430,6 +439,98 @@
                     </div>
                 @endforelse
             </div>
+        </aside>
+
+        {{-- Budget flyout drawer (read-only stage 1) --}}
+        <div class="plan-overlay"
+             x-show="budgetOpen"
+             x-transition.opacity.duration.150ms
+             @click="budgetOpen = false; $wire.closeBudget()"
+             style="display: none;"></div>
+
+        <aside class="plan-drawer budget-drawer"
+               :class="budgetOpen ? 'is-open' : ''">
+            @if ($budgetData)
+                <div class="plan-drawer-header">
+                    <div>
+                        <div class="plan-drawer-title">{{ __('coach.budget_flyout.title') }}</div>
+                        <div class="plan-drawer-sub">{{ __('coach.budget_flyout.subtitle', ['month' => $budgetData['month']]) }}</div>
+                    </div>
+                    <button type="button" class="plan-close-btn" @click="budgetOpen = false" wire:click="closeBudget">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+
+                <div class="budget-flyout-body">
+                    <div class="budget-row budget-row-headline">
+                        <div class="budget-row-label">{{ __('coach.budget_flyout.net_income') }}</div>
+                        <div class="budget-row-value">R$ {{ number_format($budgetData['net_income'], 2, ',', '.') }}</div>
+                    </div>
+
+                    <div class="budget-section">
+                        <div class="budget-section-title">{{ __('coach.budget_flyout.fixed_costs') }}</div>
+                        @foreach ($budgetData['fixed_costs_breakdown'] as $label => $amount)
+                            <div class="budget-line">
+                                <span class="budget-line-label">{{ $label }}</span>
+                                <span class="budget-line-value">R$ {{ number_format((float) $amount, 2, ',', '.') }}</span>
+                            </div>
+                        @endforeach
+                        <div class="budget-line budget-line-subtotal">
+                            <span class="budget-line-label">{{ __('coach.budget_flyout.subtotal') }}</span>
+                            <span class="budget-line-value">R$ {{ number_format($budgetData['fixed_costs_subtotal'], 2, ',', '.') }}</span>
+                        </div>
+                        <div class="budget-line budget-line-total">
+                            <span class="budget-line-label">{{ __('coach.budget_flyout.total_with_buffer') }}</span>
+                            <span class="budget-line-value">R$ {{ number_format($budgetData['fixed_costs_total'], 2, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="budget-section">
+                        <div class="budget-section-title">{{ __('coach.budget_flyout.investments') }}</div>
+                        @foreach ($budgetData['investments_breakdown'] as $label => $amount)
+                            <div class="budget-line">
+                                <span class="budget-line-label">{{ $label }}</span>
+                                <span class="budget-line-value">R$ {{ number_format((float) $amount, 2, ',', '.') }}</span>
+                            </div>
+                        @endforeach
+                        @if (empty($budgetData['investments_breakdown']))
+                            <div class="budget-line budget-line-empty">{{ __('coach.budget_flyout.empty_bucket') }}</div>
+                        @endif
+                        <div class="budget-line budget-line-total">
+                            <span class="budget-line-label">{{ __('coach.budget_flyout.total') }}</span>
+                            <span class="budget-line-value">R$ {{ number_format($budgetData['investments_total'], 2, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="budget-section">
+                        <div class="budget-section-title">{{ __('coach.budget_flyout.savings') }}</div>
+                        @foreach ($budgetData['savings_breakdown'] as $label => $amount)
+                            <div class="budget-line">
+                                <span class="budget-line-label">{{ $label }}</span>
+                                <span class="budget-line-value">R$ {{ number_format((float) $amount, 2, ',', '.') }}</span>
+                            </div>
+                        @endforeach
+                        @if (empty($budgetData['savings_breakdown']))
+                            <div class="budget-line budget-line-empty">{{ __('coach.budget_flyout.empty_bucket') }}</div>
+                        @endif
+                        <div class="budget-line budget-line-total">
+                            <span class="budget-line-label">{{ __('coach.budget_flyout.total') }}</span>
+                            <span class="budget-line-value">R$ {{ number_format($budgetData['savings_total'], 2, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="budget-row budget-row-leisure {{ $budgetData['leisure_amount'] < 0 ? 'is-deficit' : '' }}">
+                        <div class="budget-row-label">{{ __('coach.budget_flyout.leisure') }}</div>
+                        <div class="budget-row-value">R$ {{ number_format($budgetData['leisure_amount'], 2, ',', '.') }}</div>
+                    </div>
+
+                    @if ($budgetData['leisure_amount'] < 0)
+                        <div class="budget-deficit-warning">
+                            {{ __('coach.budget_flyout.deficit_warning', ['amount' => 'R$ '.number_format(abs($budgetData['leisure_amount']), 2, ',', '.')]) }}
+                        </div>
+                    @endif
+                </div>
+            @endif
         </aside>
     </div>
 

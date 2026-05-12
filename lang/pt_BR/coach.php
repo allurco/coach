@@ -248,6 +248,22 @@ return [
         'auto_close_note' => 'Concluída automaticamente quando o snapshot #:snapshot_id foi gerado.',
     ],
 
+    'budget_flyout' => [
+        'toggle' => 'Budget',
+        'title' => 'Orçamento atual',
+        'subtitle' => 'Mês :month',
+        'net_income' => 'Renda líquida',
+        'fixed_costs' => 'Custos fixos',
+        'investments' => 'Investimentos',
+        'savings' => 'Reservas',
+        'leisure' => 'Lazer (sobra)',
+        'total' => 'Total',
+        'subtotal' => 'Subtotal',
+        'total_with_buffer' => 'Total com buffer 15%',
+        'empty_bucket' => '_(sem linhas)_',
+        'deficit_warning' => 'Atenção: déficit de :amount — as caixas planejadas estouram a renda.',
+    ],
+
     'read_budget' => [
         'unauthenticated' => 'Erro: usuário não autenticado.',
         'none' => 'Sem orçamento ainda — você nunca rodou o BudgetSnapshot. Pra criar um, precisamos da sua renda líquida + lista de custos fixos.',
