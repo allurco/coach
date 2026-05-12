@@ -2325,6 +2325,28 @@ body:has(.complete-modal-overlay) .coach-thread {
     margin-top: 1rem;
     display: flex;
     justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.budget-share-btn {
+    background: transparent;
+    color: var(--c-muted);
+    border: 1px solid var(--c-line);
+    border-radius: 8px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.budget-share-btn:hover {
+    color: var(--c-ink);
+    border-color: var(--c-ink);
+    background: var(--c-bg-alt);
 }
 
 .budget-save-btn {

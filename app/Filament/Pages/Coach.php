@@ -95,6 +95,19 @@ class Coach extends Page implements HasForms
     /** Snapshot rows for the flyout, hydrated by openBudget(). */
     public ?array $budgetData = null;
 
+    // Share-budget-by-email modal state. Kept separate from the
+    // share-message modal so the two can coexist without state
+    // collisions if a user closes one and opens the other.
+    public bool $budgetShareOpen = false;
+
+    public string $budgetShareRecipient = '';
+
+    public string $budgetShareSubject = '';
+
+    public string $budgetShareBody = '';
+
+    public ?string $budgetShareError = null;
+
     public ?int $sharingMessageIndex = null;
 
     public string $shareRecipient = '';
@@ -625,6 +638,70 @@ class Coach extends Page implements HasForms
     public function updatedBudgetData(): void
     {
         $this->recalcBudget();
+    }
+
+    /**
+     * Open the share-budget modal. Pre-fills the body with the
+     * {{budget:current}} placeholder — PlaceholderRenderer expands it
+     * server-side at send time, so even if the user saves a fresh
+     * snapshot between opening and sending, the recipient still gets
+     * the latest. Pre-fills subject with the month so the recipient
+     * has context at a glance.
+     */
+    public function openBudgetShare(): void
+    {
+        if ($this->budgetData === null) {
+            return;
+        }
+
+        $this->budgetShareOpen = true;
+        $this->budgetShareRecipient = '';
+        $this->budgetShareSubject = (string) __('coach.budget_flyout.share_subject_default', [
+            'month' => (string) ($this->budgetData['month'] ?? ''),
+        ]);
+        $this->budgetShareBody = (string) __('coach.budget_flyout.share_body_default');
+        $this->budgetShareError = null;
+    }
+
+    public function cancelBudgetShare(): void
+    {
+        $this->budgetShareOpen = false;
+        $this->budgetShareRecipient = '';
+        $this->budgetShareSubject = '';
+        $this->budgetShareBody = '';
+        $this->budgetShareError = null;
+    }
+
+    public function confirmBudgetShare(): void
+    {
+        if (! $this->budgetShareOpen) {
+            return;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            $this->budgetShareError = (string) __('coach.share.errors.unauthenticated');
+
+            return;
+        }
+
+        try {
+            $message = app(Sharer::class)->send(
+                user: $user,
+                to: $this->budgetShareRecipient,
+                subject: $this->budgetShareSubject,
+                body: $this->budgetShareBody,
+            );
+
+            Notification::make()
+                ->title($message)
+                ->success()
+                ->send();
+
+            $this->cancelBudgetShare();
+        } catch (ShareFailedException $e) {
+            $this->budgetShareError = $e->getMessage();
+        }
     }
 
     /**

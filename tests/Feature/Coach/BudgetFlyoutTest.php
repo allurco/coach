@@ -1,8 +1,12 @@
 <?php
 
 use App\Filament\Pages\Coach;
+use App\Mail\Share;
 use App\Models\Budget;
+use App\Models\Contact;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -250,6 +254,147 @@ it('saveBudget keeps multi-tenant scoping (intruder cannot save into another use
         ->count();
 
     expect($intruderBudgets)->toBe(0);
+});
+
+// Stage 3 — share the budget by email --------------------------------------
+
+it('openBudgetShare pre-fills subject + body with the current snapshot placeholder', function () {
+    makeFlyoutBudget(['month' => '2026-06']);
+    $page = new Coach;
+    $page->openBudget();
+
+    $page->openBudgetShare();
+
+    expect($page->budgetShareOpen)->toBeTrue()
+        ->and($page->budgetShareSubject)->toContain('2026-06')
+        ->and($page->budgetShareBody)->toContain('{{budget:current}}')
+        ->and($page->budgetShareRecipient)->toBe('')
+        ->and($page->budgetShareError)->toBeNull();
+});
+
+it('openBudgetShare no-ops when the flyout is not open (no budgetData)', function () {
+    $page = new Coach;
+
+    $page->openBudgetShare();
+
+    expect($page->budgetShareOpen)->toBeFalse();
+});
+
+it('cancelBudgetShare wipes the share state', function () {
+    makeFlyoutBudget();
+    $page = new Coach;
+    $page->openBudget();
+    $page->openBudgetShare();
+    $page->budgetShareRecipient = 'ana@example.com';
+    $page->budgetShareError = 'something';
+
+    $page->cancelBudgetShare();
+
+    expect($page->budgetShareOpen)->toBeFalse()
+        ->and($page->budgetShareRecipient)->toBe('')
+        ->and($page->budgetShareSubject)->toBe('')
+        ->and($page->budgetShareBody)->toBe('')
+        ->and($page->budgetShareError)->toBeNull();
+});
+
+it('confirmBudgetShare sends the Share mailable to a literal email and closes the share modal', function () {
+    Mail::fake();
+    RateLimiter::clear('share-via-email:'.$this->user->id);
+    $this->user->update(['email' => 'me@example.com', 'name' => 'Rogers']);
+
+    makeFlyoutBudget(['month' => '2026-06']);
+    $page = new Coach;
+    $page->openBudget();
+    $page->openBudgetShare();
+    $page->budgetShareRecipient = 'ana@example.com';
+
+    $page->confirmBudgetShare();
+
+    Mail::assertSent(Share::class, function (Share $mail) {
+        return $mail->hasTo('ana@example.com')
+            && str_contains($mail->emailSubject, '2026-06')
+            && $mail->senderName === 'Rogers'
+            // Body had {{budget:current}} expanded by PlaceholderRenderer.
+            && str_contains($mail->body, 'Custos Fixos');
+    });
+
+    expect($page->budgetShareOpen)->toBeFalse();
+});
+
+it('confirmBudgetShare resolves a saved Contact label to its email', function () {
+    Mail::fake();
+    RateLimiter::clear('share-via-email:'.$this->user->id);
+
+    Contact::create([
+        'label' => 'contador',
+        'name' => 'João',
+        'email' => 'joao@example.com',
+    ]);
+    makeFlyoutBudget();
+    $page = new Coach;
+    $page->openBudget();
+    $page->openBudgetShare();
+    $page->budgetShareRecipient = 'contador';
+
+    $page->confirmBudgetShare();
+
+    Mail::assertSent(Share::class, fn (Share $mail) => $mail->hasTo('joao@example.com'));
+});
+
+it('confirmBudgetShare auto-bccs the authenticated user', function () {
+    Mail::fake();
+    RateLimiter::clear('share-via-email:'.$this->user->id);
+    $this->user->update(['email' => 'me@example.com']);
+
+    makeFlyoutBudget();
+    $page = new Coach;
+    $page->openBudget();
+    $page->openBudgetShare();
+    $page->budgetShareRecipient = 'ana@example.com';
+
+    $page->confirmBudgetShare();
+
+    Mail::assertSent(Share::class, fn (Share $mail) => $mail->hasBcc('me@example.com'));
+});
+
+it('confirmBudgetShare surfaces an error and keeps the modal open on bad recipient', function () {
+    Mail::fake();
+
+    makeFlyoutBudget();
+    $page = new Coach;
+    $page->openBudget();
+    $page->openBudgetShare();
+    $page->budgetShareRecipient = 'nope-not-an-email-nor-a-label';
+
+    $page->confirmBudgetShare();
+
+    Mail::assertNothingSent();
+    expect($page->budgetShareOpen)->toBeTrue()
+        ->and($page->budgetShareError)->not->toBeNull();
+});
+
+it('confirmBudgetShare does not resolve another user\'s contact label', function () {
+    Mail::fake();
+    RateLimiter::clear('share-via-email:'.$this->user->id);
+
+    $intruder = User::factory()->create();
+    Contact::withoutGlobalScope('owner')->create([
+        'user_id' => $intruder->id,
+        'label' => 'contador',
+        'name' => 'Outro',
+        'email' => 'outro@example.com',
+    ]);
+
+    makeFlyoutBudget();
+    $page = new Coach;
+    $page->openBudget();
+    $page->openBudgetShare();
+    $page->budgetShareRecipient = 'contador';
+
+    $page->confirmBudgetShare();
+
+    Mail::assertNothingSent();
+    expect($page->budgetShareError)->not->toBeNull();
 });
 
 it('openBudget is a no-op when the user has no budget', function () {

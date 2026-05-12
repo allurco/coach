@@ -267,6 +267,16 @@ return [
         'remove_line' => 'Remover linha',
         'save' => 'Salvar como novo snapshot',
         'saved' => 'Orçamento salvo.',
+        'share' => 'Compartilhar por email',
+        'share_modal_title' => 'Compartilhar este orçamento',
+        'share_subject_default' => 'Meu orçamento de :month',
+        'share_body_default' => "Oi,\n\nSegue meu orçamento atual:\n\n{{budget:current}}\n\nQualquer dúvida me avisa.",
+        'share_recipient_label' => 'Para',
+        'share_recipient_placeholder' => 'email ou nome do contato salvo',
+        'share_subject_label' => 'Assunto',
+        'share_body_label' => 'Mensagem',
+        'share_send' => 'Enviar',
+        'share_cancel' => 'Cancelar',
     ],
 
     'read_budget' => [

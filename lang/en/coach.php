@@ -267,6 +267,16 @@ return [
         'remove_line' => 'Remove line',
         'save' => 'Save as new snapshot',
         'saved' => 'Budget saved.',
+        'share' => 'Share via email',
+        'share_modal_title' => 'Share this budget',
+        'share_subject_default' => 'My budget for :month',
+        'share_body_default' => "Hi,\n\nHere's my current budget:\n\n{{budget:current}}\n\nLet me know if you have questions.",
+        'share_recipient_label' => 'To',
+        'share_recipient_placeholder' => 'email or saved contact name',
+        'share_subject_label' => 'Subject',
+        'share_body_label' => 'Message',
+        'share_send' => 'Send',
+        'share_cancel' => 'Cancel',
     ],
 
     'read_budget' => [
