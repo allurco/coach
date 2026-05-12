@@ -111,6 +111,10 @@ return [
         ],
     ],
 
+    'plan_flyout' => [
+        'eyebrow' => 'Plan',
+    ],
+
     'complete_modal' => [
         'title' => 'Complete action',
         'label' => 'How did you complete it?',

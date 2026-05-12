@@ -296,10 +296,10 @@
         <aside class="plan-drawer"
                :class="planOpen ? 'is-open' : ''">
 
-            <div class="plan-drawer-header">
+            <div class="plan-drawer-header drawer-editorial-header">
                 <div>
-                    <div class="plan-drawer-title">Plano</div>
-                    <div class="plan-drawer-sub">{{ trans_choice('coach.plan.count', count($planActions), ['count' => count($planActions)]) }}</div>
+                    <div class="drawer-eyebrow">{{ __('coach.plan_flyout.eyebrow') }}</div>
+                    <div class="drawer-headline">{{ trans_choice('coach.plan.count', count($planActions), ['count' => count($planActions)]) }}</div>
                 </div>
                 <button type="button" class="plan-close-btn" @click="planOpen = false">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -454,10 +454,10 @@
         <aside class="plan-drawer budget-drawer"
                :class="budgetOpen ? 'is-open' : ''">
             @if ($budgetData)
-                <div class="plan-drawer-header budget-drawer-header">
+                <div class="plan-drawer-header drawer-editorial-header">
                     <div>
-                        <div class="budget-eyebrow">{{ __('coach.budget_flyout.eyebrow') }}</div>
-                        <div class="budget-month">{{ $this->prettyMonth($budgetData['month']) }}</div>
+                        <div class="drawer-eyebrow">{{ __('coach.budget_flyout.eyebrow') }}</div>
+                        <div class="drawer-headline">{{ $this->prettyMonth($budgetData['month']) }}</div>
                     </div>
                     <button type="button" class="plan-close-btn" @click="budgetOpen = false" wire:click="closeBudget">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
