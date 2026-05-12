@@ -318,7 +318,7 @@
 
             <div class="plan-list">
                 @forelse ($planActions as $action)
-                    <div class="plan-item {{ $action['has_details'] ? 'has-details' : '' }}"
+                    <div class="plan-item {{ $action['has_details'] ? 'has-details' : '' }} {{ $action['is_overdue'] ? 'is-overdue' : '' }}"
                          x-data="{ menu: false, open: false }"
                          @click.away="menu = false">
                         <div class="plan-item-row">
@@ -332,17 +332,20 @@
                                 <div class="plan-item-main-text">
                                     <div class="plan-item-title {{ $action['is_overdue'] ? 'overdue' : '' }}">{{ $action['title'] }}</div>
                                     <div class="plan-item-meta">
-                                        <div class="plan-item-badges">
-                                            <span class="plan-badge-cat plan-cat-{{ $action['category'] }}">{{ $action['category'] }}</span>
-                                            <span class="plan-badge-pri plan-pri-{{ $action['priority'] }}">{{ $action['priority'] }}</span>
-                                        </div>
-                                        @if ($action['deadline'])
-                                            <span class="plan-deadline {{ $action['is_overdue'] ? 'overdue' : ($action['is_due_soon'] ? 'soon' : '') }}">
-                                                {{ $action['deadline'] }}
-                                            </span>
-                                        @endif
+                                        <span class="plan-badge-cat plan-cat-{{ $action['category'] }}">{{ $action['category'] }}</span>
+                                        <span class="plan-badge-pri plan-pri-{{ $action['priority'] }}">{{ $action['priority'] }}</span>
                                     </div>
                                 </div>
+                            </div>
+
+                            {{-- Deadline lives in its own grid column so dates align
+                                 vertically across items regardless of how badges wrap. --}}
+                            <div class="plan-item-deadline-col">
+                                @if ($action['deadline'])
+                                    <span class="plan-deadline {{ $action['is_overdue'] ? 'overdue' : ($action['is_due_soon'] ? 'soon' : '') }}">
+                                        {{ $action['deadline'] }}
+                                    </span>
+                                @endif
                             </div>
 
                             @if ($action['status'] !== 'concluido')

@@ -1330,14 +1330,28 @@ body:has(.complete-modal-overlay) .coach-thread {
     background: var(--c-bg-alt);
 }
 
+/* Overdue items get a 2px red bar down the left edge — a scanning cue
+   that doesn't compete with the badge palette. Subtle but inequivocal. */
+.plan-item.is-overdue {
+    box-shadow: inset 2px 0 0 #dc2626;
+}
+
+.dark .plan-item.is-overdue {
+    box-shadow: inset 2px 0 0 #f87171;
+}
+
+/* Grid keeps deadline + actions in fixed right columns, so dates line up
+   across items regardless of how badges wrap. `auto` tracks size to the
+   widest deadline/actions in the whole list — empty rows stay aligned
+   because the tracks are shared. */
 .plan-item-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: start;
+    gap: 0.55rem;
 }
 
 .plan-item-main {
-    flex: 1;
     min-width: 0;
     display: flex;
     align-items: flex-start;
@@ -1380,20 +1394,14 @@ body:has(.complete-modal-overlay) .coach-thread {
     margin-bottom: 0.5rem;
 }
 
-/* ----- Meta row ----- */
+/* Badges-only row — deadline lives in its own grid column on the parent.
+   Wraps freely without disturbing date alignment. */
 .plan-item-meta {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.4rem;
     font-size: 0.7rem;
-}
-
-.plan-item-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    flex: 1;
-    min-width: 0;
 }
 
 /* ----- Badges: tinted, no border ----- */
@@ -1428,14 +1436,25 @@ body:has(.complete-modal-overlay) .coach-thread {
 .dark .plan-pri-alta { background: rgba(220,38,38,.18); color: #fca5a5; }
 .dark .plan-pri-media { background: rgba(217,119,6,.18); color: #fbbf24; }
 
+/* Reserved column for the deadline pill. Always rendered (even when no
+   deadline) so the grid track width is consistent across the list and
+   dates align vertically. Empty cells just take no space. */
+.plan-item-deadline-col {
+    align-self: start;
+    padding-top: 0.1rem; /* optical baseline with the title's cap height */
+    min-width: 0;
+}
+
 /* ----- Deadline as status pill (carries the state color) ----- */
 .plan-deadline {
-    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
     padding: 0.22rem 0.55rem;
     border-radius: 5px;
     font-size: 0.7rem;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
     background: color-mix(in srgb, var(--c-ink) 6%, transparent);
     color: var(--c-muted);
 }
@@ -1919,24 +1938,11 @@ body:has(.complete-modal-overlay) .coach-thread {
 /* ============================================================ */
 
 /*
- * Plan item meta row on phones: stack the badge cluster and the deadline pill
- * vertically so every card lays out the same way (badges row + deadline row,
- * deadline right-aligned). Same DOM, different layout — chips keep hugging
- * their content instead of stretching.
+ * Phones: comfortable touch targets + tighter horizontal padding.
+ * The grid layout already keeps deadline aligned on the right column,
+ * so no special-case stacking is needed.
  */
 @media (max-width: 600px) {
-    .plan-item-meta {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5rem;
-    }
-
-    .plan-item-meta .plan-deadline {
-        align-self: flex-end;
-        margin-left: 0;
-    }
-
-    /* Pump up touch targets a touch on phones. */
     .plan-action-btn {
         width: 36px;
         height: 36px;
@@ -1944,6 +1950,12 @@ body:has(.complete-modal-overlay) .coach-thread {
 
     .plan-item {
         padding: 0.95rem 1.25rem;
+    }
+
+    /* On very narrow drawers (sub-340px), drop the gap a touch so the
+       deadline pill never elbows the title to two lines unnecessarily. */
+    .plan-item-row {
+        gap: 0.4rem;
     }
 }
 
