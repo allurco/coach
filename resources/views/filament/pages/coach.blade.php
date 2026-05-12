@@ -1,5 +1,12 @@
 <x-filament-panels::page>
-
+{{-- Single Livewire-friendly root wrapper. The page emits a stack of
+     conditional modals + a script tag alongside the main shell; if
+     those land as siblings at the component output, Livewire 4 throws
+     MultipleRootElementsDetectedException in CI/test contexts (some
+     panel renderers don't add a wrapper element of their own). One
+     parent <div> here makes the root count exactly one regardless of
+     environment. --}}
+<div class="coach-root">
     <div class="coach-page"
          x-data="{ planOpen: false, sidebarOpen: false, budgetOpen: false }"
          x-effect="document.body.classList.toggle('coach-overlay-locked', planOpen || sidebarOpen || budgetOpen)"
@@ -866,4 +873,5 @@
             });
         });
     </script>
+</div>
 </x-filament-panels::page>
