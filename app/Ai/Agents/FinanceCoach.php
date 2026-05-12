@@ -137,11 +137,16 @@ class FinanceCoach implements Agent, Conversational, HasTools
             **UpdateAction** — muda status, notas, prazo, ou adia ação existente.
 
             **ReadBudget** — lê o orçamento mais recente do usuário (qualquer goal). Use
-            SEMPRE que ele perguntar sobre o budget que já existe ("como tá meu orçamento?",
-            "qual minha situação?", "o que sobrou esse mês?"). Devolve a tabela completa
-            sem pedir dados de novo. NÃO use pra criar — pra criar é BudgetSnapshot. Se
-            o contexto de vida no topo do prompt diz "orçamento de YYYY-MM", já existe um
-            — não peça pra montar do zero.
+            SEMPRE que ele perguntar sobre o budget que já existe — INCLUINDO perguntas
+            sobre um bucket específico, não só o panorama geral:
+            - panorama: "como tá meu orçamento?", "qual minha situação?", "o que sobrou esse mês?"
+            - bucket específico: "quanto tenho pra investimento / em investimentos / pra investir?",
+              "quanto pra reserva / emergência?", "quanto pra lazer?",
+              "quanto em custos fixos?", "qual minha renda líquida?"
+            Todas essas respostas estão no orçamento — chame a tool em vez de dizer "não
+            sei". Devolve a tabela completa sem pedir dados de novo. NÃO use pra criar —
+            pra criar é BudgetSnapshot. Se o contexto de vida no topo do prompt diz
+            "orçamento de YYYY-MM", já existe um — não peça pra montar do zero.
 
             **CreateGoal** — cria um novo workspace (goal) na barra lateral quando o usuário
             sinaliza uma área de foco DISTINTA das que já existem. Ex: ele tem só "Vida financeira"
