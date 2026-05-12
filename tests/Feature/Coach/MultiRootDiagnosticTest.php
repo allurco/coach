@@ -23,6 +23,7 @@ use Livewire\Livewire;
  */
 it('reports exactly one root element from Coach::class rendered HTML', function () {
     config(['app.debug' => false]); // desliga o early-throw do Livewire
+    app()->setLocale('en'); // CI usa .env.example com APP_LOCALE=en — reproduz aqui
 
     $user = User::factory()->create();
     $this->actingAs($user);
@@ -55,13 +56,31 @@ it('reports exactly one root element from Coach::class rendered HTML', function 
 
     $count = count($rootSummaries);
 
+    // Se a contagem inicial deu > 1, normaliza atributos multi-linha
+    // (libxml do Ubuntu não lida bem com newlines literais em atributos
+    // — o Filament emite x-data assim em <x-filament-actions::modals />,
+    // e o parser fecha a div pai prematuramente, jogando o filho pra
+    // body level) e conta de novo. Se normalizado dá 1, a culpa é do
+    // parser + emissão do Filament, não do nosso código.
     if ($count !== 1) {
-        // Mostra os filhos do <body> + começo do HTML pra diagnóstico
-        // em CI. Truncado pra mensagem caber no relatório.
+        $normalized = preg_replace('/\s+/', ' ', $cleaned);
+        $dom2 = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $dom2->loadHTML($normalized, LIBXML_NOERROR);
+        libxml_clear_errors();
+        $body2 = $dom2->getElementsByTagName('body')->item(0);
+        $countNormalized = 0;
+        foreach ($body2->childNodes as $child) {
+            if ($child->nodeType === XML_ELEMENT_NODE) {
+                $countNormalized++;
+            }
+        }
+
         $snippet = substr($cleaned, 0, 4000);
         $msg = sprintf(
-            "Root element count = %d (esperava 1).\nFilhos do <body>:\n%s\n\nHTML head:\n%s",
+            "Root count raw = %d, after whitespace normalization = %d.\nRaw body children:\n%s\n\nHTML head:\n%s",
             $count,
+            $countNormalized,
             implode("\n", $rootSummaries),
             $snippet,
         );
