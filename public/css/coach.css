@@ -2065,23 +2065,38 @@ body:has(.complete-modal-overlay) .coach-thread {
     font-size: 0.85rem;
 }
 
-/* ===== Budget flyout (Stage 1: read-only) ===== */
+/* ===== Budget flyout — editorial-precise ===== */
 
 .budget-toggle-btn {
-    /* Sibling of .plan-toggle-btn — inherits its layout, adds spacing. */
     margin-right: 0.4rem;
-}
-
-.budget-toggle-label {
-    /* Hide label on very narrow viewports — icon-only on mobile. */
 }
 
 @media (max-width: 480px) {
     .budget-toggle-label { display: none; }
 }
 
-.budget-drawer {
-    /* Reuses .plan-drawer base styles; just an explicit hook for future tweaks. */
+/* --- Drawer header: small eyebrow + month as the dateline --- */
+.budget-drawer-header {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent);
+    margin-bottom: 0.5rem;
+}
+
+.budget-eyebrow {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--c-muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+}
+
+.budget-month {
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--c-ink);
+    font-feature-settings: "ss01" 1;
 }
 
 .budget-flyout-body {
@@ -2091,127 +2106,250 @@ body:has(.complete-modal-overlay) .coach-thread {
     font-size: 0.92rem;
 }
 
-.budget-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.65rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+/* --- Hero: net income. Headline number — anchor of the whole calc. --- */
+.budget-hero {
+    display: block;
+    padding: 1.25rem 0 1.75rem;
+    cursor: text;
 }
 
-.budget-row-headline {
-    padding: 0.9rem 0;
-    font-weight: 600;
-    font-size: 1rem;
+.budget-hero-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--c-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
 }
 
-.budget-row-headline .budget-row-value {
+.budget-hero-row {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.budget-hero-prefix {
+    font-size: 0.85rem;
+    color: var(--c-muted);
+    font-weight: 500;
+}
+
+.budget-hero-input {
+    font-size: 1.85rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--c-ink);
+    background: transparent;
+    border: none;
+    padding: 0;
+    width: 100%;
+    max-width: 14rem;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "ss01" 1;
+}
+
+.budget-hero-input:focus {
+    outline: none;
     color: var(--c-accent);
 }
 
-.budget-row-leisure {
-    padding: 0.9rem 0;
-    font-weight: 600;
-    border-top: 2px solid rgba(0, 0, 0, 0.08);
-    border-bottom: none;
-    margin-top: 0.5rem;
-}
-
-.budget-row-leisure .budget-row-value {
-    color: #059669;
-    font-size: 1.05rem;
-}
-
-.budget-row-leisure.is-deficit .budget-row-value {
-    color: #dc2626;
-}
-
+/* --- Sections: hairline + lowercase title + target chip --- */
 .budget-section {
-    margin-top: 1rem;
+    padding-top: 1.25rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent);
+    opacity: 0;
+    transform: translateY(4px);
+    animation: budget-section-in .32s cubic-bezier(.32,.72,.24,1) forwards;
+    animation-delay: calc(var(--stagger, 1) * 40ms);
+}
+
+@keyframes budget-section-in {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.budget-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .budget-section-title {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--c-ink);
+    letter-spacing: -0.005em;
+    margin: 0;
+}
+
+.budget-section-target {
+    font-size: 0.7rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--c-ink) 5%, transparent);
+    color: var(--c-muted);
+    white-space: nowrap;
+}
+
+.budget-section-target.is-ok {
+    background: rgba(5, 150, 105, 0.1);
+    color: #047857;
+}
+
+.budget-section-target.is-off {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+}
+
+.budget-section-target-divider {
+    color: color-mix(in srgb, currentColor 50%, transparent);
+    margin: 0 0.15rem;
+}
+
+/* --- Lines (editable rows are styled in the editable block below) --- */
+.budget-line-empty {
+    font-size: 0.82rem;
+    color: var(--c-muted);
+    padding: 0.55rem 0 0.35rem;
+    letter-spacing: -0.005em;
+}
+
+/* --- Section total: single line, optional supporting note for buffer --- */
+.budget-section-total {
+    margin-top: 0.55rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid color-mix(in srgb, var(--c-ink) 8%, transparent);
+}
+
+.budget-section-total-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-weight: 500;
+}
+
+.budget-section-total-label {
     font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
     color: var(--c-muted);
     letter-spacing: 0.04em;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    text-transform: uppercase;
 }
 
-.budget-line {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.45rem 0;
-    font-size: 0.9rem;
-}
-
-.budget-line-label {
-    color: var(--c-ink);
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.budget-line-value {
+.budget-section-total-value {
+    font-size: 1.05rem;
     color: var(--c-ink);
     font-variant-numeric: tabular-nums;
-    margin-left: 0.75rem;
-    white-space: nowrap;
+    font-feature-settings: "ss01" 1;
+    letter-spacing: -0.01em;
 }
 
-.budget-line-subtotal {
-    border-top: 1px dashed rgba(0, 0, 0, 0.1);
-    padding-top: 0.55rem;
+.budget-section-total-note {
+    font-size: 0.72rem;
+    color: var(--c-muted);
     margin-top: 0.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Lazer: the punchline. Big number, terse label. --- */
+.budget-leisure {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--c-ink);
+    opacity: 0;
+    transform: translateY(4px);
+    animation: budget-section-in .36s cubic-bezier(.32,.72,.24,1) forwards;
+    animation-delay: calc(var(--stagger, 4) * 40ms);
+}
+
+.budget-leisure-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
+}
+
+.budget-leisure-label {
+    font-size: 0.7rem;
+    font-weight: 500;
     color: var(--c-muted);
-    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
-.budget-line-subtotal .budget-line-label,
-.budget-line-subtotal .budget-line-value {
-    color: var(--c-muted);
+.budget-leisure-value {
+    font-size: 1.65rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "ss01" 1;
 }
 
-.budget-line-total {
-    border-top: 1px solid rgba(0, 0, 0, 0.12);
-    padding-top: 0.55rem;
-    margin-top: 0.25rem;
-    font-weight: 600;
+.budget-leisure.is-surplus .budget-leisure-value {
+    color: #047857;
 }
 
-.budget-line-empty {
-    color: var(--c-muted);
-    font-style: italic;
-    font-size: 0.85rem;
-    padding: 0.35rem 0;
+.budget-leisure.is-deficit {
+    border-top-color: #dc2626;
 }
 
-.budget-deficit-warning {
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    background: rgba(220, 38, 38, 0.08);
-    border-left: 3px solid #dc2626;
-    border-radius: 4px;
-    font-size: 0.88rem;
-    color: #991b1b;
+.budget-leisure.is-deficit .budget-leisure-value {
+    color: #b91c1c;
+}
+
+/* Editorial deficit note — no box. Arrow + ink. */
+.budget-deficit-note {
+    margin-top: 0.6rem;
+    font-size: 0.82rem;
     line-height: 1.45;
+    color: #991b1b;
+    letter-spacing: -0.005em;
 }
 
-.dark .budget-row,
-.dark .budget-section-title,
-.dark .budget-line-subtotal,
-.dark .budget-line-total {
+.budget-deficit-note::before {
+    content: '↘ ';
+    font-weight: 600;
+    margin-right: 0.15rem;
+}
+
+/* --- Dark mode --- */
+.dark .budget-drawer-header,
+.dark .budget-section,
+.dark .budget-section-total {
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-.dark .budget-deficit-warning {
-    background: rgba(220, 38, 38, 0.15);
+.dark .budget-leisure {
+    border-top-color: var(--c-ink);
+}
+
+.dark .budget-leisure.is-deficit {
+    border-top-color: #f87171;
+}
+
+.dark .budget-leisure.is-surplus .budget-leisure-value {
+    color: #34d399;
+}
+
+.dark .budget-leisure.is-deficit .budget-leisure-value,
+.dark .budget-deficit-note {
     color: #fca5a5;
+}
+
+.dark .budget-section-target.is-ok {
+    background: rgba(5, 150, 105, 0.18);
+    color: #34d399;
+}
+
+.dark .budget-section-target.is-off {
+    background: rgba(217, 119, 6, 0.22);
+    color: #fbbf24;
 }
 
 /* ===== Budget flyout (Stage 2: editable inline) ===== */

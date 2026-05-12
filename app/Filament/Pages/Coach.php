@@ -641,6 +641,42 @@ class Coach extends Page implements HasForms
     }
 
     /**
+     * Bucket status pill data: percentage of net income, in-range icon,
+     * and human target label. Mirrors the chat table's ✓/⚠ semantic so
+     * the flyout and the agent's BudgetSnapshot output read the same
+     * targets at a glance.
+     *
+     * @return array{pct:int, target:string, in_range:bool}
+     */
+    public function bucketStatus(string $bucket, float $total): array
+    {
+        $netIncome = (float) ($this->budgetData['net_income'] ?? 0);
+        $pct = $netIncome > 0 ? (int) round(($total / $netIncome) * 100) : 0;
+        $range = Budget::TARGET_RANGES[$bucket] ?? null;
+        $target = $range === null
+            ? ''
+            : ($range['min'] === $range['max'] ? $range['min'].'%' : $range['min'].'-'.$range['max'].'%');
+        $inRange = $range !== null && $pct >= $range['min'] && $pct <= $range['max'];
+
+        return ['pct' => $pct, 'target' => $target, 'in_range' => $inRange];
+    }
+
+    /**
+     * "2026-12" → "dez/2026". Falls back to the raw ISO if it can't
+     * parse, so a malformed month never produces a date-like value
+     * that misleads.
+     */
+    public function prettyMonth(string $iso): string
+    {
+        if (! preg_match('/^(\d{4})-(\d{2})$/', $iso, $m)) {
+            return $iso;
+        }
+        $names = ['01' => 'jan', '02' => 'fev', '03' => 'mar', '04' => 'abr', '05' => 'mai', '06' => 'jun', '07' => 'jul', '08' => 'ago', '09' => 'set', '10' => 'out', '11' => 'nov', '12' => 'dez'];
+
+        return ($names[$m[2]] ?? $m[2]).'/'.$m[1];
+    }
+
+    /**
      * Open the share-budget modal. Pre-fills the body with the
      * {{budget:current}} placeholder — PlaceholderRenderer expands it
      * server-side at send time, so even if the user saves a fresh
