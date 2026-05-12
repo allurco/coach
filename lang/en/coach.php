@@ -97,6 +97,13 @@ return [
             'month' => '1 month',
         ],
         'count' => '{0}no actions|{1}1 action|[2,*]:count actions',
+        'deadline' => [
+            'today' => 'today',
+            'tomorrow' => 'tomorrow',
+            'yesterday' => 'yesterday',
+            'in_days' => 'in :n days',
+            'days_ago' => ':n days ago',
+        ],
         'details' => [
             'expand' => 'Show details',
             'collapse' => 'Hide',

@@ -1976,18 +1976,37 @@ body:has(.complete-modal-overlay) .coach-thread {
  */
 @media (max-width: 600px) {
     .plan-action-btn {
-        width: 36px;
-        height: 36px;
+        /* Touch-friendly mas mais compacto que 36px — o título precisa
+           de cada pixel em mobile, especialmente com títulos longos
+           (ex: "Renegociar contrato de prestação de serviços..."). */
+        width: 32px;
+        height: 32px;
     }
 
     .plan-item {
-        padding: 0.95rem 1.25rem;
+        padding: 0.9rem 1rem;
     }
 
     /* On very narrow drawers (sub-340px), drop the gap a touch so the
        deadline pill never elbows the title to two lines unnecessarily. */
     .plan-item-row {
-        gap: 0.4rem;
+        gap: 0.35rem;
+    }
+
+    /* Title menor em mobile pra acomodar títulos longos sem virar
+       coluna de uma palavra por linha. Line-height tighter também. */
+    .plan-item-title {
+        font-size: 0.88rem;
+        line-height: 1.3;
+    }
+
+    /* Deadline pill mais compacto em mobile. Font + padding menores
+       deixam o pill cooperar com title 0.88rem sem virar coluna
+       gigante na grid track auto. Ano completo mantido (informação
+       importante quando deadline cruza ano). */
+    .plan-deadline {
+        padding: 0.18rem 0.4rem;
+        font-size: 0.66rem;
     }
 
     /* iOS Safari auto-zooms the viewport when the user taps an input
