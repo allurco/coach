@@ -97,6 +97,13 @@ return [
             'month' => '1 mês',
         ],
         'count' => '{0}sem ações|{1}1 ação|[2,*]:count ações',
+        'deadline' => [
+            'today' => 'hoje',
+            'tomorrow' => 'amanhã',
+            'yesterday' => 'ontem',
+            'in_days' => 'em :n dias',
+            'days_ago' => 'há :n dias',
+        ],
         'details' => [
             'expand' => 'Ver detalhes',
             'collapse' => 'Recolher',

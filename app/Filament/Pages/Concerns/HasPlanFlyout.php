@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Concerns;
 
 use App\Models\Action;
+use Carbon\CarbonInterface;
 
 /**
  * State + behavior do flyout do Plano: lista de actions com filtros,
@@ -73,7 +74,7 @@ trait HasPlanFlyout
                     'category' => $a->category,
                     'priority' => $a->priority,
                     'status' => $a->status,
-                    'deadline' => $a->deadline?->format('d/m/Y'),
+                    'deadline' => $a->deadline ? $this->formatDeadlineLabel($a->deadline) : null,
                     'is_overdue' => $a->isOverdue(),
                     'is_due_soon' => $a->isDueSoon(),
                     'description' => $a->description,
@@ -160,5 +161,36 @@ trait HasPlanFlyout
         return $this->memoPendingPlanCount ??= collect($this->planActions)
             ->whereIn('status', Action::OPEN_STATUSES)
             ->count();
+    }
+
+    /**
+     * Formata a deadline como label natural-language quando perto, ou
+     * data completa quando distante:
+     *
+     *   - Hoje, amanhã, ontem    → "hoje" / "amanhã" / "ontem"
+     *   - 2-14 dias futuros      → "em 5 dias"
+     *   - 2-14 dias passados     → "há 5 dias"
+     *   - Mais que isso          → "DD/MM/YYYY"
+     *
+     * 14 dias é amplo o bastante pra cobrir overdue de meses (até 2
+     * semanas) e planejamento de até 2 semanas — onde "há N dias" /
+     * "em N dias" é mais cognitivamente útil que "20/05/2026". Pra
+     * deadlines mais distantes a data exata vale mais (planejamento
+     * de longo prazo). A cor do pill (overdue/soon/neutral) continua
+     * carregando o status visual independente do label.
+     */
+    protected function formatDeadlineLabel(CarbonInterface $date): string
+    {
+        // diffInDays(today, signed=true) → positivo se futuro, negativo se passado
+        $diff = (int) today()->diffInDays($date->copy()->startOfDay(), false);
+
+        return match (true) {
+            $diff === 0 => (string) __('coach.plan.deadline.today'),
+            $diff === 1 => (string) __('coach.plan.deadline.tomorrow'),
+            $diff === -1 => (string) __('coach.plan.deadline.yesterday'),
+            $diff > 1 && $diff <= 14 => (string) __('coach.plan.deadline.in_days', ['n' => $diff]),
+            $diff < -1 && $diff >= -14 => (string) __('coach.plan.deadline.days_ago', ['n' => abs($diff)]),
+            default => $date->format('d/m/Y'),
+        };
     }
 }

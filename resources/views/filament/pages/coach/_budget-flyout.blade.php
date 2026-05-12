@@ -7,6 +7,59 @@
 
 <aside class="plan-drawer budget-drawer"
        :class="budgetOpen ? 'is-open' : ''">
+    {{-- Skeleton: mostra durante a janela entre o click (Alpine abre o
+         drawer instantaneamente) e o openBudget Livewire roundtrip
+         terminar ($budgetData ainda null no server). Labels estáticas
+         ficam, só os valores são placeholders — handoff pra UI real
+         é silencioso. --}}
+    @if (! $budgetData)
+        <div x-show="budgetOpen" class="budget-skeleton" aria-hidden="true">
+            <div class="plan-drawer-header drawer-editorial-header">
+                <div>
+                    <div class="drawer-eyebrow">{{ __('coach.budget_flyout.eyebrow') }}</div>
+                    <div class="skel-bar skel-bar-headline"></div>
+                </div>
+            </div>
+
+            <div class="budget-flyout-body">
+                <div class="budget-hero">
+                    <span class="budget-hero-label">{{ __('coach.budget_flyout.net_income') }}</span>
+                    <div class="skel-bar skel-bar-hero"></div>
+                </div>
+
+                @foreach (['fixed_costs', 'investments', 'savings'] as $i => $bucket)
+                    <section class="budget-section skel-section" style="--delay: {{ $i * 80 }}ms">
+                        <header class="budget-section-head">
+                            <h3 class="budget-section-title">{{ __('coach.budget_flyout.'.$bucket) }}</h3>
+                            <span class="skel-bar skel-bar-chip"></span>
+                        </header>
+                        <div class="budget-line skel-line-row"><span class="skel-bar skel-bar-line"></span></div>
+                        <div class="budget-line skel-line-row"><span class="skel-bar skel-bar-line"></span></div>
+                        <div class="budget-section-total">
+                            <div class="budget-section-total-row">
+                                <span class="budget-section-total-label">{{ __('coach.budget_flyout.total') }}</span>
+                                <span class="skel-bar skel-bar-total"></span>
+                            </div>
+                        </div>
+                    </section>
+                @endforeach
+
+                <section class="budget-leisure is-surplus" style="--stagger: 4">
+                    <div class="budget-leisure-head">
+                        <span class="budget-leisure-label">{{ __('coach.budget_flyout.leisure') }}</span>
+                        <span class="skel-bar skel-bar-chip"></span>
+                    </div>
+                    <div class="skel-bar skel-bar-leisure"></div>
+                </section>
+
+                <div class="budget-flyout-actions">
+                    <div class="skel-bar skel-bar-btn"></div>
+                    <div class="skel-bar skel-bar-btn skel-bar-btn-primary"></div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @if ($budgetData)
         <div class="plan-drawer-header drawer-editorial-header">
             <div>
