@@ -464,60 +464,72 @@
                 <div class="budget-flyout-body">
                     <div class="budget-row budget-row-headline">
                         <div class="budget-row-label">{{ __('coach.budget_flyout.net_income') }}</div>
-                        <div class="budget-row-value">R$ {{ number_format($budgetData['net_income'], 2, ',', '.') }}</div>
-                    </div>
-
-                    <div class="budget-section">
-                        <div class="budget-section-title">{{ __('coach.budget_flyout.fixed_costs') }}</div>
-                        @foreach ($budgetData['fixed_costs_breakdown'] as $label => $amount)
-                            <div class="budget-line">
-                                <span class="budget-line-label">{{ $label }}</span>
-                                <span class="budget-line-value">R$ {{ number_format((float) $amount, 2, ',', '.') }}</span>
-                            </div>
-                        @endforeach
-                        <div class="budget-line budget-line-subtotal">
-                            <span class="budget-line-label">{{ __('coach.budget_flyout.subtotal') }}</span>
-                            <span class="budget-line-value">R$ {{ number_format($budgetData['fixed_costs_subtotal'], 2, ',', '.') }}</span>
-                        </div>
-                        <div class="budget-line budget-line-total">
-                            <span class="budget-line-label">{{ __('coach.budget_flyout.total_with_buffer') }}</span>
-                            <span class="budget-line-value">R$ {{ number_format($budgetData['fixed_costs_total'], 2, ',', '.') }}</span>
+                        <div class="budget-row-value">
+                            <span class="budget-input-prefix">R$</span>
+                            <input type="number"
+                                   step="0.01"
+                                   class="budget-amount-input budget-amount-input-headline"
+                                   wire:model.live.debounce.400ms="budgetData.net_income"
+                                   inputmode="decimal">
                         </div>
                     </div>
 
-                    <div class="budget-section">
-                        <div class="budget-section-title">{{ __('coach.budget_flyout.investments') }}</div>
-                        @foreach ($budgetData['investments_breakdown'] as $label => $amount)
-                            <div class="budget-line">
-                                <span class="budget-line-label">{{ $label }}</span>
-                                <span class="budget-line-value">R$ {{ number_format((float) $amount, 2, ',', '.') }}</span>
-                            </div>
-                        @endforeach
-                        @if (empty($budgetData['investments_breakdown']))
-                            <div class="budget-line budget-line-empty">{{ __('coach.budget_flyout.empty_bucket') }}</div>
-                        @endif
-                        <div class="budget-line budget-line-total">
-                            <span class="budget-line-label">{{ __('coach.budget_flyout.total') }}</span>
-                            <span class="budget-line-value">R$ {{ number_format($budgetData['investments_total'], 2, ',', '.') }}</span>
-                        </div>
-                    </div>
+                    @php
+                        $bucketSections = [
+                            ['key' => 'fixed_costs', 'title' => 'coach.budget_flyout.fixed_costs', 'show_buffer' => true],
+                            ['key' => 'investments', 'title' => 'coach.budget_flyout.investments', 'show_buffer' => false],
+                            ['key' => 'savings',     'title' => 'coach.budget_flyout.savings',     'show_buffer' => false],
+                        ];
+                    @endphp
 
-                    <div class="budget-section">
-                        <div class="budget-section-title">{{ __('coach.budget_flyout.savings') }}</div>
-                        @foreach ($budgetData['savings_breakdown'] as $label => $amount)
-                            <div class="budget-line">
-                                <span class="budget-line-label">{{ $label }}</span>
-                                <span class="budget-line-value">R$ {{ number_format((float) $amount, 2, ',', '.') }}</span>
-                            </div>
-                        @endforeach
-                        @if (empty($budgetData['savings_breakdown']))
-                            <div class="budget-line budget-line-empty">{{ __('coach.budget_flyout.empty_bucket') }}</div>
-                        @endif
-                        <div class="budget-line budget-line-total">
-                            <span class="budget-line-label">{{ __('coach.budget_flyout.total') }}</span>
-                            <span class="budget-line-value">R$ {{ number_format($budgetData['savings_total'], 2, ',', '.') }}</span>
+                    @foreach ($bucketSections as $section)
+                        @php $linesKey = $section['key'].'_lines'; @endphp
+                        <div class="budget-section">
+                            <div class="budget-section-title">{{ __($section['title']) }}</div>
+                            @foreach ($budgetData[$linesKey] as $idx => $line)
+                                <div class="budget-line" wire:key="{{ $section['key'] }}-{{ $idx }}">
+                                    <input type="text"
+                                           class="budget-line-input budget-line-label-input"
+                                           wire:model.live.debounce.400ms="budgetData.{{ $linesKey }}.{{ $idx }}.label"
+                                           placeholder="{{ __('coach.budget_flyout.line_label_placeholder') }}">
+                                    <span class="budget-input-prefix">R$</span>
+                                    <input type="number"
+                                           step="0.01"
+                                           class="budget-line-input budget-line-amount-input"
+                                           wire:model.live.debounce.400ms="budgetData.{{ $linesKey }}.{{ $idx }}.amount"
+                                           inputmode="decimal">
+                                    <button type="button"
+                                            class="budget-line-remove"
+                                            wire:click="removeBudgetLine('{{ $section['key'] }}', {{ $idx }})"
+                                            title="{{ __('coach.budget_flyout.remove_line') }}"
+                                            aria-label="{{ __('coach.budget_flyout.remove_line') }}">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </div>
+                            @endforeach
+
+                            <button type="button" class="budget-add-line" wire:click="addBudgetLine('{{ $section['key'] }}')">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                {{ __('coach.budget_flyout.add_line') }}
+                            </button>
+
+                            @if ($section['show_buffer'])
+                                <div class="budget-line budget-line-subtotal">
+                                    <span class="budget-line-label">{{ __('coach.budget_flyout.subtotal') }}</span>
+                                    <span class="budget-line-value">R$ {{ number_format($budgetData['fixed_costs_subtotal'], 2, ',', '.') }}</span>
+                                </div>
+                                <div class="budget-line budget-line-total">
+                                    <span class="budget-line-label">{{ __('coach.budget_flyout.total_with_buffer') }}</span>
+                                    <span class="budget-line-value">R$ {{ number_format($budgetData['fixed_costs_total'], 2, ',', '.') }}</span>
+                                </div>
+                            @else
+                                <div class="budget-line budget-line-total">
+                                    <span class="budget-line-label">{{ __('coach.budget_flyout.total') }}</span>
+                                    <span class="budget-line-value">R$ {{ number_format($budgetData[$section['key'].'_total'], 2, ',', '.') }}</span>
+                                </div>
+                            @endif
                         </div>
-                    </div>
+                    @endforeach
 
                     <div class="budget-row budget-row-leisure {{ $budgetData['leisure_amount'] < 0 ? 'is-deficit' : '' }}">
                         <div class="budget-row-label">{{ __('coach.budget_flyout.leisure') }}</div>
@@ -529,6 +541,17 @@
                             {{ __('coach.budget_flyout.deficit_warning', ['amount' => 'R$ '.number_format(abs($budgetData['leisure_amount']), 2, ',', '.')]) }}
                         </div>
                     @endif
+
+                    <div class="budget-flyout-actions">
+                        <button type="button"
+                                class="budget-save-btn"
+                                wire:click="saveBudget"
+                                wire:loading.attr="disabled"
+                                wire:target="saveBudget">
+                            <span wire:loading.remove wire:target="saveBudget">{{ __('coach.budget_flyout.save') }}</span>
+                            <span wire:loading wire:target="saveBudget" class="btn-spinner"></span>
+                        </button>
+                    </div>
                 </div>
             @endif
         </aside>

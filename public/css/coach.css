@@ -2201,3 +2201,156 @@ body:has(.complete-modal-overlay) .coach-thread {
     background: rgba(220, 38, 38, 0.15);
     color: #fca5a5;
 }
+
+/* ===== Budget flyout (Stage 2: editable inline) ===== */
+
+.budget-input-prefix {
+    color: var(--c-muted);
+    font-size: 0.85rem;
+    margin-right: 0.3rem;
+}
+
+.budget-amount-input,
+.budget-line-input {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    font: inherit;
+    color: var(--c-ink);
+    font-variant-numeric: tabular-nums;
+    transition: border-color .12s ease, background .12s ease;
+}
+
+.budget-amount-input:hover,
+.budget-line-input:hover {
+    border-color: var(--c-line);
+}
+
+.budget-amount-input:focus,
+.budget-line-input:focus {
+    outline: none;
+    border-color: var(--c-accent);
+    background: var(--c-bg-alt);
+}
+
+.budget-amount-input-headline {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: right;
+    width: 7rem;
+    color: var(--c-accent);
+}
+
+.budget-line {
+    /* Override Stage 1 — was display:flex space-between; need a 3-col grid
+       for the editable cells: label / amount / remove button. */
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0;
+}
+
+.budget-line-label-input {
+    width: 100%;
+    min-width: 0;
+}
+
+.budget-line-amount-input {
+    width: 6.5rem;
+    text-align: right;
+}
+
+.budget-line-remove {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--c-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .12s ease, background .12s ease, color .12s ease;
+}
+
+.budget-line:hover .budget-line-remove,
+.budget-line-remove:focus-visible {
+    opacity: 1;
+}
+
+.budget-line-remove:hover {
+    background: rgba(220, 38, 38, 0.08);
+    color: #dc2626;
+}
+
+/* Subtotal/total/empty rows keep the original 2-col flex behaviour —
+   they don't carry inputs, just a label + computed value. */
+.budget-line-subtotal,
+.budget-line-total,
+.budget-line-empty {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    grid-template-columns: none;
+}
+
+.budget-add-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: transparent;
+    border: 1px dashed var(--c-line);
+    border-radius: 6px;
+    padding: 0.4rem 0.7rem;
+    margin-top: 0.4rem;
+    color: var(--c-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.budget-add-line:hover {
+    color: var(--c-ink);
+    border-color: var(--c-ink);
+    background: var(--c-bg-alt);
+}
+
+.budget-flyout-actions {
+    padding: 1.25rem 0 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.budget-save-btn {
+    background: var(--c-ink);
+    color: var(--c-bg);
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: opacity .12s ease;
+}
+
+.budget-save-btn:hover {
+    opacity: 0.85;
+}
+
+.budget-save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dark .budget-flyout-actions {
+    border-color: rgba(255, 255, 255, 0.08);
+}

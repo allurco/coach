@@ -262,6 +262,11 @@ return [
         'total_with_buffer' => 'Total with 15% buffer',
         'empty_bucket' => '_(no lines)_',
         'deficit_warning' => 'Heads up: shortfall of :amount — planned buckets exceed income.',
+        'line_label_placeholder' => 'description',
+        'add_line' => 'add line',
+        'remove_line' => 'Remove line',
+        'save' => 'Save as new snapshot',
+        'saved' => 'Budget saved.',
     ],
 
     'read_budget' => [

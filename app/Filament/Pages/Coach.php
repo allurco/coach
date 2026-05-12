@@ -472,12 +472,12 @@ class Coach extends Page implements HasForms
             'id' => $budget->id,
             'month' => (string) $budget->month,
             'net_income' => (float) $budget->net_income,
-            'fixed_costs_breakdown' => is_array($budget->fixed_costs_breakdown) ? $budget->fixed_costs_breakdown : [],
+            'fixed_costs_lines' => $this->breakdownToLines($budget->fixed_costs_breakdown),
             'fixed_costs_subtotal' => (float) $budget->fixed_costs_subtotal,
             'fixed_costs_total' => (float) $budget->fixed_costs_total,
-            'investments_breakdown' => is_array($budget->investments_breakdown) ? $budget->investments_breakdown : [],
+            'investments_lines' => $this->breakdownToLines($budget->investments_breakdown),
             'investments_total' => (float) $budget->investments_total,
-            'savings_breakdown' => is_array($budget->savings_breakdown) ? $budget->savings_breakdown : [],
+            'savings_lines' => $this->breakdownToLines($budget->savings_breakdown),
             'savings_total' => (float) $budget->savings_total,
             'leisure_amount' => (float) $budget->leisure_amount,
             'notes' => (string) ($budget->notes ?? ''),
@@ -489,6 +489,186 @@ class Coach extends Page implements HasForms
     {
         $this->budgetOpen = false;
         $this->budgetData = null;
+    }
+
+    /**
+     * Append an editable line to one of the three breakdown buckets.
+     * Investments and savings get a suggested amount derived from
+     * net income (10% / 7%, the latter mid of the 5-10% savings
+     * target). Fixed costs default to 0 — the user knows exact rent
+     * or utilities and a wrong default is worse than a blank one.
+     */
+    public function addBudgetLine(string $bucket): void
+    {
+        if ($this->budgetData === null) {
+            return;
+        }
+        $key = match ($bucket) {
+            'fixed_costs', 'investments', 'savings' => $bucket.'_lines',
+            default => null,
+        };
+        if ($key === null) {
+            return;
+        }
+
+        $netIncome = (float) ($this->budgetData['net_income'] ?? 0);
+        $suggested = match ($bucket) {
+            'investments' => round($netIncome * 0.10, 2),
+            'savings' => round($netIncome * 0.07, 2),
+            default => 0.0,
+        };
+
+        $this->budgetData[$key][] = ['label' => '', 'amount' => $suggested];
+        $this->recalcBudget();
+    }
+
+    public function removeBudgetLine(string $bucket, int $index): void
+    {
+        if ($this->budgetData === null) {
+            return;
+        }
+        $key = match ($bucket) {
+            'fixed_costs', 'investments', 'savings' => $bucket.'_lines',
+            default => null,
+        };
+        if ($key === null || ! isset($this->budgetData[$key][$index])) {
+            return;
+        }
+
+        array_splice($this->budgetData[$key], $index, 1);
+        $this->recalcBudget();
+    }
+
+    /**
+     * Recompute subtotals/totals/leisure from the current line state.
+     * Cheap in-memory arithmetic; fires on every input change via
+     * updatedBudgetData() so the user sees the leisure delta settle
+     * as they type.
+     */
+    public function recalcBudget(): void
+    {
+        if ($this->budgetData === null) {
+            return;
+        }
+
+        $sumLines = fn (array $lines) => array_sum(array_map(
+            fn ($line) => (float) ($line['amount'] ?? 0),
+            $lines,
+        ));
+
+        $netIncome = (float) ($this->budgetData['net_income'] ?? 0);
+        $fixedSubtotal = $sumLines($this->budgetData['fixed_costs_lines'] ?? []);
+        $bufferPct = Budget::FIXED_COSTS_BUFFER_PCT;
+        $fixedTotal = round($fixedSubtotal * (1 + $bufferPct / 100), 2);
+        $investmentsTotal = $sumLines($this->budgetData['investments_lines'] ?? []);
+        $savingsTotal = $sumLines($this->budgetData['savings_lines'] ?? []);
+        $leisure = round($netIncome - $fixedTotal - $investmentsTotal - $savingsTotal, 2);
+
+        $this->budgetData['fixed_costs_subtotal'] = round($fixedSubtotal, 2);
+        $this->budgetData['fixed_costs_total'] = $fixedTotal;
+        $this->budgetData['investments_total'] = round($investmentsTotal, 2);
+        $this->budgetData['savings_total'] = round($savingsTotal, 2);
+        $this->budgetData['leisure_amount'] = $leisure;
+    }
+
+    /**
+     * Persist the current edit state as a NEW Budget row — snapshots
+     * are immutable, every save creates a new row, "current" is the
+     * most recent. Matches how BudgetSnapshot tool already behaves
+     * and preserves history for revisits.
+     */
+    public function saveBudget(): void
+    {
+        if ($this->budgetData === null) {
+            return;
+        }
+
+        $fixedBreakdown = $this->linesToBreakdown($this->budgetData['fixed_costs_lines'] ?? []);
+        $investmentsBreakdown = $this->linesToBreakdown($this->budgetData['investments_lines'] ?? []);
+        $savingsBreakdown = $this->linesToBreakdown($this->budgetData['savings_lines'] ?? []);
+
+        $fixedSubtotal = array_sum($fixedBreakdown);
+        $bufferPct = Budget::FIXED_COSTS_BUFFER_PCT;
+        $fixedTotal = round($fixedSubtotal * (1 + $bufferPct / 100), 2);
+        $investmentsTotal = array_sum($investmentsBreakdown);
+        $savingsTotal = array_sum($savingsBreakdown);
+        $netIncome = (float) ($this->budgetData['net_income'] ?? 0);
+        $leisure = round($netIncome - $fixedTotal - $investmentsTotal - $savingsTotal, 2);
+
+        $new = Budget::create([
+            'goal_id' => null,
+            'month' => (string) $this->budgetData['month'],
+            'net_income' => $netIncome,
+            'fixed_costs_breakdown' => $fixedBreakdown ?: null,
+            'fixed_costs_subtotal' => $fixedSubtotal,
+            'fixed_costs_total' => $fixedTotal,
+            'investments_breakdown' => $investmentsBreakdown ?: null,
+            'investments_total' => $investmentsTotal,
+            'savings_breakdown' => $savingsBreakdown ?: null,
+            'savings_total' => $savingsTotal,
+            'leisure_amount' => $leisure,
+        ]);
+
+        $this->budgetData['id'] = $new->id;
+
+        Notification::make()
+            ->title((string) __('coach.budget_flyout.saved'))
+            ->success()
+            ->send();
+    }
+
+    /**
+     * Livewire lifecycle hook — fires on any budgetData mutation from
+     * the client (wire:model.live on the input cells). Keeps derived
+     * fields in sync as the user types.
+     */
+    public function updatedBudgetData(): void
+    {
+        $this->recalcBudget();
+    }
+
+    /**
+     * Convert label-keyed breakdown (persisted shape) to indexed line
+     * shape (UI edit shape). Float amounts so the view's type-coerce
+     * does not surprise.
+     *
+     * @param  mixed  $breakdown
+     * @return list<array{label:string,amount:float}>
+     */
+    protected function breakdownToLines($breakdown): array
+    {
+        if (! is_array($breakdown)) {
+            return [];
+        }
+
+        $lines = [];
+        foreach ($breakdown as $label => $amount) {
+            $lines[] = ['label' => (string) $label, 'amount' => (float) $amount];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Inverse — for persist time. Drops empty-label and zero/negative
+     * amount lines so scratch rows the user never filled in don't
+     * pollute the snapshot.
+     *
+     * @param  array<int,array<string,mixed>>  $lines
+     * @return array<string,float>
+     */
+    protected function linesToBreakdown(array $lines): array
+    {
+        $out = [];
+        foreach ($lines as $line) {
+            $label = trim((string) ($line['label'] ?? ''));
+            $amount = (float) ($line['amount'] ?? 0);
+            if ($label !== '' && $amount > 0) {
+                $out[$label] = $amount;
+            }
+        }
+
+        return $out;
     }
 
     /**

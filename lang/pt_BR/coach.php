@@ -262,6 +262,11 @@ return [
         'total_with_buffer' => 'Total com buffer 15%',
         'empty_bucket' => '_(sem linhas)_',
         'deficit_warning' => 'Atenção: déficit de :amount — as caixas planejadas estouram a renda.',
+        'line_label_placeholder' => 'descrição',
+        'add_line' => 'adicionar linha',
+        'remove_line' => 'Remover linha',
+        'save' => 'Salvar como novo snapshot',
+        'saved' => 'Orçamento salvo.',
     ],
 
     'read_budget' => [
