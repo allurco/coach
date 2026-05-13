@@ -4,6 +4,9 @@
 - **Author**: rogerssampaio (with Claude pair)
 - **Created**: 2026-05-13
 - **Supersedes**: —
+- **Framed by**: [RFC 0002](0002-coach-as-extensible-app.md) — this RFC
+  implements one of the seven extension points committed in 0002 (prompt
+  stages). Read 0002 first for the overall philosophy and audience model.
 - **Related**: PR #48 (i18n + locale knowledge), PR #51 (locale attachment template)
 
 ## 1. Summary

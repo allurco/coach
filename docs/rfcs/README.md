@@ -30,4 +30,10 @@ patterns the team will follow for future work.
 
 | # | Title | Status |
 |---|---|---|
-| [0001](0001-prompt-pipeline-and-extensibility.md) | Prompt assembly pipeline & extensibility hooks | Proposed |
+| [0002](0002-coach-as-extensible-app.md) | Coach as a self-hostable, extensible coaching app | Proposed |
+| [0001](0001-prompt-pipeline-and-extensibility.md) | Prompt assembly pipeline & extensibility hooks (one of seven extension points framed by 0002) | Proposed |
+
+> **Read 0002 first** — it frames the audience, the architectural shape
+> (app vs package), and the seven extension points Coach commits to in v1.
+> Individual extension points have their own RFCs (0001 covers prompt
+> stages).
