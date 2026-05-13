@@ -348,7 +348,7 @@ class CoachAgent implements Agent, Conversational, HasTools
                 promising to show)
 
             ✅ RIGHT — complete flow in a single response:
-                [calls CreateAction(title="Do pilates", category="health", priority="media")]
+                [calls CreateAction(title="Do pilates", category="crescimento", priority="media")]
                 [calls ListActions]
                 "Done. Added pilates to the plan. You have 6 pending actions now."
 
