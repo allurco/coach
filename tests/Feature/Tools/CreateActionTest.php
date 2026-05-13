@@ -39,13 +39,13 @@ it('creates an action with required title only', function () {
     $result = $this->tool->handle(new Request(['title' => 'Pagar fatura']));
 
     expect(Action::count())->toBe(1)
-        ->and($result)->toContain('Ação criada com ID');
+        ->and($result)->toContain('Action created with ID');
 
     $action = Action::first();
     expect($action->title)->toBe('Pagar fatura')
-        ->and($action->status)->toBe('pendente')
-        ->and($action->category)->toBe('financeiro')
-        ->and($action->priority)->toBe('media')
+        ->and($action->status)->toBe('pending')
+        ->and($action->category)->toBe('financial')
+        ->and($action->priority)->toBe('medium')
         ->and($action->deadline)->toBeNull();
 });
 
@@ -53,17 +53,17 @@ it('respects all provided fields', function () {
     $this->tool->handle(new Request([
         'title' => 'Falar com contador',
         'description' => 'urgente',
-        'category' => 'fiscal',
-        'priority' => 'alta',
-        'importance' => 'critico',
-        'difficulty' => 'medio',
+        'category' => 'tax',
+        'priority' => 'high',
+        'importance' => 'critical',
+        'difficulty' => 'medium',
     ]));
 
     $action = Action::first();
-    expect($action->category)->toBe('fiscal')
-        ->and($action->priority)->toBe('alta')
-        ->and($action->importance)->toBe('critico')
-        ->and($action->difficulty)->toBe('medio')
+    expect($action->category)->toBe('tax')
+        ->and($action->priority)->toBe('high')
+        ->and($action->importance)->toBe('critical')
+        ->and($action->difficulty)->toBe('medium')
         ->and($action->description)->toBe('urgente');
 });
 

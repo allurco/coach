@@ -38,7 +38,7 @@ function seedActiveAction(int $goalId): void
     Action::create([
         'goal_id' => $goalId,
         'title' => 'seed action',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 }
 

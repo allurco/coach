@@ -23,7 +23,7 @@ class UpdateAction implements Tool
         $action = Action::find($request['id']);
 
         if (! $action) {
-            return "Ação com ID {$request['id']} não encontrada.";
+            return "Action with ID {$request['id']} not found.";
         }
 
         $changes = [];
@@ -32,11 +32,11 @@ class UpdateAction implements Tool
             $action->status = $request['status'];
             $changes[] = "status → {$request['status']}";
 
-            if ($request['status'] === 'concluido') {
+            if ($request['status'] === 'completed') {
                 $action->completed_at = now();
-                $changes[] = 'completed_at → agora';
+                $changes[] = 'completed_at → now';
             } elseif ($action->completed_at !== null) {
-                // Re-opening or cancelling a previously concluded action: clear timestamp.
+                // Re-opening or cancelling a previously completed action: clear timestamp.
                 $action->completed_at = null;
                 $changes[] = 'completed_at → null';
             }
@@ -44,26 +44,26 @@ class UpdateAction implements Tool
 
         if (! empty($request['result_notes'])) {
             $action->result_notes = $request['result_notes'];
-            $changes[] = 'notas adicionadas';
+            $changes[] = 'notes added';
         }
 
         if (! empty($request['deadline'])) {
             $action->deadline = $this->parseRelativeDate($request['deadline']) ?: null;
-            $changes[] = 'deadline atualizado';
+            $changes[] = 'deadline updated';
         }
 
         if (! empty($request['snooze_until'])) {
             $action->snooze_until = $this->parseRelativeDate($request['snooze_until']);
-            $changes[] = "adiada até {$action->snooze_until?->format('d/m/Y')}";
+            $changes[] = "snoozed until {$action->snooze_until?->format('Y-m-d')}";
         }
 
         $action->save();
 
         return sprintf(
-            'Ação #%d "%s" atualizada: %s.',
+            'Action #%d "%s" updated: %s.',
             $action->id,
             $action->title,
-            implode(', ', $changes) ?: 'sem mudanças',
+            implode(', ', $changes) ?: 'no changes',
         );
     }
 
@@ -72,7 +72,7 @@ class UpdateAction implements Tool
         return [
             'id' => $schema->integer()->required(),
             'status' => $schema->string()
-                ->enum(['pendente', 'em_andamento', 'concluido', 'cancelado']),
+                ->enum(['pending', 'in_progress', 'completed', 'cancelled']),
             'result_notes' => $schema->string(),
             'deadline' => $schema->string(),
             'snooze_until' => $schema->string(),

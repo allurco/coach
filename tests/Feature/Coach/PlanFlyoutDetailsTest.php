@@ -13,11 +13,11 @@ it('exposes detail fields for a pending action', function () {
     Action::create([
         'title' => 'Quitar Itaú',
         'description' => 'Ligar 4004-4828 e pedir saldo devedor',
-        'category' => 'financeiro',
-        'priority' => 'alta',
-        'importance' => 'critico',
-        'difficulty' => 'medio',
-        'status' => 'pendente',
+        'category' => 'financial',
+        'priority' => 'high',
+        'importance' => 'critical',
+        'difficulty' => 'medium',
+        'status' => 'pending',
     ]);
 
     $page = new Coach;
@@ -29,8 +29,8 @@ it('exposes detail fields for a pending action', function () {
 
     expect($row)
         ->toHaveKey('description', 'Ligar 4004-4828 e pedir saldo devedor')
-        ->toHaveKey('importance', 'critico')
-        ->toHaveKey('difficulty', 'medio')
+        ->toHaveKey('importance', 'critical')
+        ->toHaveKey('difficulty', 'medium')
         ->toHaveKey('snooze_until', null)
         ->toHaveKey('result_notes', null)
         ->toHaveKey('completed_at', null)
@@ -42,19 +42,19 @@ it('exposes detail fields for a pending action', function () {
 it('formats snooze_until and completed_at as date strings', function () {
     Action::create([
         'title' => 'Snoozed task',
-        'status' => 'pendente',
+        'status' => 'pending',
         'snooze_until' => '2026-06-15',
     ]);
 
     Action::create([
         'title' => 'Done task',
-        'status' => 'concluido',
+        'status' => 'completed',
         'completed_at' => '2026-04-10 09:30:00',
         'result_notes' => 'Pago via Pix',
     ]);
 
     $page = new Coach;
-    $page->planFilter = 'todas';
+    $page->planFilter = 'all';
     $page->loadPlan();
 
     $snoozed = collect($page->planActions)->firstWhere('title', 'Snoozed task');
@@ -68,7 +68,7 @@ it('formats snooze_until and completed_at as date strings', function () {
 it('exposes attachment metadata as a list', function () {
     Action::create([
         'title' => 'Action with files',
-        'status' => 'pendente',
+        'status' => 'pending',
         'attachments' => [
             'coach-uploads/fatura-itau.pdf',
             'coach-uploads/comprovante.png',
@@ -89,7 +89,7 @@ it('exposes attachment metadata as a list', function () {
 it('handles null attachments without crashing', function () {
     Action::create([
         'title' => 'No attachments',
-        'status' => 'pendente',
+        'status' => 'pending',
         'attachments' => null,
     ]);
 
@@ -103,21 +103,21 @@ it('flags has_details true when description, snooze, attachments or completion d
     Action::create([
         'title' => 'With description',
         'description' => 'Some text',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
     Action::create([
         'title' => 'With completed_at',
-        'status' => 'concluido',
+        'status' => 'completed',
         'completed_at' => now(),
     ]);
     Action::create([
         'title' => 'With attachments',
-        'status' => 'pendente',
+        'status' => 'pending',
         'attachments' => ['coach-uploads/file.pdf'],
     ]);
 
     $page = new Coach;
-    $page->planFilter = 'todas';
+    $page->planFilter = 'all';
     $page->loadPlan();
 
     foreach ($page->planActions as $row) {
@@ -126,13 +126,13 @@ it('flags has_details true when description, snooze, attachments or completion d
 });
 
 it('flags has_details true even for a bare action because importance/difficulty have model defaults', function () {
-    // Documents the existing behavior: Action defaults importance='importante'
-    // and difficulty='medio', so every action carries enough metadata to show
+    // Documents the existing behavior: Action defaults importance='important'
+    // and difficulty='medium', so every action carries enough metadata to show
     // the details panel. If those defaults ever go away, this test will catch
     // the visual side-effect.
     Action::create([
         'title' => 'Bare action',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     $page = new Coach;
@@ -148,7 +148,7 @@ it('does not leak details from another user\'s action', function () {
         'user_id' => $intruder->id,
         'title' => 'Intruder secret',
         'description' => 'top secret',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     $page = new Coach;

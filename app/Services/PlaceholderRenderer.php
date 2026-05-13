@@ -83,13 +83,13 @@ class PlaceholderRenderer
             return (string) __('coach.placeholders.plan_empty');
         }
 
-        $statusRank = ['em_andamento' => 0, 'pendente' => 1];
-        $priorityRank = ['alta' => 0, 'media' => 1, 'baixa' => 2];
+        $statusRank = ['in_progress' => 0, 'pending' => 1];
+        $priorityRank = ['high' => 0, 'medium' => 1, 'low' => 2];
 
         $actions = Action::query()
             ->withoutGlobalScope('owner')
             ->where('user_id', $userId)
-            ->whereIn('status', ['pendente', 'em_andamento'])
+            ->whereIn('status', ['pending', 'in_progress'])
             ->orderBy('deadline')
             ->limit(20)
             ->get()

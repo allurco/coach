@@ -23,7 +23,7 @@ class LogFirstWin extends Tip
         return Action::query()
             ->withoutGlobalScope('owner')
             ->where('user_id', $user->id)
-            ->where('status', 'concluido')
+            ->where('status', 'completed')
             ->whereNull('result_notes')
             ->exists();
     }

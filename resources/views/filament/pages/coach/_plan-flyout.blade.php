@@ -59,7 +59,7 @@
                         @endif
                     </div>
 
-                    @if ($action['status'] !== 'concluido')
+                    @if ($action['status'] !== 'completed')
                         <div class="plan-item-actions" @click.stop>
                             <button type="button" class="plan-action-btn done"
                                     wire:click="startCompleteAction({{ $action['id'] }})"
@@ -145,10 +145,10 @@
                     <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M9 11h6"/><path d="M9 15h4"/><path d="M8 4V2.5"/><path d="M16 4V2.5"/></svg>
                 </div>
                 <div class="plan-empty-copy">
-                    {{ __('coach.plan.empty_'.($planFilter !== 'todas' ? $planFilter : 'todas')) }}
+                    {{ __('coach.plan.empty_'.($planFilter !== 'all' ? $planFilter : 'all')) }}
                 </div>
-                @if ($planFilter !== 'todas')
-                    <button type="button" wire:click="setPlanFilter('todas')" class="plan-empty-link">{{ __('coach.plan.view_all') }}</button>
+                @if ($planFilter !== 'all')
+                    <button type="button" wire:click="setPlanFilter('all')" class="plan-empty-link">{{ __('coach.plan.view_all') }}</button>
                 @endif
             </div>
         @endforelse

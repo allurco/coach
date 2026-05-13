@@ -321,9 +321,9 @@ class CoachAgent implements Agent, Conversational, HasTools
             IT'S NOT THE TEXT that changes the plan's state. It's the TOOL.
             "Narrating" without executing = lying to the user.
 
-            - If the user says "mark as in progress" → CALL UpdateAction(id, status='em_andamento'),
+            - If the user says "mark as in progress" → CALL UpdateAction(id, status='in_progress'),
               THEN write "Marked as in progress."
-            - If they say "completed" → CALL UpdateAction(id, status='concluido'), THEN confirm.
+            - If they say "completed" → CALL UpdateAction(id, status='completed'), THEN confirm.
             - If they say "snooze 1 week" → CALL UpdateAction(id, snooze_until='1w'), THEN confirm.
             - If they say "create action X" (and already confirmed) → CALL CreateAction, THEN say "Created".
 
@@ -882,16 +882,16 @@ class CoachAgent implements Agent, Conversational, HasTools
 
     protected function planStats(): string
     {
-        $pending = Action::where('status', 'pendente')->count();
-        $overdue = Action::where('status', 'pendente')
+        $pending = Action::where('status', 'pending')->count();
+        $overdue = Action::where('status', 'pending')
             ->whereNotNull('deadline')
             ->whereDate('deadline', '<', now())
             ->count();
-        $dueSoon = Action::where('status', 'pendente')
+        $dueSoon = Action::where('status', 'pending')
             ->whereNotNull('deadline')
             ->whereBetween('deadline', [now(), now()->addDays(3)])
             ->count();
-        $done = Action::where('status', 'concluido')->count();
+        $done = Action::where('status', 'completed')->count();
 
         return "Pending: $pending | Overdue: $overdue | Due in 3 days: $dueSoon | Completed: $done";
     }

@@ -51,7 +51,7 @@ it('AddFirstAction applies when an active non-general goal has no actions', func
 
 it('AddFirstAction does not apply once any action exists in the goal', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
-    Action::create(['goal_id' => $goal->id, 'title' => 'X', 'status' => 'pendente']);
+    Action::create(['goal_id' => $goal->id, 'title' => 'X', 'status' => 'pending']);
 
     expect((new AddFirstAction)->applies($this->user, $goal))->toBeFalse();
 });
@@ -71,7 +71,7 @@ it('ReviewOverdue applies when an open action is overdue by 3+ days', function (
     Action::create([
         'goal_id' => $goal->id,
         'title' => 'old',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->subDays(5),
     ]);
 
@@ -83,7 +83,7 @@ it('ReviewOverdue does not apply for actions overdue less than 3 days', function
     Action::create([
         'goal_id' => $goal->id,
         'title' => 'recent',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->subDays(1),
     ]);
 
@@ -101,7 +101,7 @@ it('ReviewOverdue does not see another user’s overdue action', function () {
         'user_id' => $other->id,
         'goal_id' => $otherGoal->id,
         'title' => 'their old',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->subDays(30),
     ]);
 
@@ -117,7 +117,7 @@ it('LogFirstWin applies when there’s a concluded action with no result_notes',
     Action::create([
         'goal_id' => $goal->id,
         'title' => 'done',
-        'status' => 'concluido',
+        'status' => 'completed',
         'result_notes' => null,
     ]);
 
@@ -129,7 +129,7 @@ it('LogFirstWin does not apply once result_notes is filled', function () {
     Action::create([
         'goal_id' => $goal->id,
         'title' => 'done',
-        'status' => 'concluido',
+        'status' => 'completed',
         'result_notes' => 'how it went',
     ]);
 
@@ -146,7 +146,7 @@ it('TrimHeavyPlan applies when open action count >= threshold', function () {
         Action::create([
             'goal_id' => $goal->id,
             'title' => "a{$i}",
-            'status' => 'pendente',
+            'status' => 'pending',
         ]);
     }
 
@@ -159,7 +159,7 @@ it('TrimHeavyPlan does not apply below threshold', function () {
         Action::create([
             'goal_id' => $goal->id,
             'title' => "a{$i}",
-            'status' => 'pendente',
+            'status' => 'pending',
         ]);
     }
 
@@ -211,7 +211,7 @@ it('RevisitDormantGoal does not apply for a fresh goal', function () {
 it('RevisitDormantGoal does not apply when actions were touched recently', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
     $goal->forceFill(['created_at' => now()->subDays(30)])->save();
-    Action::create(['goal_id' => $goal->id, 'title' => 'recent', 'status' => 'pendente']);
+    Action::create(['goal_id' => $goal->id, 'title' => 'recent', 'status' => 'pending']);
 
     expect((new RevisitDormantGoal)->applies($this->user, $goal))->toBeFalse();
 });

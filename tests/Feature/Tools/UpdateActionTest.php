@@ -11,45 +11,45 @@ beforeEach(function () {
     $this->tool = new UpdateAction;
     $this->action = Action::create([
         'title' => 'Pagar fatura',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 });
 
 it('returns a not-found message when id does not exist', function () {
     $result = $this->tool->handle(new Request(['id' => 99999]));
 
-    expect($result)->toContain('não encontrada');
+    expect($result)->toContain('not found');
 });
 
 it('updates status to em_andamento', function () {
-    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'em_andamento']));
+    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'in_progress']));
 
-    expect($this->action->fresh()->status)->toBe('em_andamento')
+    expect($this->action->fresh()->status)->toBe('in_progress')
         ->and($this->action->fresh()->completed_at)->toBeNull();
 });
 
 it('sets completed_at when status changes to concluido', function () {
-    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'concluido']));
+    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'completed']));
 
     $fresh = $this->action->fresh();
-    expect($fresh->status)->toBe('concluido')
+    expect($fresh->status)->toBe('completed')
         ->and($fresh->completed_at)->not->toBeNull();
 });
 
 it('clears completed_at when status changes from concluido back to pendente', function () {
-    $this->action->update(['status' => 'concluido', 'completed_at' => now()]);
+    $this->action->update(['status' => 'completed', 'completed_at' => now()]);
 
-    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'pendente']));
+    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'pending']));
 
     $fresh = $this->action->fresh();
-    expect($fresh->status)->toBe('pendente')
+    expect($fresh->status)->toBe('pending')
         ->and($fresh->completed_at)->toBeNull();
 });
 
 it('clears completed_at when status changes from concluido to cancelado', function () {
-    $this->action->update(['status' => 'concluido', 'completed_at' => now()]);
+    $this->action->update(['status' => 'completed', 'completed_at' => now()]);
 
-    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'cancelado']));
+    $this->tool->handle(new Request(['id' => $this->action->id, 'status' => 'cancelled']));
 
     expect($this->action->fresh()->completed_at)->toBeNull();
 });
@@ -86,12 +86,12 @@ it('updates snooze_until using relative shorthand', function () {
 it('reports the changes back', function () {
     $result = $this->tool->handle(new Request([
         'id' => $this->action->id,
-        'status' => 'concluido',
+        'status' => 'completed',
         'result_notes' => 'feito',
     ]));
 
     expect($result)
-        ->toContain("Ação #{$this->action->id}")
-        ->toContain('status → concluido')
-        ->toContain('notas adicionadas');
+        ->toContain("Action #{$this->action->id}")
+        ->toContain('status → completed')
+        ->toContain('notes added');
 });
