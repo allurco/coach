@@ -405,13 +405,17 @@ class CoachAgent implements Agent, Conversational, HasTools
             return 'en_US';
         }
 
+        $locale = str_replace('-', '_', $locale);
+        [$language, $region] = array_pad(explode('_', $locale, 2), 2, null);
+        $locale = strtolower($language).($region !== null ? '_'.strtoupper($region) : '');
+
         // Bare `en` would miss en.md and silently fall through to en_US.md
         // via the candidate chain. Normalize upfront so the path is honest.
         if ($locale === 'en') {
             return 'en_US';
         }
 
-        return str_replace('-', '_', $locale);
+        return $locale;
     }
 
     protected function tonePersonaPt(): string
