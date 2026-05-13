@@ -12,11 +12,11 @@ class RecallFacts implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Consulta a MEMÓRIA DE LONGO PRAZO do Rogers — fatos guardados em conversas anteriores '
-            .'(faturas analisadas, pagamentos feitos, decisões tomadas, etc.). '
-            .'Use quando o Rogers fizer referência a algo que aconteceu antes, ou quando precisar '
-            .'de contexto histórico pra responder. Filtra por tipo (fatura, pagamento, decisao, etc.) ou '
-            .'busca por palavra-chave.';
+        return 'Queries the user\'s LONG-TERM MEMORY — facts stored in previous conversations '
+            .'(analyzed invoices, payments made, decisions taken, etc.). '
+            .'Use when the user references something that happened before, or when you need '
+            .'historical context to answer. Filters by kind (fatura, pagamento, decisao, etc.) or '
+            .'searches by keyword.';
     }
 
     public function handle(Request $request): Stringable|string

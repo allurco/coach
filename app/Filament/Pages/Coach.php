@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Ai\Agents\FinanceCoach;
+use App\Ai\Agents\CoachAgent;
 use App\Ai\Tools\BudgetSnapshot;
 use App\Filament\Pages\Concerns\HasBudgetFlyout;
 use App\Filament\Pages\Concerns\HasBudgetShare;
@@ -573,7 +573,7 @@ class Coach extends Page implements HasForms
                 }
             }
 
-            $coach = new FinanceCoach;
+            $coach = new CoachAgent;
 
             if ($this->conversationId) {
                 $coach = $coach->continue($this->conversationId, as: auth()->user());
@@ -610,31 +610,31 @@ class Coach extends Page implements HasForms
 
             if (! empty($documents)) {
                 $promptToSend .= "\n\n---\n\n"
-                    ."FORMATO OBRIGATÓRIO da sua resposta:\n\n"
-                    ."1️⃣ PRIMEIRO a tabela markdown estruturada do documento:\n\n"
-                    ."| Campo | Valor |\n"
+                    ."MANDATORY FORMAT for your response:\n\n"
+                    ."1️⃣ FIRST the structured markdown table of the document:\n\n"
+                    ."| Field | Value |\n"
                     ."|---|---|\n"
-                    ."| Tipo | (fatura cartão / boleto / extrato / certidão / contrato / nota fiscal / DARF / GPS / DAS / outro) |\n"
-                    ."| Emissor | (banco/empresa/órgão) |\n"
-                    ."| Pagador | (nome ou CPF/CNPJ) |\n"
-                    ."| Categoria | PF / PJ / Híbrido |\n"
-                    ."| Valor total | R\$ X,XX |\n"
-                    ."| Vencimento | DD/MM/AAAA |\n"
-                    ."| Data emissão | DD/MM/AAAA |\n"
-                    ."| Identificador | (número/código) |\n"
-                    ."| Pontos críticos | (parcelamento/juros/atraso/observações) |\n\n"
-                    ."2️⃣ DEPOIS da tabela, faça uma ANÁLISE QUALITATIVA do conteúdo (NÃO PULE):\n"
-                    ."   - Se for fatura de cartão: liste 3-5 lançamentos mais relevantes (valores acima da média, padrões, recorrentes).\n"
-                    .'     IDENTIFIQUE explicitamente despesas que parecem PJ no cartão pessoal: Google Cloud, AWS, Vercel, GitHub, '
-                    ."     Microsoft, Figma, Workspace, hosting, SaaS de dev. Some o total dessas e diga o que faria sentido migrar.\n"
-                    ."   - Se for extrato: identifique padrões de gasto — categorias recorrentes, picos, sangrias.\n"
-                    ."   - Se for boleto/imposto: contexto fiscal e implicações de atraso.\n"
-                    ."   Use bullets ou parágrafos curtos. Não tem que ser exaustivo, mas tem que ser ÚTIL.\n\n"
-                    ."3️⃣ DEPOIS, 1-2 frases sobre o que o usuário deveria fazer.\n\n"
-                    ."4️⃣ POR ÚLTIMO chame RememberFact com label e summary.\n\n"
-                    .'REGRA CRÍTICA: a tabela + análise + texto devem aparecer na sua mensagem visível PRIMEIRO. '
-                    .'NUNCA termine apenas com tool call sem texto. '
-                    .'NÃO PULE a análise qualitativa — é o que mais importa pro usuário.';
+                    ."| Type | (credit card invoice / payment slip / bank statement / certificate / contract / tax invoice / tax filing / other — use locale-specific labels if listed in 'Local fiscal/cultural context') |\n"
+                    ."| Issuer | (bank/company/agency) |\n"
+                    ."| Payer | (name or national/tax ID) |\n"
+                    ."| Category | Personal / Business / Mixed |\n"
+                    ."| Total | (with currency and locale format) |\n"
+                    ."| Due date | YYYY-MM-DD |\n"
+                    ."| Issue date | YYYY-MM-DD |\n"
+                    ."| Identifier | (number/code) |\n"
+                    ."| Critical notes | (installments/interest/overdue/observations) |\n\n"
+                    ."2️⃣ AFTER the table, do a QUALITATIVE ANALYSIS of the content (DO NOT SKIP):\n"
+                    ."   - If a credit card invoice: list 3-5 most relevant line items (above-average values, patterns, recurring).\n"
+                    .'     EXPLICITLY identify expenses that look like business charges on a personal card: Google Cloud, AWS, Vercel, GitHub, '
+                    ."     Microsoft, Figma, Workspace, hosting, dev SaaS. Sum the total of those and say what would make sense to migrate.\n"
+                    ."   - If a bank statement: identify spending patterns — recurring categories, spikes, leaks.\n"
+                    ."   - If a payment slip / tax doc: fiscal context and implications of being late.\n"
+                    ."   Use bullets or short paragraphs. Doesn't have to be exhaustive, but has to be USEFUL.\n\n"
+                    ."3️⃣ THEN, 1-2 sentences on what the user should do.\n\n"
+                    ."4️⃣ LASTLY call RememberFact with label and summary.\n\n"
+                    .'CRITICAL RULE: the table + analysis + text must appear in your visible message FIRST. '
+                    .'NEVER end with only a tool call without text. '
+                    .'DO NOT SKIP the qualitative analysis — it\'s what matters most to the user.';
             }
 
             $this->streamingText = '';
@@ -658,12 +658,12 @@ class Coach extends Page implements HasForms
                     'accumulated_tail' => mb_substr($rawText, -120),
                 ]);
 
-                $this->stream(to: 'coach-stream', content: "\n\n— _reexecutando…_ —\n\n");
+                $this->stream(to: 'coach-stream', content: "\n\n— _retrying…_ —\n\n");
 
-                $retryPrompt = '[Sistema]: Sua resposta anterior narrou ações ("criei", "adicionei", "atualizei", "marquei") '
-                    .'mas NÃO chamou as tools correspondentes (CreateAction / UpdateAction / RememberFact), '
-                    .'OU terminou no meio de uma frase. Execute AGORA as tools necessárias e finalize com texto curto. '
-                    .'NÃO narre — execute. Se for caso de listar, chame ListActions.';
+                $retryPrompt = '[System]: Your previous response narrated actions ("created", "added", "updated", "marked") '
+                    .'but did NOT call the corresponding tools (CreateAction / UpdateAction / RememberFact), '
+                    .'OR ended mid-sentence. Execute the necessary tools NOW and finish with a short text. '
+                    .'DO NOT narrate — execute. If a list is needed, call ListActions.';
 
                 ['text' => $retryAccumulated, 'tools' => $retryTools, 'streamText' => $retryStreamText] =
                     $this->streamOnePass($coach, $retryPrompt, []);
@@ -810,7 +810,7 @@ class Coach extends Page implements HasForms
      *
      * @return array{text:string, tools:list<array{name:string,count:int,ok:int}>, streamText:?string}
      */
-    protected function streamOnePass(FinanceCoach $coach, string $promptToSend, array $documents): array
+    protected function streamOnePass(CoachAgent $coach, string $promptToSend, array $documents): array
     {
         $accumulated = '';
         $toolLabels = (array) __('coach.tool_labels');

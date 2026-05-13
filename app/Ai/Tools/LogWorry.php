@@ -19,13 +19,13 @@ class LogWorry implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Registra uma preocupação ou medo que o usuário verbalizou. '
-            .'Use quando o usuário expressar ansiedade ("e se X acontecer?", '
-            .'"tô com medo de Y", "fico travado pensando em Z"). '
-            .'A ideia é dar um lugar concreto pra preocupação sair da cabeça '
-            .'e poder ser revisitada depois — a maioria não materializa, e '
-            .'isso vira evidência ao longo do tempo. '
-            .'Inclua um "topic" curto (1-3 palavras) pra facilitar busca depois.';
+        return 'Registers a worry or fear the user has verbalized. '
+            .'Use when the user expresses anxiety ("what if X happens?", '
+            .'"I\'m afraid of Y", "I get stuck thinking about Z"). '
+            .'The idea is to give the worry a concrete place to live so it can '
+            .'leave the user\'s head and be revisited later — most don\'t materialize, '
+            .'and that becomes evidence over time. '
+            .'Include a short "topic" (1-3 words) for easier lookup later.';
     }
 
     public function handle(Request $request): Stringable|string

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Ai\Agents\FinanceCoach;
+use App\Ai\Agents\CoachAgent;
 use App\Mail\BudgetReminder;
 use App\Models\Budget;
 use App\Models\Goal;
@@ -97,7 +97,7 @@ class CoachMonthlyBudgetReminder extends Command
 
             $prompt = $this->buildPrompt($kind, $financeGoal, $latestBudget);
 
-            $coach = (new FinanceCoach)->forUser($user)->forGoal($financeGoal?->id);
+            $coach = (new CoachAgent)->forUser($user)->forGoal($financeGoal?->id);
 
             // Localize the rendering: the agent's prompt uses the user's
             // own language so the email body matches user.locale.
@@ -151,41 +151,42 @@ class CoachMonthlyBudgetReminder extends Command
             $lastLeisure = number_format((float) $latest->leisure_amount, 2, ',', '.');
 
             return <<<PROMPT
-            [Sistema] Hoje é dia 28. Quero mandar um email pro usuário lembrando de atualizar o Planejador Financeiro do mês {$thisMonth}.
+            [System] It's the 28th. Send an email reminding the user to update the Budget Planner for month {$thisMonth}.
 
             Goal: {$goalName}
-            Último snapshot: {$lastMonth} —
-              Renda líquida R$ {$lastIncome},
-              Custos Fixos R$ {$lastFixed},
-              Investimentos R$ {$lastInvest},
-              Reservas R$ {$lastSavings},
-              Lazer R$ {$lastLeisure}
+            Last snapshot: {$lastMonth} —
+              Net income {$lastIncome},
+              Fixed Costs {$lastFixed},
+              Investments {$lastInvest},
+              Reserves {$lastSavings},
+              Leisure {$lastLeisure}
+            (values formatted per the user's locale)
 
-            Gere o CORPO do email (markdown), 4-6 frases, no idioma do usuário.
+            Generate the email BODY (markdown), 4-6 sentences, in the user's language.
 
-            REGRAS:
-            - Tom: amigo firme, sem "olá" nem "espero que esteja bem".
-            - Cite 1-2 números do snapshot anterior pra contexto.
-            - Peça pra ele responder ESSE email com a renda + gastos atualizados ("é só responder aqui mesmo").
-            - Termine com uma frase curta de incentivo.
-            - NÃO assine, NÃO adicione subject, NÃO adicione saudação corporativa.
-            - NÃO chame nenhuma tool — só gere texto.
+            RULES:
+            - Tone: friendly and firm, no "hello" or "hope you're well". Use the locale-aware voice from the system prompt.
+            - Cite 1-2 numbers from the previous snapshot for context.
+            - Ask them to reply to THIS email with updated income + expenses ("just reply right here").
+            - End with a short encouraging sentence.
+            - DO NOT sign, DO NOT add a subject, DO NOT add a corporate greeting.
+            - DO NOT call any tools — just generate text.
             PROMPT;
         }
 
-        // intro: tem finance goal mas nunca usou BudgetSnapshot
+        // intro: has a finance goal but never used BudgetSnapshot
         return <<<PROMPT
-        [Sistema] Hoje é dia 28. O usuário tem um goal de finance ('{$goalName}') mas ainda não usou o Planejador Financeiro. Quero mandar um email convidando ele a começar pra {$thisMonth}.
+        [System] It's the 28th. The user has a finance goal ('{$goalName}') but hasn't used the Budget Planner yet. Send an invitation email to start for {$thisMonth}.
 
-        Gere o CORPO do email (markdown), 5-7 frases, no idioma do usuário.
+        Generate the email BODY (markdown), 5-7 sentences, in the user's language.
 
-        REGRAS:
-        - Tom: convite, sem pressão.
-        - Explique em 2-3 frases o framework: 4 caixas (Custos Fixos / Investimentos / Reservas / Lazer), aplica buffer de 15% nos fixos, calcula quanto sobra pra Lazer, mostra os % vs alvos (50-60 / 10 / 5-10 / 20-35).
-        - Peça pra ele responder ESSE email com renda + uma noção dos gastos do mês ("é só responder com a sua renda líquida e os principais gastos").
-        - Termine convidando — "topa começar?".
-        - NÃO assine, NÃO adicione subject, NÃO adicione saudação corporativa.
-        - NÃO chame nenhuma tool — só gere texto.
+        RULES:
+        - Tone: invitation, no pressure. Use the locale-aware voice from the system prompt.
+        - Explain the framework in 2-3 sentences: 4 buckets (Fixed Costs / Investments / Reserves / Leisure), applies 15% buffer over fixed costs, calculates what's left for Leisure, shows percentages vs targets (50-60 / 10 / 5-10 / 20-35).
+        - Ask them to reply to THIS email with income + a sense of monthly expenses ("just reply with your net income and main expenses").
+        - End with an invitation — "want to start?".
+        - DO NOT sign, DO NOT add a subject, DO NOT add a corporate greeting.
+        - DO NOT call any tools — just generate text.
         PROMPT;
     }
 }

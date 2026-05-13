@@ -12,19 +12,19 @@ class LogWhy implements Tool
 {
     /**
      * @param  ?int  $activeGoalId  Goal the why belongs to. Passed in by
-     *                              FinanceCoach so the motivation lands
+     *                              CoachAgent so the motivation lands
      *                              in the workspace it was uttered in.
      */
     public function __construct(protected ?int $activeGoalId = null) {}
 
     public function description(): Stringable|string
     {
-        return 'Salva o "porquê" do usuário — a razão profunda dele querer alcançar este goal. '
-            .'Use quando o usuário expressar motivação genuína ("quero X porque Y", '
-            .'"se eu conseguir, finalmente vou poder Z"). '
-            .'Esses porquês ficam em memória de longo prazo e o coach cita de volta '
-            .'quando o usuário estiver vacilando ou com vontade de desistir. '
-            .'NÃO use pra registrar fatos triviais — só motivação real.';
+        return 'Saves the user\'s "why" — the deep reason they want to reach this goal. '
+            .'Use when the user expresses genuine motivation ("I want X because Y", '
+            .'"if I succeed, I\'ll finally be able to Z"). '
+            .'These whys live in long-term memory and the coach cites them back '
+            .'when the user is wavering or wanting to quit. '
+            .'DO NOT use for trivial facts — only real motivation.';
     }
 
     public function handle(Request $request): Stringable|string

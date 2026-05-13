@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Agents\FinanceCoach;
+use App\Ai\Agents\CoachAgent;
 use App\Models\CoachMemory;
 use App\Models\Goal;
 use App\Models\User;
@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
-function goalContextOf(FinanceCoach $coach): string
+function goalContextOf(CoachAgent $coach): string
 {
     $ref = new ReflectionMethod($coach, 'goalContext');
     $ref->setAccessible(true);
@@ -20,15 +20,15 @@ function goalContextOf(FinanceCoach $coach): string
     return (string) $ref->invoke($coach);
 }
 
-function setActive(Goal $goal): FinanceCoach
+function setActive(Goal $goal): CoachAgent
 {
-    return (new FinanceCoach)->forGoal($goal->id);
+    return (new CoachAgent)->forGoal($goal->id);
 }
 
 it('returns the empty message when the user has no goals at all', function () {
     Goal::query()->where('user_id', $this->user->id)->delete();
 
-    $context = goalContextOf(new FinanceCoach);
+    $context = goalContextOf(new CoachAgent);
 
     expect($context)->toBe((string) __('coach.goal_context.empty'))
         ->not->toContain('FINANCE:')
@@ -49,7 +49,7 @@ it('falls back to the user’s default goal when no goal is explicitly set', fun
     Goal::query()->where('user_id', $this->user->id)->delete();
     $goal = Goal::create(['label' => 'fitness', 'name' => 'Voltar a treinar']);
 
-    $context = goalContextOf(new FinanceCoach);
+    $context = goalContextOf(new CoachAgent);
 
     expect($context)
         ->toContain('fitness')
@@ -126,7 +126,7 @@ it('ignores archived goals when falling back to the user default', function () {
     $archived = Goal::create(['label' => 'fitness', 'name' => 'Archived']);
     $archived->update(['is_archived' => true]);
 
-    $context = goalContextOf(new FinanceCoach);
+    $context = goalContextOf(new CoachAgent);
 
     expect($context)
         ->toContain('Active')
@@ -142,7 +142,7 @@ it('does not include other users goals (multi-tenant isolation)', function () {
         'name' => 'OTHER user goal',
     ]);
 
-    expect(goalContextOf(new FinanceCoach))
+    expect(goalContextOf(new CoachAgent))
         ->toBe((string) __('coach.goal_context.empty'))
         ->not->toContain('OTHER user');
 });
@@ -162,7 +162,7 @@ it('auto-resolves the active goal from a continued conversation’s goal_id', fu
         'updated_at' => now(),
     ]);
 
-    $coach = (new FinanceCoach)->continue($convId, as: $this->user);
+    $coach = (new CoachAgent)->continue($convId, as: $this->user);
 
     $context = goalContextOf($coach);
 
@@ -181,7 +181,7 @@ it('does not allow forGoal() to load another users goal (global scope blocks it)
         'name' => 'OTHER user goal',
     ]);
 
-    $coach = (new FinanceCoach)->forGoal($otherGoal->id);
+    $coach = (new CoachAgent)->forGoal($otherGoal->id);
 
     expect(goalContextOf($coach))
         ->toBe((string) __('coach.goal_context.empty'))
@@ -202,7 +202,7 @@ it('surfaces the user’s latest "why" for the active goal so the agent can quot
     $context = goalContextOf(setActive($goal));
 
     expect($context)->toContain('Quero dormir tranquilo sabendo que minhas contas estão em dia.')
-        ->and($context)->toMatch('/por que.*importa|cite de volta/iu');
+        ->and($context)->toMatch('/why.*matters|cite it back/iu');
 });
 
 it('uses the most recent active "why" when the user has logged several', function () {
@@ -248,4 +248,3 @@ it('does not surface a "why" tied to another goal', function () {
 
     expect($context)->not->toContain('health-specific motivation');
 });
-

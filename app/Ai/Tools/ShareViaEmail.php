@@ -13,14 +13,14 @@ class ShareViaEmail implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Envia por email o que o usuário quiser compartilhar com terceiros — '
-            .'contador, parceiro, advogado, etc. O agente escreve o corpo em markdown '
-            .'e pode usar placeholders pra dados estruturados: '
-            .'`{{budget:current}}` (último orçamento do usuário), '
-            .'`{{budget:N}}` (snapshot específico), `{{plan}}` (ações em curso). '
-            .'Cada destinatário pode ser um email literal OU o label de um Contact salvo. '
-            .'O usuário recebe BCC automático pra ter cópia. CONFIRMAR DESTINATÁRIO '
-            .'E ASSUNTO COM O USUÁRIO ANTES DE CHAMAR.';
+        return 'Sends an email with whatever the user wants to share with third parties — '
+            .'accountant, partner, lawyer, etc. The agent writes the body in markdown '
+            .'and can use placeholders for structured data: '
+            .'`{{budget:current}}` (user\'s most recent budget), '
+            .'`{{budget:N}}` (specific snapshot), `{{plan}}` (active actions). '
+            .'Each recipient can be a literal email OR the label of a saved Contact. '
+            .'The user receives an automatic BCC copy. CONFIRM RECIPIENT '
+            .'AND SUBJECT WITH THE USER BEFORE CALLING.';
     }
 
     public function handle(Request $request): Stringable|string

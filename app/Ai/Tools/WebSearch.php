@@ -13,10 +13,10 @@ class WebSearch implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Pesquisa na web pra encontrar informação atual ou que você não tem na memória '
-            .'(ex: cotações, taxas, leis recentes, notícias, recomendações específicas). '
-            .'Retorna até 5 resultados com título, URL e trecho. '
-            .'Use quando o usuário pedir algo factual e atual que você não tem certeza.';
+        return 'Searches the web to find current information or things you don\'t have in memory '
+            .'(e.g. exchange rates, tax rates, recent laws, news, specific recommendations). '
+            .'Returns up to 5 results with title, URL and snippet. '
+            .'Use when the user asks for something factual and current you\'re not sure about.';
     }
 
     public function handle(Request $request): Stringable|string

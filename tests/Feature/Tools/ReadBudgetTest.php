@@ -86,36 +86,37 @@ it('returns an unauth message when no user is logged in', function () {
 });
 
 /**
- * Routing guardrail: when the user asks about a SPECIFIC bucket (investimento,
- * reserva, lazer, custos fixos, renda) the agent must route through ReadBudget
- * — not say "não sei". The signal that tells the LLM to do that lives in this
- * tool's description(). If someone trims it, the routing breaks silently and
- * the agent regresses to "I don't have that info."
+ * Routing guardrail: when the user asks about a SPECIFIC bucket (investment,
+ * emergency fund, leisure, fixed costs, income), the agent must route through
+ * ReadBudget — not say "I don't know". The signal that tells the LLM to do
+ * that lives in this tool's description(). If someone trims it, the routing
+ * breaks silently and the agent regresses.
  */
 it('description enumerates bucket-specific phrasings so the agent routes bucket questions here', function () {
     $description = mb_strtolower((string) $this->tool->description());
 
     expect($description)
-        ->toContain('investiment')      // "investimento"/"investimentos"/"investir"
-        ->toContain('reserva')
-        ->toContain('lazer')
-        ->toContain('renda')
-        ->toContain('custos');
+        ->toContain('investment')
+        ->toContain('emergency fund')
+        ->toContain('leisure')
+        ->toContain('net income')
+        ->toContain('fixed costs');
 });
 
 /**
- * Linhas de gasto específicas (aluguel, mercado, transporte) também precisam
- * estar na description — pra evitar o caso do agente inventar números quando
- * perguntado "quanto gasto com mercado?" só porque a frase não casava com um
- * gatilho. Tudo que tá no breakdown deve sair daqui, não da imaginação.
+ * Specific line items (rent, groceries, transport) must also be in the
+ * description — to prevent the case where the agent invents numbers when
+ * asked "how much do I spend on groceries?" simply because the phrasing
+ * didn't match a trigger. Anything in the breakdown should come from here,
+ * not from imagination.
  */
 it('description enumerates line-item phrasings and forbids inventing numbers', function () {
     $description = mb_strtolower((string) $this->tool->description());
 
     expect($description)
-        ->toContain('aluguel')
-        ->toContain('mercado')
-        ->toContain('transporte')
+        ->toContain('rent')
+        ->toContain('groceries')
+        ->toContain('transport')
         ->toContain('breakdown')
-        ->toContain('não invente');
+        ->toContain('do not invent');
 });
