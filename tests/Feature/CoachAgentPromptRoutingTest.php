@@ -123,3 +123,73 @@ it('loads en_US locale knowledge when user locale is en', function () {
         ->toContain('IRS')   // US tax authority
         ->toContain('1099'); // US contractor tax form
 });
+
+/**
+ * Security guardrail: the user's `locale` column flows into a resource_path()
+ * concatenation in localeKnowledge(). Without validation, a malicious value
+ * like "../../../etc/passwd" would let the loader escape the locale directory
+ * and read arbitrary files. resolveLocale() must filter against an allowlist
+ * regex BEFORE the path is built.
+ */
+it('rejects locale values that could escape the prompts/locale directory', function () {
+    $coach = new CoachAgent;
+    $resolveLocale = new ReflectionMethod($coach, 'resolveLocale');
+    $resolveLocale->setAccessible(true);
+
+    $malicious = [
+        '../../../etc/passwd',
+        '..\\..\\windows\\system32',
+        '/etc/passwd',
+        'pt_BR/../en_US',
+        'en_US.md', // file extension shouldn't slip through
+        '',
+        '   ',
+        'a',                  // too short
+        'toolong_XX',         // wrong shape
+        'PT_br',              // wrong case on country code
+    ];
+
+    foreach ($malicious as $input) {
+        $this->user->update(['locale' => $input]);
+        expect($resolveLocale->invoke($coach))
+            ->toBe('en_US', "locale '{$input}' should fall back to en_US, got: ".$resolveLocale->invoke($coach));
+    }
+});
+
+/**
+ * Fallback chain: when the user's locale has no markdown file yet (e.g. a
+ * Spanish user before es_ES.md exists), localeKnowledge() must return the
+ * en_US content rather than empty — that way the agent still has SOME
+ * fiscal/cultural baseline instead of nothing.
+ */
+it('falls back to en_US knowledge when the user locale file does not exist', function () {
+    $this->user->update(['locale' => 'fr_FR']);
+
+    $coach = new CoachAgent;
+    $prompt = (string) $coach->instructions();
+
+    // fr_FR.md doesn't exist yet — should pull en_US content
+    expect($prompt)
+        ->toContain('LLC')
+        ->toContain('IRS');
+});
+
+/**
+ * Normalization: bare `en` should map to `en_US` (not silently fall through
+ * the candidate chain to the fallback). Same for dash-form `en-US` →
+ * `en_US`. Makes the resolved value honest and the cache key consistent.
+ */
+it('normalizes bare en to en_US and en-US to en_US', function () {
+    $coach = new CoachAgent;
+    $resolveLocale = new ReflectionMethod($coach, 'resolveLocale');
+    $resolveLocale->setAccessible(true);
+
+    $this->user->update(['locale' => 'en']);
+    expect($resolveLocale->invoke($coach))->toBe('en_US');
+
+    $this->user->update(['locale' => 'en-US']);
+    expect($resolveLocale->invoke($coach))->toBe('en_US');
+
+    $this->user->update(['locale' => 'pt-BR']);
+    expect($resolveLocale->invoke($coach))->toBe('pt_BR');
+});

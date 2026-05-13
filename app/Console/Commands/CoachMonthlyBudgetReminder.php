@@ -144,23 +144,29 @@ class CoachMonthlyBudgetReminder extends Command
 
         if ($kind === 'recurring' && $latest) {
             $lastMonth = $latest->month;
-            $lastIncome = number_format((float) $latest->net_income, 2, ',', '.');
-            $lastFixed = number_format((float) $latest->fixed_costs_total, 2, ',', '.');
-            $lastInvest = number_format((float) $latest->investments_total, 2, ',', '.');
-            $lastSavings = number_format((float) $latest->savings_total, 2, ',', '.');
-            $lastLeisure = number_format((float) $latest->leisure_amount, 2, ',', '.');
+            // Pass raw decimals (e.g. 1234.56) to the LLM. The locale knowledge
+            // block in the system prompt tells it how to format currency for
+            // the user's locale (R$ 1.234,56 for pt_BR vs $1,234.56 for en_US).
+            // Pre-formatting in PHP with number_format() locked the email to
+            // Brazilian style regardless of user locale — a real regression.
+            $lastIncome = (float) $latest->net_income;
+            $lastFixed = (float) $latest->fixed_costs_total;
+            $lastInvest = (float) $latest->investments_total;
+            $lastSavings = (float) $latest->savings_total;
+            $lastLeisure = (float) $latest->leisure_amount;
 
             return <<<PROMPT
             [System] It's the 28th. Send an email reminding the user to update the Budget Planner for month {$thisMonth}.
 
             Goal: {$goalName}
-            Last snapshot: {$lastMonth} —
-              Net income {$lastIncome},
-              Fixed Costs {$lastFixed},
-              Investments {$lastInvest},
-              Reserves {$lastSavings},
-              Leisure {$lastLeisure}
-            (values formatted per the user's locale)
+            Last snapshot: {$lastMonth} — raw numeric values (format them yourself
+            per the user's locale, using the currency conventions documented in
+            "## Local fiscal/cultural context" of the system prompt):
+              Net income: {$lastIncome}
+              Fixed Costs: {$lastFixed}
+              Investments: {$lastInvest}
+              Reserves: {$lastSavings}
+              Leisure: {$lastLeisure}
 
             Generate the email BODY (markdown), 4-6 sentences, in the user's language.
 

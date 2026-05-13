@@ -362,31 +362,61 @@ class CoachAgent implements Agent, Conversational, HasTools
     }
 
     /**
-     * Locale-aware voice/tone block. Instructions stay in English (universal),
-     * but the model needs concrete examples in the language it should speak
-     * — otherwise it defaults to mirroring the prompt language. The output
-     * locale is driven by the authenticated user's locale (set in the User
-     * model), falling back to the app's default.
+     * Locale-aware voice/tone block.
+     *
+     * CONVENTION FOR CONTRIBUTORS: meta-instructions ("Respond in X language",
+     * "use definite articles", etc.) stay in English so any reviewer can read
+     * the rules regardless of which locale they're contributing. The CONCRETE
+     * EXAMPLES of voice ("Eai, beleza?" / "Hey, what's up?") live in the
+     * target language — the model needs them to lock the register, since
+     * abstract instructions like "be casual" don't carry tone.
+     *
+     * To add a new locale's voice (e.g. `tonePersonaEs`), follow this layout
+     * and wire it into the match() below. The dispatcher reads the user's
+     * locale (sanitized by resolveLocale) and picks the right block.
      */
     protected function tonePersona(): string
     {
         return match ($this->resolveLocale()) {
-            'pt_BR', 'pt-BR', 'pt' => $this->tonePersonaPt(),
+            'pt_BR' => $this->tonePersonaPt(),
             default => $this->tonePersonaEn(),
         };
     }
 
+    /**
+     * Resolves the user's locale for prompt assembly. Validates the value
+     * against an allowlist regex BEFORE it ever reaches the file system —
+     * the locale flows into a resource_path() concatenation in
+     * localeKnowledge(), so an unsanitized value like "../../../etc/passwd"
+     * would let the loader read arbitrary files. Validating here closes
+     * that hole for every downstream caller.
+     *
+     * Format accepted: `xx` (2 letters) or `xx_YY` / `xx-YY` (BCP-47-ish).
+     * Anything else falls back to `en_US`. We also normalize bare `en` →
+     * `en_US` to avoid silently aliasing to the fallback path.
+     */
     protected function resolveLocale(): string
     {
         $user = auth()->user();
-        $locale = $user?->locale ?? app()->getLocale() ?? 'en';
+        $raw = $user?->locale ?? app()->getLocale() ?? 'en';
+        $locale = is_string($raw) ? $raw : 'en';
 
-        return is_string($locale) ? $locale : 'en';
+        if (! preg_match('/^[a-zA-Z]{2}([_-][A-Z]{2})?$/', $locale)) {
+            return 'en_US';
+        }
+
+        // Bare `en` would miss en.md and silently fall through to en_US.md
+        // via the candidate chain. Normalize upfront so the path is honest.
+        if ($locale === 'en') {
+            return 'en_US';
+        }
+
+        return str_replace('-', '_', $locale);
     }
 
     protected function tonePersonaPt(): string
     {
-        return <<<TONE
+        return <<<'TONE'
             Respond in **Brazilian Portuguese, casual** ("português coloquial brasileiro"),
             tight, like someone who knows the user.
             - **ALWAYS use definite articles (o/a/os/as)** — avoid telegraphic phrasing
@@ -395,20 +425,38 @@ class CoachAgent implements Agent, Conversational, HasTools
             - Voice examples (this is the register you should write in):
               "Eai, beleza?" / "Bora resolver isso." / "Tá pesado, mas dá pra fazer." /
               "Pronto." / "Feito." / "Não rolou agora, tenta de novo?"
+            - When calling **CreateGoal** or **CreateAction**, the `name`/`title`
+              you pass MUST be in Portuguese — match the user's language.
+              Examples: CreateGoal(name="Sair do vermelho", label="finance");
+              CreateAction(title="Ligar pro contador", ...).
             TONE;
     }
 
     protected function tonePersonaEn(): string
     {
-        return <<<TONE
+        return <<<'TONE'
             Respond in **casual American English**, conversational and tight, like
             someone who knows the user.
             - Voice examples (this is the register you should write in):
               "Hey, what's up?" / "Let's tackle this." / "Heavy, but doable." /
               "Done." / "Couldn't pull it off right now — try again?"
             - No "Hello, [user]", no corporate tone, no over-politeness.
+            - When calling **CreateGoal** or **CreateAction**, the `name`/`title`
+              you pass MUST be in English — match the user's language.
+              Examples: CreateGoal(name="Get out of the red", label="finance");
+              CreateAction(title="Call the accountant", ...).
             TONE;
     }
+
+    /**
+     * In-process cache for loaded locale knowledge files. The agent runs the
+     * same prompt assembly on every conversation turn, and the markdown
+     * content is immutable per-deploy — reading from disk every time is
+     * wasteful. Keyed by resolved locale (already sanitized in resolveLocale).
+     *
+     * @var array<string, string>
+     */
+    protected static array $localeKnowledgeCache = [];
 
     /**
      * Locale-specific fiscal / cultural / regulatory context that varies by
@@ -420,25 +468,32 @@ class CoachAgent implements Agent, Conversational, HasTools
      * The fallback for unknown locales is en_US (most generic) — better than
      * mixing Brazilian assumptions into, say, a Mexican user's prompt.
      *
+     * Cached in a static property per resolved locale — the markdown is
+     * immutable at runtime, so re-reading on every prompt build is wasted I/O.
+     *
      * Contributors: see docs/contributing-locales.md for the expected sections
      * (fiscal terms, currency format, ID formats, common document types).
      */
     protected function localeKnowledge(): string
     {
         $locale = $this->resolveLocale();
+
+        if (isset(self::$localeKnowledgeCache[$locale])) {
+            return self::$localeKnowledgeCache[$locale];
+        }
+
         $candidates = [
             resource_path("prompts/locale/{$locale}.md"),
-            resource_path('prompts/locale/'.str_replace('-', '_', $locale).'.md'),
             resource_path('prompts/locale/en_US.md'), // fallback
         ];
 
         foreach ($candidates as $path) {
             if (is_file($path)) {
-                return trim((string) file_get_contents($path));
+                return self::$localeKnowledgeCache[$locale] = trim((string) file_get_contents($path));
             }
         }
 
-        return '';
+        return self::$localeKnowledgeCache[$locale] = '';
     }
 
     /**
