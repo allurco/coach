@@ -609,22 +609,20 @@ class Coach extends Page implements HasForms
             $promptToSend = $userMessage ?: __('coach.attachments.analyze_default');
 
             if (! empty($documents)) {
+                // Runtime reminder of the 4-step format. The TABLE shape itself
+                // is locale-aware and defined in the system prompt's
+                // "## Attachment analysis template" (loaded from
+                // resources/prompts/locale/{locale}.md). This prefix only
+                // enforces the ORDER and the qualitative-analysis depth — no
+                // duplication of the table fields, which would drift out of
+                // sync with the per-locale template.
                 $promptToSend .= "\n\n---\n\n"
                     ."MANDATORY FORMAT for your response:\n\n"
-                    ."1️⃣ FIRST the structured markdown table of the document:\n\n"
-                    ."| Field | Value |\n"
-                    ."|---|---|\n"
-                    ."| Type | (credit card invoice / payment slip / bank statement / certificate / contract / tax invoice / tax filing / other — use locale-specific labels if listed in 'Local fiscal/cultural context') |\n"
-                    ."| Issuer | (bank/company/agency) |\n"
-                    ."| Payer | (name or national/tax ID) |\n"
-                    ."| Category | Personal / Business / Mixed |\n"
-                    ."| Total | (with currency and locale format) |\n"
-                    ."| Due date | YYYY-MM-DD |\n"
-                    ."| Issue date | YYYY-MM-DD |\n"
-                    ."| Identifier | (number/code) |\n"
-                    ."| Critical notes | (installments/interest/overdue/observations) |\n\n"
+                    .'1️⃣ FIRST: render the markdown table from your '
+                    ."'## Attachment analysis template' section verbatim, with the document's values filled in. "
+                    ."Empty fields become '—'.\n\n"
                     ."2️⃣ AFTER the table, do a QUALITATIVE ANALYSIS of the content (DO NOT SKIP):\n"
-                    ."   - If a credit card invoice: list 3-5 most relevant line items (above-average values, patterns, recurring).\n"
+                    ."   - If a credit card invoice/statement: list 3-5 most relevant line items (above-average values, patterns, recurring).\n"
                     .'     EXPLICITLY identify expenses that look like business charges on a personal card: Google Cloud, AWS, Vercel, GitHub, '
                     ."     Microsoft, Figma, Workspace, hosting, dev SaaS. Sum the total of those and say what would make sense to migrate.\n"
                     ."   - If a bank statement: identify spending patterns — recurring categories, spikes, leaks.\n"

@@ -59,3 +59,21 @@
 - ACH transfer is standard for peer payments; Zelle, Venmo, Cash App for
   instant person-to-person.
 - Credit score (FICO) ranges 300-850; impacts loan/mortgage rates significantly.
+
+## Attachment analysis template
+
+When the user uploads a document (PDF/image), open your response with this exact
+markdown table — written in English, with US-specific document types and currency
+formatting. Empty fields become `—`.
+
+| Field | Value |
+|---|---|
+| Type | (credit card statement / bank statement / pay stub / 1099-NEC / 1099-MISC / 1099-K / W-2 / 1040 / K-1 / Schedule C / EOB / HSA-FSA statement / other) |
+| Issuer | (bank / company / agency) |
+| Payer | (name or SSN/EIN — if visible) |
+| Category | Personal / Business / Mixed |
+| Total | $X,XXX.XX (US format: comma for thousands, period for decimal) |
+| Due date | YYYY-MM-DD |
+| Issue date | YYYY-MM-DD |
+| Identifier | (statement no. / code / account) |
+| Critical notes | (revolving balance / interest / overdue / fees / important observations) |
