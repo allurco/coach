@@ -84,3 +84,21 @@ it('returns an unauth message when no user is logged in', function () {
 
     expect($result)->toMatch('/aut|usu|user|login/iu');
 });
+
+/**
+ * Routing guardrail: when the user asks about a SPECIFIC bucket (investimento,
+ * reserva, lazer, custos fixos, renda) the agent must route through ReadBudget
+ * — not say "não sei". The signal that tells the LLM to do that lives in this
+ * tool's description(). If someone trims it, the routing breaks silently and
+ * the agent regresses to "I don't have that info."
+ */
+it('description enumerates bucket-specific phrasings so the agent routes bucket questions here', function () {
+    $description = mb_strtolower((string) $this->tool->description());
+
+    expect($description)
+        ->toContain('investiment')      // "investimento"/"investimentos"/"investir"
+        ->toContain('reserva')
+        ->toContain('lazer')
+        ->toContain('renda')
+        ->toContain('custos');
+});

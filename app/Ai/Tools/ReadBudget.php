@@ -24,8 +24,16 @@ class ReadBudget implements Tool
     public function description(): Stringable|string
     {
         return 'Lê o orçamento atual do usuário (o mais recente persistido) e devolve a tabela formatada. '
-            .'Use quando o usuário perguntar "como está meu orçamento?", "qual minha situação financeira?", '
-            .'ou qualquer pergunta sobre o budget existente. NÃO use pra criar — pra isso use BudgetSnapshot.';
+            .'Use quando o usuário perguntar sobre o budget existente — INCLUINDO perguntas sobre um '
+            .'bucket específico, não só o panorama geral. Exemplos: '
+            .'"como está meu orçamento?", "qual minha situação financeira?", "o que sobrou esse mês?", '
+            .'"quanto eu tenho pra investimento / em investimentos / pra investir?", '
+            .'"quanto pra reserva / pra emergência?", '
+            .'"quanto pra lazer?", '
+            .'"quanto tô gastando em custos fixos?", '
+            .'"qual minha renda líquida?". '
+            .'Todas essas respostas vêm do orçamento — chame essa tool em vez de dizer que não sabe. '
+            .'NÃO use pra criar — pra isso use BudgetSnapshot.';
     }
 
     public function handle(Request $request): Stringable|string
