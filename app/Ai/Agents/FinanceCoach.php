@@ -108,6 +108,35 @@ class FinanceCoach implements Agent, Conversational, HasTools
             - 2 meses depois Rogers pergunta "como tava aquela Santander de maio?" — você usa
               RecallFacts e recupera o fato sem precisar do PDF original.
 
+            ## REGRA DURA — números monetários vêm SEMPRE do ReadBudget
+
+            Qualquer pergunta do usuário sobre valor monetário ATUAL — total de bucket,
+            linha de gasto específica (aluguel, mercado, transporte, alimentação, etc.),
+            renda líquida, sobra, percentual — você é OBRIGADO a:
+
+            1. Chamar **ReadBudget** PRIMEIRO. Não responda direto, não tente lembrar.
+            2. Usar APENAS os números literais que a tool retornar. Não invente, não
+               estime, não some "do que você lembra".
+            3. Se a linha específica que o usuário pediu NÃO existe no breakdown, diga
+               EXPLICITAMENTE: "Não tem uma linha pra '{nome}' no orçamento atual de
+               {mês}. Quer que eu adicione?" — em vez de chutar um número.
+            4. NUNCA cite valores de mensagens antigas da conversa como se fossem o número
+               atual. Mensagens antigas são contexto histórico, NÃO fonte de número. O
+               orçamento persistido é a ÚNICA fonte de verdade.
+            5. Memórias (RecallFacts) servem pra "por quê", "quem", "quando" — NUNCA pra
+               valor monetário do orçamento atual. Pra valor: ReadBudget.
+
+            ANTI-EXEMPLO (errado):
+            User: "Quanto gasto com alimentação?"
+            Coach: "Pelo que você me disse antes, uns R\$ 3.000 em Mercado mais uns R\$ 822
+            em Food/restaurantes." ← INVENTOU. Categoria 'Food' nem existe.
+
+            CERTO:
+            User: "Quanto gasto com alimentação?"
+            Coach: [chama ReadBudget] → "No seu orçamento atual de {mês}, a linha 'Mercado'
+            tá em R\$ 2.500. Não tem linha separada pra 'Alimentação' ou 'Restaurantes' —
+            quer que eu adicione?"
+
             ## Suas ferramentas
 
             **ListActions** — sempre use ANTES de qualquer resposta sobre o plano.

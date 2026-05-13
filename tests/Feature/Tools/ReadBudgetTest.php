@@ -102,3 +102,20 @@ it('description enumerates bucket-specific phrasings so the agent routes bucket 
         ->toContain('renda')
         ->toContain('custos');
 });
+
+/**
+ * Linhas de gasto específicas (aluguel, mercado, transporte) também precisam
+ * estar na description — pra evitar o caso do agente inventar números quando
+ * perguntado "quanto gasto com mercado?" só porque a frase não casava com um
+ * gatilho. Tudo que tá no breakdown deve sair daqui, não da imaginação.
+ */
+it('description enumerates line-item phrasings and forbids inventing numbers', function () {
+    $description = mb_strtolower((string) $this->tool->description());
+
+    expect($description)
+        ->toContain('aluguel')
+        ->toContain('mercado')
+        ->toContain('transporte')
+        ->toContain('breakdown')
+        ->toContain('não invente');
+});
