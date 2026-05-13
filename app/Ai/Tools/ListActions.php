@@ -14,7 +14,7 @@ class ListActions implements Tool
     {
         return 'Lists the actions in the user\'s plan. '
             .'Use to understand the current state before nudging, suggesting, creating a new action, or answering any question about the plan. '
-            .'Can filter by status (pendente, em_andamento, concluido, cancelado) or by category.';
+            .'Can filter by status (pending, in_progress, completed, cancelled) or by category (financial, tax, operational, growth).';
     }
 
     public function handle(Request $request): Stringable|string
@@ -30,7 +30,7 @@ class ListActions implements Tool
         }
 
         if (! empty($request['only_overdue'])) {
-            $query->where('status', 'pendente')
+            $query->where('status', 'pending')
                 ->whereNotNull('deadline')
                 ->whereDate('deadline', '<', now());
         }
@@ -42,15 +42,15 @@ class ListActions implements Tool
             ->get();
 
         if ($actions->isEmpty()) {
-            return 'Nenhuma ação encontrada com esses filtros.';
+            return 'No actions found with those filters.';
         }
 
         $lines = $actions->map(function (Action $a) {
-            $deadline = $a->deadline?->format('d/m/Y') ?? 's/prazo';
-            $overdue = $a->isOverdue() ? ' [ATRASADA]' : '';
+            $deadline = $a->deadline?->format('Y-m-d') ?? 'no deadline';
+            $overdue = $a->isOverdue() ? ' [OVERDUE]' : '';
 
             return sprintf(
-                '#%d [%s|%s|%s] %s — prazo: %s%s',
+                '#%d [%s|%s|%s] %s — deadline: %s%s',
                 $a->id,
                 $a->status,
                 $a->category,
@@ -68,9 +68,9 @@ class ListActions implements Tool
     {
         return [
             'status' => $schema->string()
-                ->enum(['pendente', 'em_andamento', 'concluido', 'cancelado']),
+                ->enum(['pending', 'in_progress', 'completed', 'cancelled']),
             'category' => $schema->string()
-                ->enum(['financeiro', 'fiscal', 'operacional', 'crescimento']),
+                ->enum(['financial', 'tax', 'operational', 'growth']),
             'only_overdue' => $schema->boolean(),
         ];
     }

@@ -15,8 +15,8 @@ beforeEach(function () {
     Action::create([
         'goal_id' => $goal->id,
         'title' => 'seed action',
-        'status' => 'pendente',
-        'priority' => 'media',
+        'status' => 'pending',
+        'priority' => 'medium',
         'category' => 'general',
     ]);
 });

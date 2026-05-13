@@ -18,8 +18,8 @@ it('puts every plan-item deadline in its own grid column (alignment regression)'
     // Use the user's auto-created default goal — that's what activeGoalId
     // points at after mount, so loadPlan() filters by it.
     $goalId = $this->user->defaultGoal()->id;
-    Action::create(['goal_id' => $goalId, 'title' => 'Action with deadline', 'status' => 'pendente', 'deadline' => now()->addDays(5)]);
-    Action::create(['goal_id' => $goalId, 'title' => 'Action without deadline', 'status' => 'pendente']);
+    Action::create(['goal_id' => $goalId, 'title' => 'Action with deadline', 'status' => 'pending', 'deadline' => now()->addDays(5)]);
+    Action::create(['goal_id' => $goalId, 'title' => 'Action without deadline', 'status' => 'pending']);
 
     Livewire::test(Coach::class)
         ->assertSeeHtmlInOrder([
@@ -33,7 +33,7 @@ it('marks overdue plan-items with the is-overdue class for the left-edge stripe'
     Action::create([
         'goal_id' => $goalId,
         'title' => 'Late on this',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->subDays(3)->toDateString(),
     ]);
 
@@ -47,7 +47,7 @@ it('does NOT mark non-overdue items with is-overdue', function () {
     Action::create([
         'goal_id' => $goalId,
         'title' => 'Not late yet',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->addDays(10)->toDateString(),
     ]);
 

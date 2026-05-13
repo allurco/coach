@@ -28,7 +28,7 @@ it('global scope hides other users actions in queries', function () {
     Action::withoutGlobalScope('owner')->create([
         'user_id' => $this->bob->id,
         'title' => 'Bob private action',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     $this->actingAs($this->alice);
@@ -40,12 +40,12 @@ it('ListActions tool only returns actions for the current user', function () {
     Action::withoutGlobalScope('owner')->create([
         'user_id' => $this->alice->id,
         'title' => 'Alice action',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
     Action::withoutGlobalScope('owner')->create([
         'user_id' => $this->bob->id,
         'title' => 'Bob action',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     $this->actingAs($this->alice);
@@ -60,26 +60,26 @@ it('UpdateAction tool refuses to update another users action', function () {
     $bobsAction = Action::withoutGlobalScope('owner')->create([
         'user_id' => $this->bob->id,
         'title' => 'Bob action',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     $this->actingAs($this->alice);
     $result = (string) (new UpdateAction)->handle(new Request([
         'id' => $bobsAction->id,
-        'status' => 'concluido',
+        'status' => 'completed',
     ]));
 
-    expect($result)->toContain('não encontrada');
+    expect($result)->toContain('not found');
 
     // And Bob's action stays untouched.
-    expect($bobsAction->fresh()->status)->toBe('pendente');
+    expect($bobsAction->fresh()->status)->toBe('pending');
 });
 
 it('Action::find on someone elses action returns null', function () {
     $bobsAction = Action::withoutGlobalScope('owner')->create([
         'user_id' => $this->bob->id,
         'title' => 'Bob action',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     $this->actingAs($this->alice);
@@ -91,12 +91,12 @@ it('global scope is bypassed for unauthenticated contexts', function () {
     Action::withoutGlobalScope('owner')->create([
         'user_id' => $this->alice->id,
         'title' => 'A',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
     Action::withoutGlobalScope('owner')->create([
         'user_id' => $this->bob->id,
         'title' => 'B',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     // No auth — scope should not filter; both rows visible.

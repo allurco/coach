@@ -94,7 +94,7 @@ it('action belongs to a goal', function () {
     $action = Action::create([
         'goal_id' => $goal->id,
         'title' => 'Pay invoice',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     expect($action->goal)->not->toBeNull()
@@ -106,8 +106,8 @@ it('goal has many actions', function () {
     $this->actingAs($user);
 
     $goal = Goal::create(['label' => 'finance', 'name' => 'F']);
-    Action::create(['goal_id' => $goal->id, 'title' => 'A', 'status' => 'pendente']);
-    Action::create(['goal_id' => $goal->id, 'title' => 'B', 'status' => 'pendente']);
+    Action::create(['goal_id' => $goal->id, 'title' => 'A', 'status' => 'pending']);
+    Action::create(['goal_id' => $goal->id, 'title' => 'B', 'status' => 'pending']);
 
     expect($goal->actions)->toHaveCount(2);
 });
@@ -213,7 +213,7 @@ it('Action::create throws a clear exception if the user has no active goal', fun
     // Force-archive every goal — bypasses the saving guard via raw query.
     Goal::query()->where('user_id', $user->id)->update(['is_archived' => true]);
 
-    expect(fn () => Action::create(['title' => 'orphan', 'status' => 'pendente']))
+    expect(fn () => Action::create(['title' => 'orphan', 'status' => 'pending']))
         ->toThrow(DomainException::class, 'no active goal');
 });
 
@@ -231,7 +231,7 @@ it('Action::create still works when an explicit goal_id is given even if default
     $action = Action::create([
         'goal_id' => $explicit->id,
         'title' => 'works',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     expect($action->goal_id)->toBe($explicit->id);

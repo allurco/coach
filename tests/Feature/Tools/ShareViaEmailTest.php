@@ -110,7 +110,7 @@ it('expands {{budget:current}} in the body before sending', function () {
 
 it('expands {{plan}} in the body before sending', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
-    Action::create(['goal_id' => $goal->id, 'title' => 'Pagar fatura', 'status' => 'pendente']);
+    Action::create(['goal_id' => $goal->id, 'title' => 'Pagar fatura', 'status' => 'pending']);
 
     $this->tool->handle(new Request([
         'to' => 'joao@example.com',

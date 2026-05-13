@@ -22,11 +22,11 @@ it('counts zero pending actions when the plan is empty', function () {
 it('counts only pendente and em_andamento statuses', function () {
     $page = new Coach;
     $page->planActions = [
-        ['status' => 'pendente'],
-        ['status' => 'em_andamento'],
-        ['status' => 'pendente'],
-        ['status' => 'concluido'],
-        ['status' => 'cancelado'],
+        ['status' => 'pending'],
+        ['status' => 'in_progress'],
+        ['status' => 'pending'],
+        ['status' => 'completed'],
+        ['status' => 'cancelled'],
     ];
 
     expect($page->pendingPlanCount())->toBe(3);
@@ -35,8 +35,8 @@ it('counts only pendente and em_andamento statuses', function () {
 it('returns zero when every action is concluido', function () {
     $page = new Coach;
     $page->planActions = [
-        ['status' => 'concluido'],
-        ['status' => 'concluido'],
+        ['status' => 'completed'],
+        ['status' => 'completed'],
     ];
 
     expect($page->pendingPlanCount())->toBe(0);
@@ -79,7 +79,7 @@ it('returns coach.suggestions_first for a brand new user', function () {
 });
 
 it('returns coach.suggestions_active when the user has a non-empty plan', function () {
-    Action::create(['title' => 'Pagar boleto', 'status' => 'pendente']);
+    Action::create(['title' => 'Pagar boleto', 'status' => 'pending']);
     // Seeding a memory takes the user out of first-timer territory.
     CoachMemory::create([
         'kind' => 'perfil',
@@ -89,7 +89,7 @@ it('returns coach.suggestions_active when the user has a non-empty plan', functi
     ]);
 
     $page = new Coach;
-    $page->planActions = [['status' => 'pendente']];
+    $page->planActions = [['status' => 'pending']];
 
     expect($page->suggestionsKey())->toBe('coach.suggestions_active');
 });

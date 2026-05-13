@@ -101,7 +101,7 @@ class BudgetSnapshot implements Tool
             ->get()
             ->filter(fn (Action $a) => (bool) preg_match($pattern, (string) $a->title))
             ->each(fn (Action $a) => $a->update([
-                'status' => 'concluido',
+                'status' => 'completed',
                 'completed_at' => now(),
                 'result_notes' => __('coach.budget.auto_close_note', ['snapshot_id' => $budget->id]),
             ]));

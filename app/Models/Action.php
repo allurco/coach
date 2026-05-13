@@ -32,40 +32,46 @@ class Action extends Model
         'attachments' => 'array',
     ];
 
+    /**
+     * Enum value catalogs. Keys are the canonical English identifiers
+     * persisted in the database; values are the default English labels
+     * used in dev tooling (Filament internals, factories, etc.).
+     * User-facing UI must localize via `__('coach.action.<column>.<key>')`.
+     */
     public const CATEGORIES = [
-        'financeiro' => 'Financeiro',
-        'fiscal' => 'Fiscal',
-        'operacional' => 'Operacional',
-        'crescimento' => 'Crescimento',
+        'financial' => 'Financial',
+        'tax' => 'Tax',
+        'operational' => 'Operational',
+        'growth' => 'Growth',
     ];
 
     public const PRIORITIES = [
-        'alta' => 'Alta',
-        'media' => 'Média',
-        'baixa' => 'Baixa',
+        'high' => 'High',
+        'medium' => 'Medium',
+        'low' => 'Low',
     ];
 
     public const IMPORTANCES = [
-        'critico' => 'Crítico',
-        'importante' => 'Importante',
-        'rotineiro' => 'Rotineiro',
+        'critical' => 'Critical',
+        'important' => 'Important',
+        'routine' => 'Routine',
     ];
 
     public const DIFFICULTIES = [
-        'rapido' => 'Rápido',
-        'medio' => 'Médio',
-        'pesado' => 'Pesado',
+        'quick' => 'Quick',
+        'medium' => 'Medium',
+        'heavy' => 'Heavy',
     ];
 
     public const STATUSES = [
-        'pendente' => 'Pendente',
-        'em_andamento' => 'Em andamento',
-        'concluido' => 'Concluído',
-        'cancelado' => 'Cancelado',
+        'pending' => 'Pending',
+        'in_progress' => 'In progress',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
     ];
 
     /** Statuses where the action is still actionable (not closed). */
-    public const OPEN_STATUSES = ['pendente', 'em_andamento'];
+    public const OPEN_STATUSES = ['pending', 'in_progress'];
 
     protected static function booted(): void
     {
@@ -120,14 +126,14 @@ class Action extends Model
     public function isOverdue(): bool
     {
         return $this->deadline
-            && $this->status === 'pendente'
+            && $this->status === 'pending'
             && $this->deadline->isPast();
     }
 
     public function isDueSoon(int $days = 3): bool
     {
         return $this->deadline
-            && $this->status === 'pendente'
+            && $this->status === 'pending'
             && $this->deadline->isBetween(now(), now()->addDays($days));
     }
 }

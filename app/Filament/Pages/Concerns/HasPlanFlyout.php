@@ -18,7 +18,7 @@ trait HasPlanFlyout
 {
     public array $planActions = [];
 
-    public string $planFilter = 'pendente';
+    public string $planFilter = 'pending';
 
     public ?int $completingActionId = null;
 
@@ -40,14 +40,14 @@ trait HasPlanFlyout
             $query->where('goal_id', $this->activeGoalId);
         }
 
-        if ($this->planFilter !== 'todas') {
+        if ($this->planFilter !== 'all') {
             $query->where('status', $this->planFilter);
         }
 
         $this->planActions = $query
-            ->orderByRaw("CASE status WHEN 'em_andamento' THEN 0 WHEN 'pendente' THEN 1 WHEN 'concluido' THEN 2 ELSE 3 END")
+            ->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'pending' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END")
             ->orderByRaw('deadline IS NULL, deadline ASC')
-            ->orderByRaw("CASE priority WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END")
+            ->orderByRaw("CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END")
             ->limit(100)
             ->get()
             ->map(function (Action $a) {
@@ -121,7 +121,7 @@ trait HasPlanFlyout
         }
 
         $payload = [
-            'status' => 'concluido',
+            'status' => 'completed',
             'completed_at' => now(),
             'snooze_until' => null,
         ];

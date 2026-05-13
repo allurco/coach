@@ -71,14 +71,14 @@ it('expands {{plan}} into the user’s open actions list', function () {
     Action::create([
         'goal_id' => $goal->id,
         'title' => 'Pedir extrato banco X',
-        'status' => 'pendente',
-        'priority' => 'alta',
+        'status' => 'pending',
+        'priority' => 'high',
     ]);
     Action::create([
         'goal_id' => $goal->id,
         'title' => 'Ligar pro contador',
-        'status' => 'em_andamento',
-        'priority' => 'media',
+        'status' => 'in_progress',
+        'priority' => 'medium',
     ]);
 
     $result = $this->renderer->render("plano:\n\n{{plan}}");
@@ -107,7 +107,7 @@ it('does not expand a {{plan}} from another user', function () {
         'user_id' => $other->id,
         'goal_id' => $otherGoal->id,
         'title' => 'Other user secret',
-        'status' => 'pendente',
+        'status' => 'pending',
     ]);
 
     $result = $this->renderer->render('plano: {{plan}}');
@@ -131,7 +131,7 @@ it('honours an explicit userId, ignoring auth()', function () {
 
 it('handles multiple placeholders in one body', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
-    Action::create(['goal_id' => $goal->id, 'title' => 'Action A', 'status' => 'pendente']);
+    Action::create(['goal_id' => $goal->id, 'title' => 'Action A', 'status' => 'pending']);
     makeBudget(['leisure_amount' => 600]);
 
     $body = "Plan:\n{{plan}}\n\nBudget:\n{{budget:current}}";

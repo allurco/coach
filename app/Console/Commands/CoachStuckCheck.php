@@ -35,13 +35,13 @@ class CoachStuckCheck extends Command
         $days = (int) $this->option('days');
 
         $stuckActions = Action::query()
-            ->where('status', 'pendente')
+            ->where('status', 'pending')
             ->where(function ($q) {
                 $q->whereNull('snooze_until')
                     ->orWhereDate('snooze_until', '<=', now());
             })
             ->where('updated_at', '<=', now()->subDays($days))
-            ->where('importance', '!=', 'rotineiro')
+            ->where('importance', '!=', 'routine')
             ->orderBy('priority', 'desc')
             ->orderBy('updated_at', 'asc')
             ->limit(3)

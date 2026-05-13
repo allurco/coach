@@ -26,12 +26,12 @@ class CreateAction implements Tool
     {
         return 'Creates a new action in the user\'s plan. '
             .'Use only after the user verbally confirms they want to add the action. '
-            .'For category, priority, importance, and difficulty, use only the exact Portuguese strings accepted by the schema; do not send English values. '
-            .'Categories (exact strings): financeiro, fiscal, operacional, crescimento. '
-            .'Priorities (exact strings): alta, media, baixa. '
-            .'Importance (exact strings): critico, importante, rotineiro. '
-            .'Difficulty (exact strings): rapido, medio, pesado. '
-            .'Status always starts as the exact string "pendente".';
+            .'Enum values below are the EXACT strings the schema accepts — pass them as-is, not translations: '
+            .'Categories: financial, tax, operational, growth. '
+            .'Priorities: high, medium, low. '
+            .'Importance: critical, important, routine. '
+            .'Difficulty: quick, medium, heavy. '
+            .'Status always starts as "pending" (set automatically).';
     }
 
     public function handle(Request $request): Stringable|string
@@ -39,12 +39,12 @@ class CreateAction implements Tool
         $payload = [
             'title' => $request['title'],
             'description' => $request['description'] ?? null,
-            'category' => $request['category'] ?? 'financeiro',
-            'priority' => $request['priority'] ?? 'media',
-            'importance' => $request['importance'] ?? 'importante',
-            'difficulty' => $request['difficulty'] ?? 'medio',
+            'category' => $request['category'] ?? 'financial',
+            'priority' => $request['priority'] ?? 'medium',
+            'importance' => $request['importance'] ?? 'important',
+            'difficulty' => $request['difficulty'] ?? 'medium',
             'deadline' => $this->parseDeadline($request['deadline'] ?? null),
-            'status' => 'pendente',
+            'status' => 'pending',
         ];
 
         if ($this->activeGoalId !== null) {
@@ -54,12 +54,12 @@ class CreateAction implements Tool
         $action = Action::create($payload);
 
         return sprintf(
-            'Ação criada com ID %d: "%s" (categoria: %s, prioridade: %s, prazo: %s).',
+            'Action created with ID %d: "%s" (category: %s, priority: %s, deadline: %s).',
             $action->id,
             $action->title,
             $action->category,
             $action->priority,
-            $action->deadline?->format('d/m/Y') ?? 'sem prazo',
+            $action->deadline?->format('Y-m-d') ?? 'no deadline',
         );
     }
 
@@ -134,13 +134,13 @@ class CreateAction implements Tool
                 ->required(),
             'description' => $schema->string(),
             'category' => $schema->string()
-                ->enum(['financeiro', 'fiscal', 'operacional', 'crescimento']),
+                ->enum(['financial', 'tax', 'operational', 'growth']),
             'priority' => $schema->string()
-                ->enum(['alta', 'media', 'baixa']),
+                ->enum(['high', 'medium', 'low']),
             'importance' => $schema->string()
-                ->enum(['critico', 'importante', 'rotineiro']),
+                ->enum(['critical', 'important', 'routine']),
             'difficulty' => $schema->string()
-                ->enum(['rapido', 'medio', 'pesado']),
+                ->enum(['quick', 'medium', 'heavy']),
             'deadline' => $schema->string(),
         ];
     }

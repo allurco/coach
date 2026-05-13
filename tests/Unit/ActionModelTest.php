@@ -5,7 +5,7 @@ use App\Models\Action;
 it('flags a pendente action with past deadline as overdue', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->subDay(),
     ]);
 
@@ -15,7 +15,7 @@ it('flags a pendente action with past deadline as overdue', function () {
 it('does not flag concluido action as overdue even with past deadline', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'concluido',
+        'status' => 'completed',
         'deadline' => now()->subDay(),
     ]);
 
@@ -25,7 +25,7 @@ it('does not flag concluido action as overdue even with past deadline', function
 it('does not flag overdue when deadline is null', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => null,
     ]);
 
@@ -35,7 +35,7 @@ it('does not flag overdue when deadline is null', function () {
 it('flags as due soon when deadline is within next 3 days', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->addDays(2),
     ]);
 
@@ -45,7 +45,7 @@ it('flags as due soon when deadline is within next 3 days', function () {
 it('does not flag as due soon when deadline is past', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->subDay(),
     ]);
 
@@ -55,7 +55,7 @@ it('does not flag as due soon when deadline is past', function () {
 it('does not flag as due soon when deadline is far in the future', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->addMonth(),
     ]);
 
@@ -65,7 +65,7 @@ it('does not flag as due soon when deadline is far in the future', function () {
 it('does not flag concluido action as due soon', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'concluido',
+        'status' => 'completed',
         'deadline' => now()->addDay(),
     ]);
 
@@ -75,7 +75,7 @@ it('does not flag concluido action as due soon', function () {
 it('respects custom days param for due soon', function () {
     $action = new Action([
         'title' => 'X',
-        'status' => 'pendente',
+        'status' => 'pending',
         'deadline' => now()->addDays(6),
     ]);
 
