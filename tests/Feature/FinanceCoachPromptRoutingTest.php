@@ -45,3 +45,20 @@ it('main prompt instructs bucket questions to go through ReadBudget', function (
         ->toContain('renda')
         ->toContain('custos');
 });
+
+/**
+ * Lock guardrail: o prompt principal deve carregar a REGRA DURA que proíbe
+ * inventar números monetários. Sem isso o agente alucina valores ("R$ 822,72
+ * em Food/restaurantes" quando a categoria nem existe no breakdown). Travamos
+ * a redação dessa regra em teste — se alguém apagar acidentalmente, a suíte
+ * quebra antes de regredir em produção.
+ */
+it('main prompt carries the hard rule that forbids inventing budget numbers', function () {
+    $coach = new FinanceCoach;
+    $prompt = mb_strtolower((string) $coach->instructions());
+
+    expect($prompt)
+        ->toContain('regra dura')
+        ->toContain('não invente')
+        ->toContain('única fonte de verdade');
+});

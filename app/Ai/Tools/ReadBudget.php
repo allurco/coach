@@ -23,16 +23,17 @@ class ReadBudget implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Lê o orçamento atual do usuário (o mais recente persistido) e devolve a tabela formatada. '
-            .'Use quando o usuário perguntar sobre o budget existente — INCLUINDO perguntas sobre um '
-            .'bucket específico, não só o panorama geral. Exemplos: '
-            .'"como está meu orçamento?", "qual minha situação financeira?", "o que sobrou esse mês?", '
-            .'"quanto eu tenho pra investimento / em investimentos / pra investir?", '
-            .'"quanto pra reserva / pra emergência?", '
-            .'"quanto pra lazer?", '
-            .'"quanto tô gastando em custos fixos?", '
-            .'"qual minha renda líquida?". '
-            .'Todas essas respostas vêm do orçamento — chame essa tool em vez de dizer que não sabe. '
+        return 'Lê o orçamento atual do usuário (o mais recente persistido) e devolve a tabela formatada — '
+            .'incluindo o breakdown linha por linha de cada bucket. '
+            .'Use SEMPRE que o usuário perguntar QUALQUER valor monetário atual. Cobre 3 níveis: '
+            .'(1) panorama: "como está meu orçamento?", "qual minha situação?", "o que sobrou esse mês?"; '
+            .'(2) bucket: "quanto pra investimento / investir?", "quanto pra reserva / emergência?", '
+            .'"quanto pra lazer?", "quanto em custos fixos?", "qual minha renda líquida?"; '
+            .'(3) linha específica do breakdown: "quanto eu gasto com aluguel / mercado / transporte / '
+            .'alimentação / contas / assinaturas?". '
+            .'Os números vêm DAQUI, não da sua memória. NÃO invente, NÃO estime, NÃO recupere de '
+            .'mensagens antigas — se a linha que o usuário pediu não existir no breakdown, diga '
+            .'explicitamente que não tem essa linha no orçamento atual em vez de chutar. '
             .'NÃO use pra criar — pra isso use BudgetSnapshot.';
     }
 
