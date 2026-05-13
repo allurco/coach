@@ -125,6 +125,37 @@ it('loads en_US locale knowledge when user locale is en', function () {
 });
 
 /**
+ * Attachment template duplication guard: the table SHAPE used to live in two
+ * places — the system prompt heredoc and the Filament runtime prefix — so
+ * any update to one would drift from the other. We moved it to per-locale
+ * markdown files; this test ensures the prompt no longer hardcodes the
+ * generic "Field | Value" table and instead pulls from locale knowledge.
+ */
+it('does not hardcode the attachment table in the system prompt anymore', function () {
+    $this->user->update(['locale' => 'pt_BR']);
+    $prompt = (string) (new CoachAgent)->instructions();
+
+    // Universal English fallback header should NOT be in the heredoc — that
+    // table moved to the per-locale .md file (where it can use PT labels).
+    expect($prompt)
+        ->not->toContain('| Field | Value |')
+        ->toContain('## Attachment analysis template')
+        ->toContain('Campo')  // PT-BR field label from the locale file
+        ->toContain('DARF');  // PT-BR document type from the locale file
+});
+
+it('serves the en_US attachment template with English field labels and US document types', function () {
+    $this->user->update(['locale' => 'en']);
+    $prompt = (string) (new CoachAgent)->instructions();
+
+    expect($prompt)
+        ->toContain('## Attachment analysis template')
+        ->toContain('| Field | Value |')  // EN labels
+        ->toContain('1099')               // US-specific document
+        ->toContain('SSN/EIN');           // US-specific ID format
+});
+
+/**
  * Security guardrail: the user's `locale` column flows into a resource_path()
  * concatenation in localeKnowledge(). Without validation, a malicious value
  * like "../../../etc/passwd" would let the loader escape the locale directory

@@ -47,3 +47,21 @@
   **rotativo** — typically 10-15% interest per month, compounding. This is a critical
   trap to flag for the user.
 - PIX (instant transfer) is the default payment method for most peer transactions.
+
+## Attachment analysis template
+
+When the user uploads a document (PDF/image), open your response with this exact
+markdown table — written in Portuguese, with Brazilian-specific document types and
+currency formatting. Empty fields become `—`.
+
+| Campo | Valor |
+|---|---|
+| Tipo | (fatura cartão / boleto / extrato bancário / certidão / contrato / nota fiscal / DARF / GPS / DAS / comprovante PIX / outro) |
+| Emissor | (banco / empresa / órgão emissor) |
+| Pagador | (nome ou CPF/CNPJ — se aparecer) |
+| Categoria | PF / PJ / Híbrido |
+| Valor total | R$ X.XXX,XX (formato brasileiro: ponto pra milhar, vírgula pra decimal) |
+| Vencimento | DD/MM/AAAA |
+| Data emissão | DD/MM/AAAA |
+| Identificador | (nº fatura / código / conta) |
+| Pontos críticos | (parcelamento ativo / juros / rotativo / atraso / encargos / observações importantes) |

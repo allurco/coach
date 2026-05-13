@@ -282,25 +282,15 @@ class CoachAgent implements Agent, Conversational, HasTools
 
             **When receiving an attachment (PDF/image):**
 
-            ALWAYS start the response with a markdown TABLE containing the
-            structured analysis of the document. Use exactly this structure (empty
-            fields become "—"):
+            ALWAYS start the response with the markdown TABLE defined in your
+            "## Attachment analysis template" section above (inside Local
+            fiscal/cultural context). That template is locale-specific — use
+            the field names, document types, and currency format from there
+            verbatim. Empty fields become "—".
 
-            | Field | Value |
-            |---|---|
-            | Type | (credit card invoice / payment slip / bank statement / certificate / contract / tax filing / other — see "## Local fiscal/cultural context" for locale-specific document types) |
-            | Issuer | (bank/company/agency) |
-            | Payer | (name/national-ID/tax-ID — if visible) |
-            | Category | Personal / Business / Mixed |
-            | Total | (with currency symbol and locale format — see local context) |
-            | Due date | YYYY-MM-DD |
-            | Issue date | YYYY-MM-DD |
-            | Identifier | (invoice no., code, account) |
-            | Critical notes | (active installments / interest / overdue / charges / important observations) |
-
-            AFTER the table, write at most 2-3 sentences with what the user needs to
-            do/know. Don't repeat the table data in the text — just comment on what
-            matters for their action.
+            AFTER the table, write at most 2-3 sentences with what the user needs
+            to do/know. Don't repeat the table data in the text — just comment on
+            what matters for their action.
 
             FINISH by calling RememberFact to consolidate into long-term memory
             (unless the content is trivial).
