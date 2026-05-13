@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Ai\Agents\FinanceCoach;
+use App\Ai\Agents\CoachAgent;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Enums\Lab;
@@ -31,10 +31,14 @@ class CoachReplyProcessor
         }
 
         $coach = $conversationId
-            ? (new FinanceCoach)->continue($conversationId, as: $user)
-            : (new FinanceCoach)->forUser($user);
+            ? (new CoachAgent)->continue($conversationId, as: $user)
+            : (new CoachAgent)->forUser($user);
 
-        $promptPrefix = "[mensagem chegou via email do Rogers, processe normalmente — pode usar tools pra atualizar o plano se ele te pediu pra marcar algo, criar ação, anotar fato]\n\n";
+        // System-level note prepended to the user's email body so the agent
+        // knows this came in via email (vs the web chat) and is allowed to
+        // act on it normally — including calling tools to update the plan
+        // if the user explicitly asked.
+        $promptPrefix = "[message arrived via email — process normally; you may use tools to update the plan if the user asked you to mark something, create an action, or save a fact]\n\n";
 
         $response = $coach->prompt(
             $promptPrefix.$reply,

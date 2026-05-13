@@ -23,18 +23,18 @@ class ReadBudget implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Lê o orçamento atual do usuário (o mais recente persistido) e devolve a tabela formatada — '
-            .'incluindo o breakdown linha por linha de cada bucket. '
-            .'Use SEMPRE que o usuário perguntar QUALQUER valor monetário atual. Cobre 3 níveis: '
-            .'(1) panorama: "como está meu orçamento?", "qual minha situação?", "o que sobrou esse mês?"; '
-            .'(2) bucket: "quanto pra investimento / investir?", "quanto pra reserva / emergência?", '
-            .'"quanto pra lazer?", "quanto em custos fixos?", "qual minha renda líquida?"; '
-            .'(3) linha específica do breakdown: "quanto eu gasto com aluguel / mercado / transporte / '
-            .'alimentação / contas / assinaturas?". '
-            .'Os números vêm DAQUI, não da sua memória. NÃO invente, NÃO estime, NÃO recupere de '
-            .'mensagens antigas — se a linha que o usuário pediu não existir no breakdown, diga '
-            .'explicitamente que não tem essa linha no orçamento atual em vez de chutar. '
-            .'NÃO use pra criar — pra isso use BudgetSnapshot.';
+        return 'Reads the user\'s current budget (the most recently persisted one) and returns the '
+            .'formatted table — including the line-by-line breakdown of each bucket. '
+            .'Use ALWAYS when the user asks ANY current monetary value. Covers 3 levels: '
+            .'(1) overview: "how\'s my budget?", "what\'s my situation?", "what\'s left this month?"; '
+            .'(2) bucket: "how much for investment / to invest?", "how much for the emergency fund?", '
+            .'"how much for leisure?", "how much in fixed costs?", "what\'s my net income?"; '
+            .'(3) specific breakdown line: "how much do I spend on rent / groceries / transport / '
+            .'food / bills / subscriptions?". '
+            .'The numbers come FROM HERE, not from your memory. DO NOT invent, DO NOT estimate, DO NOT '
+            .'recover from old messages — if the line the user asked about does not exist in the breakdown, '
+            .'say explicitly that there\'s no such line in the current budget instead of guessing. '
+            .'DO NOT use to create — for that use BudgetSnapshot.';
     }
 
     public function handle(Request $request): Stringable|string

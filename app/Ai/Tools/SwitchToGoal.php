@@ -13,7 +13,7 @@ class SwitchToGoal implements Tool
 {
     /**
      * @param  ?string  $conversationId  Current conversation id, passed in by
-     *                                   FinanceCoach so the tool knows WHICH
+     *                                   CoachAgent so the tool knows WHICH
      *                                   conversation to relocate. Null when
      *                                   there's no active conversation yet.
      */
@@ -21,12 +21,12 @@ class SwitchToGoal implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Move a conversa atual pra um goal (workspace) diferente. '
-            .'Use SOMENTE depois de perguntar ao usuário se ele quer mudar — '
-            .'ex.: depois de criar um goal novo via CreateGoal e o usuário '
-            ."confirmar 'sim, vamos pra lá'. A conversa inteira (toda a "
-            .'history desde o início) passa a pertencer ao goal de destino, '
-            .'e a sidebar reflete a mudança imediatamente.';
+        return 'Moves the current conversation to a different goal (workspace). '
+            .'Use ONLY after asking the user if they want to switch — '
+            .'e.g. after creating a new goal via CreateGoal and the user '
+            ."confirms 'yes, let's go there'. The entire conversation (all "
+            .'history from the start) transfers to the destination goal, '
+            .'and the sidebar reflects the change immediately.';
     }
 
     public function handle(Request $request): Stringable|string

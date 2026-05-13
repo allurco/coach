@@ -12,12 +12,12 @@ class RememberFact implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Salva um fato importante na MEMÓRIA DE LONGO PRAZO do Rogers. '
-            .'Use depois de analisar uma fatura/extrato/PDF, decisão tomada, ou evento marcante — '
-            .'para que conversas FUTURAS possam recordar que aconteceu sem precisar do PDF original. '
-            .'O summary deve ser CURTO (1-3 frases), factual, com valores e datas concretas. '
-            .'Não use pra coisas triviais — só pra fatos que vale consultar depois. '
-            .'Tipos: fatura, pagamento, decisao, evento, fato, meta, aprendizado.';
+        return 'Saves an important fact in the user\'s LONG-TERM MEMORY. '
+            .'Use after analyzing an invoice/statement/PDF, a decision taken, or a notable event — '
+            .'so that FUTURE conversations can recall it without needing the original PDF. '
+            .'The summary should be SHORT (1-3 sentences), factual, with concrete values and dates. '
+            .'Don\'t use it for trivial things — only for facts worth consulting later. '
+            .'Kinds: fatura, pagamento, decisao, evento, fato, meta, aprendizado.';
     }
 
     public function handle(Request $request): Stringable|string

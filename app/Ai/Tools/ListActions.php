@@ -12,9 +12,9 @@ class ListActions implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Lista as ações do plano do Rogers. '
-            .'Use para entender o estado atual antes de cobrar, sugerir, criar nova ação ou responder qualquer pergunta sobre o plano. '
-            .'Pode filtrar por status (pendente, em_andamento, concluido, cancelado) ou por categoria.';
+        return 'Lists the actions in the user\'s plan. '
+            .'Use to understand the current state before nudging, suggesting, creating a new action, or answering any question about the plan. '
+            .'Can filter by status (pendente, em_andamento, concluido, cancelado) or by category.';
     }
 
     public function handle(Request $request): Stringable|string

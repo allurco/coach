@@ -13,11 +13,11 @@ class MoveAction implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Move uma ação existente pra outro goal (workspace) do usuário. '
-            .'Use quando perceber que uma ação foi criada no workspace errado, '
-            .'ou quando o usuário pedir explicitamente pra mover. '
-            .'Tanto a ação quanto o goal de destino precisam pertencer ao usuário, '
-            .'e o goal de destino não pode estar arquivado.';
+        return 'Moves an existing action to another goal (workspace) of the user. '
+            .'Use when you realize an action was created in the wrong workspace, '
+            .'or when the user explicitly asks to move it. '
+            .'Both the action and the destination goal must belong to the user, '
+            .'and the destination goal must not be archived.';
     }
 
     public function handle(Request $request): Stringable|string

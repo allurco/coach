@@ -18,9 +18,9 @@ class WebFetch implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Faz GET HTTP em uma URL específica e retorna o texto extraído (HTML é convertido pra texto). '
-            .'Use quando o usuário compartilhar um link e você precisar ler o conteúdo, ou quando '
-            .'um WebSearch deu uma URL relevante e você quer mais detalhe. Apenas http(s).';
+        return 'Performs an HTTP GET on a specific URL and returns the extracted text (HTML is converted to text). '
+            .'Use when the user shares a link and you need to read the content, or when '
+            .'a WebSearch returned a relevant URL and you want more detail. http(s) only.';
     }
 
     public function handle(Request $request): Stringable|string

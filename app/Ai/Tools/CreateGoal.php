@@ -14,12 +14,12 @@ class CreateGoal implements Tool
     {
         $labels = implode(', ', array_keys(Goal::LABELS));
 
-        return 'Cria um novo goal (workspace) na barra lateral do usuário. '
-            .'Use quando o usuário expressar uma nova área de foco distinta dos goals existentes. '
-            .'Confirme verbalmente antes de criar. '
-            ."'name' é o título curto que aparece na sidebar (ex: 'Sair do vermelho'). "
-            ."'label' classifica o tipo e define a especialização do agente. Aceitos: {$labels}. "
-            ."Use 'general' se nenhum se encaixar.";
+        return 'Creates a new goal (workspace) in the user\'s sidebar. '
+            .'Use when the user expresses a new focus area distinct from existing goals. '
+            .'Confirm verbally before creating. '
+            ."'name' is the short title shown in the sidebar (e.g. 'Get out of the red'). "
+            ."'label' classifies the type and drives the agent\'s specialization. Accepted: {$labels}. "
+            ."Use 'general' if none fits.";
     }
 
     public function handle(Request $request): Stringable|string

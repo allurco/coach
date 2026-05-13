@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Agents\FinanceCoach;
+use App\Ai\Agents\CoachAgent;
 use App\Models\User;
 use Illuminate\JsonSchema\JsonSchemaTypeFactory;
 use Illuminate\JsonSchema\Types\Type;
@@ -17,7 +17,7 @@ it('declares items on every array schema property across every registered tool',
     // agent registers, serialize each property, and fail the suite if
     // any array slot ships without items.
     $factory = new JsonSchemaTypeFactory;
-    $agent = (new FinanceCoach)->forUser($this->user);
+    $agent = (new CoachAgent)->forUser($this->user);
 
     $offenders = [];
     foreach ($agent->tools() as $tool) {

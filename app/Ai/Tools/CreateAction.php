@@ -13,7 +13,7 @@ class CreateAction implements Tool
 {
     /**
      * @param  ?int  $activeGoalId  Goal the new action belongs to. Passed
-     *                              in by FinanceCoach so the action lands
+     *                              in by CoachAgent so the action lands
      *                              in the workspace the user is currently
      *                              looking at. If null, the Action model's
      *                              creating hook falls back to the user's
@@ -24,13 +24,14 @@ class CreateAction implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Cria uma nova ação no plano do Rogers. '
-            .'Use somente após o Rogers confirmar verbalmente que quer adicionar a ação. '
-            .'Categorias: financeiro, fiscal, operacional, crescimento. '
-            .'Prioridades: alta, media, baixa. '
-            .'Importâncias: critico, importante, rotineiro. '
-            .'Dificuldades: rapido, medio, pesado. '
-            .'Status sempre começa como "pendente".';
+        return 'Creates a new action in the user\'s plan. '
+            .'Use only after the user verbally confirms they want to add the action. '
+            .'For category, priority, importance, and difficulty, use only the exact Portuguese strings accepted by the schema; do not send English values. '
+            .'Categories (exact strings): financeiro, fiscal, operacional, crescimento. '
+            .'Priorities (exact strings): alta, media, baixa. '
+            .'Importance (exact strings): critico, importante, rotineiro. '
+            .'Difficulty (exact strings): rapido, medio, pesado. '
+            .'Status always starts as the exact string "pendente".';
     }
 
     public function handle(Request $request): Stringable|string

@@ -13,9 +13,9 @@ class UpdateAction implements Tool
 {
     public function description(): Stringable|string
     {
-        return 'Atualiza uma ação existente: muda status, adiciona notas de resultado, '
-            .'ajusta prazo ou adia (snooze). Use após o Rogers confirmar que algo foi feito, '
-            .'cancelado, ou que o prazo precisa mudar. Use ListActions primeiro para descobrir o ID correto.';
+        return 'Updates an existing action: changes status, adds result notes, '
+            .'adjusts deadline, or snoozes. Use after the user confirms something was done, '
+            .'cancelled, or that the deadline needs to change. Use ListActions first to find the correct ID.';
     }
 
     public function handle(Request $request): Stringable|string

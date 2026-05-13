@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Ai\Agents\FinanceCoach;
+use App\Ai\Agents\CoachAgent;
 use App\Mail\CoachPing;
 use App\Models\Action;
 use App\Models\User;
@@ -60,29 +60,29 @@ class CoachStuckCheck extends Command
             $a->id,
             $a->title,
             $a->category,
-            $a->deadline?->format('d/m/Y') ?? 'sem prazo',
+            $a->deadline?->format('Y-m-d') ?? 'no deadline',
             (int) $a->updated_at->diffInDays(now()),
         ))->implode("\n");
 
         $prompt = <<<PROMPT
-            O Rogers tem ações paradas há mais de {$days} dias. Manda um ping curto pra ele.
+            The user has actions stuck for more than {$days} days. Send a short ping.
 
-            Ações paradas (top 3 mais importantes):
+            Stuck actions (top 3 most important):
             {$list}
 
-            REGRAS:
-            - Pegue A ÚNICA ação mais crítica dessa lista (não tente cobrir todas).
-            - Pergunta CURTA: o que está travando? Não cobre, não dá lição.
-            - Sem "olá", sem rodeio. Tipo: "X tá há N dias parada — o que tá pegando?".
-            - Tom amigo, sem julgar, brasileiro coloquial.
-            - 2-4 frases NO MÁXIMO.
-            - Pode oferecer ajuda concreta se fizer sentido (ex: "quer que eu ajude a destrinchar?").
+            RULES:
+            - Pick THE ONE most critical action from this list (don't try to cover all).
+            - SHORT question: what's blocking? Don't lecture, don't moralize.
+            - No "hello", no preamble. E.g.: "X has been stuck N days — what's getting in the way?".
+            - Friendly tone, no judgment. Use the locale-aware voice from the system prompt.
+            - 2-4 sentences MAX.
+            - You can offer concrete help if it makes sense (e.g. "want me to help break it down?").
 
-            Não chame nenhuma tool — você já tem todas as informações necessárias acima.
+            Don't call any tools — you already have all the info you need above.
             PROMPT;
 
         try {
-            $coach = (new FinanceCoach)->forUser($user);
+            $coach = (new CoachAgent)->forUser($user);
             $response = $coach->prompt($prompt, provider: Lab::Gemini, model: 'gemini-2.5-flash');
 
             $body = trim((string) $response);

@@ -19,19 +19,19 @@ class BudgetSnapshot implements Tool
      *                              has no effect on retrieval. Budgets are
      *                              user-scoped (life-context), not
      *                              goal-scoped — every goal sees them via
-     *                              FinanceCoach::lifeContext().
+     *                              CoachAgent::lifeContext().
      */
     public function __construct(protected ?int $activeGoalId = null) {}
 
     public function description(): Stringable|string
     {
-        return 'Captura uma fotografia mensal do orçamento do usuário em 4 caixas: '
-            .'Custos Fixos (alvo 50-60% da renda), Investimentos (alvo 10%), '
-            .'Reservas (alvo 5-10%), Lazer (sobra automática, alvo 20-35%). '
-            .'Aplica buffer de 15% sobre os custos fixos pra cobrir linhas esquecidas. '
-            .'Persiste em coach_budgets pra revisita futura. Retorna análise em markdown '
-            .'com diff vs alvo. Use quando o usuário entrevistar com renda + gastos, '
-            .'ou pedir explicitamente um plano financeiro.';
+        return 'Captures a monthly snapshot of the user\'s budget in 4 buckets: '
+            .'Fixed Costs (target 50-60% of income), Investments (target 10%), '
+            .'Reserves (target 5-10%), Leisure (automatic remainder, target 20-35%). '
+            .'Applies a 15% buffer over fixed costs to cover forgotten line items. '
+            .'Persists to coach_budgets for future revisit. Returns analysis in markdown '
+            .'with diff vs target. Use when the user is being interviewed about '
+            .'income + expenses, or explicitly asks for a financial plan.';
     }
 
     public function handle(Request $request): Stringable|string
