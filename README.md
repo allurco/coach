@@ -217,12 +217,91 @@ ship in both locales. Add a new label by adding a key to the
 
 ## Internationalization
 
-Two locales: **pt_BR** (default) and **en**. Switch with `APP_LOCALE`
-in `.env`. Every UI string, the invitation email, and the
-set-password page are translated. Files in
-`lang/{pt_BR,en}/{coach,users,invitation}.php`.
+Coach is **multilingual at three layers** — UI strings, agent voice/tone,
+and locale-specific fiscal knowledge — wired so a contributor can add a
+new locale by dropping a couple of files, without touching PHP.
 
-To add another locale, copy `lang/en/` to `lang/<code>/` and translate.
+### Layer 1 — UI strings (Laravel lang files)
+
+The standard Laravel translation files. Every visible string (buttons,
+labels, emails, validation messages) lives in
+`lang/{locale}/{coach,users,invitation}.php`. Currently shipped:
+`pt_BR` (default) and `en`. Switch with `APP_LOCALE` in `.env`.
+
+### Layer 2 — Agent voice & tone (`tonePersona`)
+
+The agent's system prompt is in **English** by design — instructions to
+the LLM, not output to the user. The OUTPUT language is locale-aware via
+a `tonePersona()` method in `app/Ai/Agents/CoachAgent.php` that injects
+a per-locale voice block with concrete examples:
+
+```
+pt_BR  →  "Eai, beleza? / Bora resolver isso. / Pronto."
+en     →  "Hey, what's up? / Let's tackle this. / Done."
+```
+
+To add another voice, add a `tonePersonaXx()` method following the same
+shape and wire it into the `match()` inside `tonePersona()`.
+
+### Layer 3 — Locale knowledge (plug-and-play markdown)
+
+The fiscal, cultural, and regulatory context that varies by country
+lives in **standalone markdown files**, loaded at runtime and injected
+into the system prompt:
+
+```
+resources/prompts/locale/
+├── pt_BR.md   ← PJ/MEI, INSS, DARF/GPS/DAS, R$, CPF/CNPJ
+└── en_US.md   ← LLC/Sole Prop, IRS, 1099/W-2, USD, SSN/EIN
+```
+
+Each file is plain markdown organized into sections the agent reads as
+context. The expected sections are:
+
+1. **Fiscal & legal context** — income types, tax regimes, recurring
+   obligations, the boundary where the agent should refer to a
+   professional (accountant, CPA, etc.)
+2. **Document types you may see in attachments** — locale-specific
+   invoice/statement/tax-doc names
+3. **Currency & ID formats** — symbol, thousands/decimal separator,
+   personal-ID and business-ID formats
+4. **Common cultural references** — local terminology the agent should
+   recognize and quote back
+5. **Banking & cards** — major banks, debt traps (rotativo, revolving
+   debt, etc.), common payment methods
+6. **Attachment analysis template** — the markdown TABLE the agent
+   renders when the user uploads a document, with locale-native field
+   labels and locale-specific document types
+
+### Adding a new locale (e.g. `es_ES`, `de_DE`, `fr_FR`)
+
+To support a new locale end-to-end:
+
+1. **UI strings**: copy `lang/en/` to `lang/<code>/` and translate.
+2. **Voice block**: add `tonePersona<Xx>()` in `CoachAgent.php` and a
+   case to `tonePersona()` for the new locale code.
+3. **Locale knowledge**: copy `resources/prompts/locale/en_US.md` to
+   `resources/prompts/locale/<code>.md` and rewrite the sections with
+   the target country's fiscal terms, document types, currency, IDs,
+   and attachment template.
+
+That's it. The agent will:
+- speak the user's language (driven by `user.locale`),
+- analyze their documents in the right idiom (DARF for `pt_BR`, 1099
+  for `en_US`, *Steuerbescheid* for `de_DE`, etc.),
+- format money the right way,
+- refer to the right type of professional (contador / CPA / *Steuerberater*),
+- never need a Laravel deployment to add a new country — markdown is
+  read at runtime (with an in-process cache).
+
+### Security & robustness
+
+The user's `locale` column is the only field that selects which file
+to load, so it's validated by `resolveLocale()` against the regex
+`^[a-zA-Z]{2}([_-][A-Z]{2})?$` before any path construction. Anything
+outside that shape falls back to `en_US`. Unknown but well-shaped
+locales (e.g. `it_IT` before `it_IT.md` exists) also fall back to
+`en_US` so the model never sees an empty local-context section.
 
 ---
 
@@ -256,36 +335,51 @@ To add another locale, copy `lang/en/` to `lang/<code>/` and translate.
 ```
 app/
 ├── Ai/
-│   ├── Agents/FinanceCoach.php   ← prompt, persona, onboarding mode,
-│   │                              tool wiring, active-goal resolution
-│   └── Tools/                     ← 8 tools the agent can call
-│       ├── ListActions / CreateAction / UpdateAction
-│       ├── CreateGoal             ← agent opens new sidebar workspaces
-│       ├── RememberFact / RecallFacts
+│   ├── Agents/CoachAgent.php      ← system prompt, locale-aware tone,
+│   │                              onboarding mode, tool wiring,
+│   │                              locale knowledge loader
+│   └── Tools/                     ← tools the agent can call
+│       ├── ListActions / CreateAction / UpdateAction / MoveAction
+│       ├── CreateGoal / SwitchToGoal  ← workspace management
+│       ├── BudgetSnapshot / ReadBudget  ← financial planning
+│       ├── LogWhy / LogWorry          ← motivation + anxiety capture
+│       ├── RememberFact / RecallFacts ← long-term memory
+│       ├── ShareViaEmail              ← outbound email with placeholders
 │       └── WebSearch / WebFetch
 ├── Console/Commands/
-│   ├── CoachMorningPing           ← daily 8am
-│   ├── CoachWeeklyBriefing        ← Sunday 8pm
-│   └── CoachStuckCheck            ← weekday noon
+│   ├── CoachMorningPing                  ← daily 8am
+│   ├── CoachWeeklyBriefing               ← Sunday 8pm
+│   ├── CoachStuckCheck                   ← weekday noon
+│   ├── CoachCarryBudgetForward           ← day 28: copy budget to next month
+│   └── CoachMonthlyBudgetReminder        ← day 28 evening: budget reminder
 ├── Filament/
-│   ├── Pages/Coach.php            ← chat UI, plan flyout, goal sidebar,
-│   │                              streaming + auto-retry on truncation
-│   └── Resources/Users/           ← admin-only user management
+│   ├── Pages/Coach.php                   ← chat UI, plan flyout, goal sidebar,
+│   │                                      budget flyout, streaming + auto-retry
+│   └── Resources/Users/                  ← admin-only user management
 ├── Http/Controllers/
-│   ├── CoachWebhookController     ← inbound email reply parser
-│   └── InvitationController       ← public set-password page
+│   ├── CoachWebhookController            ← inbound email reply parser
+│   └── InvitationController              ← public set-password page
 ├── Mail/
-│   ├── CoachPing                  ← scheduled ping with conv-aware Reply-To
-│   └── UserInvitation             ← invite email
+│   ├── CoachPing                         ← scheduled ping with conv-aware Reply-To
+│   ├── BudgetReminder                    ← monthly budget reminder
+│   └── UserInvitation                    ← invite email
 ├── Models/
-│   ├── Action                     ← plan items, scoped to (user_id, goal_id)
-│   ├── AgentConversation          ← read model over laravel/ai messages
-│   ├── CoachMemory                ← long-term memories, scoped to user_id
-│   ├── Goal                       ← workspace; owns actions + conversations
-│   └── User                       ← FilamentUser, isAdmin, invitation helpers
+│   ├── Action                            ← plan items, scoped to (user_id, goal_id)
+│   ├── AgentConversation                 ← read model over laravel/ai messages
+│   ├── Budget                            ← monthly financial snapshots
+│   ├── CoachMemory                       ← long-term memories, scoped to user_id
+│   ├── Goal                              ← workspace; owns actions + conversations
+│   └── User                              ← FilamentUser, isAdmin, invitation helpers
 └── Services/
-    ├── EmailReplyParser           ← strip quoted text from replies
-    └── CoachReplyProcessor        ← logs in user, routes reply to conversation
+    ├── EmailReplyParser                  ← strip quoted text from replies
+    ├── CoachReplyProcessor               ← logs in user, routes reply to conversation
+    ├── PlaceholderRenderer               ← expands {{budget:current}}, {{plan}} in email bodies
+    └── Sharer                            ← outbound email sender for ShareViaEmail tool
+
+resources/prompts/locale/
+├── pt_BR.md                       ← Brazilian fiscal/cultural knowledge + voice
+└── en_US.md                       ← US fiscal/cultural knowledge + voice
+                                   ← drop a new file here to add a locale
 ```
 
 Multi-tenant isolation is enforced by Eloquent global scopes on
@@ -309,12 +403,16 @@ WARN level for postmortem.
 ./vendor/bin/pest --compact
 ```
 
-178 tests covering: tools (CreateAction/UpdateAction/CreateGoal —
-date parsing, goal scoping, label validation), goal-specialization
-prompt routing, multi-tenant isolation, response decorator
-(truncation + hallucinated-tool detection), invitation flow,
-Reply-To routing, webhook auth, EmailReplyParser, Action model,
-PWA assets, and the Coach send guard.
+400+ tests covering: tools (CreateAction/UpdateAction/CreateGoal/
+BudgetSnapshot/ReadBudget — date parsing, goal scoping, label
+validation, locale-aware enum schemas), agent prompt routing
+(bucket questions, hard-rule against inventing numbers,
+locale-aware tone injection, locale knowledge loading, path
+traversal protection), goal specialization, multi-tenant isolation,
+response decorator (truncation + hallucinated-tool detection),
+invitation flow, Reply-To routing, webhook auth, EmailReplyParser,
+Action model, budget flyout, plan list layout, PWA assets, and
+the Coach send guard.
 
 CI runs the same suite on PHP 8.4 (`.github/workflows/tests.yml`).
 Tests are written to pass in **both locales** (`pt_BR` + `en`) — CI
