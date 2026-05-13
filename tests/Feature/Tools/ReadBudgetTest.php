@@ -1,6 +1,5 @@
 <?php
 
-use App\Ai\Tools\BudgetSnapshot;
 use App\Ai\Tools\ReadBudget;
 use App\Models\Budget;
 use App\Models\User;
@@ -12,42 +11,44 @@ beforeEach(function () {
     $this->tool = new ReadBudget;
 });
 
-it('returns the {{budget:current}} placeholder when the user has a budget', function () {
-    Budget::create([
-        'goal_id' => null,
-        'month' => '2026-06',
-        'net_income' => 24000,
-        'fixed_costs_subtotal' => 10000,
-        'fixed_costs_total' => 11500,
-        'investments_total' => 2400,
-        'savings_total' => 1200,
-        'leisure_amount' => 8900,
-    ]);
-
-    $result = (string) $this->tool->handle(new Request([]));
-
-    expect($result)->toBe('{{budget:current}}');
-});
-
-it('expanded placeholder renders the full markdown via PlaceholderRenderer', function () {
+/**
+ * Production bug regression: ReadBudget used to return the literal string
+ * '{{budget:current}}' so the chat's PlaceholderRenderer would expand it
+ * before display. BUT tool results don't go through that renderer — they
+ * go straight back to the LLM. The model would receive the raw placeholder
+ * and report "the tool isn't working". The fix is to expand SERVER-SIDE
+ * inside handle() so the LLM gets real budget data, not a template string.
+ */
+it('returns the fully-expanded markdown budget when the user has a budget', function () {
     $budget = Budget::create([
         'goal_id' => null,
         'month' => '2026-06',
         'net_income' => 24000,
         'fixed_costs_subtotal' => 10000,
         'fixed_costs_total' => 11500,
+        'fixed_costs_breakdown' => ['Aluguel' => 6000, 'Mercado' => 4000],
         'investments_total' => 2400,
+        'investments_breakdown' => ['Aposentadoria' => 2400],
         'savings_total' => 1200,
+        'savings_breakdown' => ['Reservas' => 1200],
         'leisure_amount' => 8900,
     ]);
 
     $result = (string) $this->tool->handle(new Request([]));
-    $rendered = BudgetSnapshot::expandPlaceholders($result);
 
-    expect($rendered)
-        ->toContain('Custos Fixos')
-        ->toContain('Lazer')
+    // The placeholder must not leak back to the LLM. Whatever shape the
+    // renderer produces, it must contain the real numbers and bucket
+    // names — not template syntax.
+    expect($result)
+        ->not->toContain('{{budget:current}}')
+        ->not->toContain('{{')
         ->toContain('snapshot #'.$budget->id);
+
+    // Spot-check the user's actual breakdown line items appear so the agent
+    // can answer "how much for Reservas?" / "how much for Aluguel?".
+    expect($result)
+        ->toContain('Reservas')
+        ->toContain('Aluguel');
 });
 
 it('returns a "no budget" message when the user has none', function () {
