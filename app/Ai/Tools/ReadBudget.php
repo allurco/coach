@@ -3,6 +3,7 @@
 namespace App\Ai\Tools;
 
 use App\Models\Budget;
+use App\Services\PlaceholderRenderer;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
@@ -15,9 +16,13 @@ use Stringable;
  * (cheap, no input from user needed) instead of asking the user for
  * income/expenses again.
  *
- * Returns the {{budget:current}} placeholder so the chat's
- * PlaceholderRenderer expands it to the full markdown table at
- * render time — same shape BudgetSnapshot uses for its output.
+ * Returns the FULLY EXPANDED markdown table (income, buckets, breakdowns,
+ * targets vs actuals) — NOT the {{budget:current}} placeholder. The
+ * placeholder pattern only works for outbound chat/email rendering; tool
+ * results go straight back to the LLM, so we need real data here, not
+ * a template string. Production bug discovered when the agent reported
+ * "the tool isn't working" because it saw literal "{{budget:current}}"
+ * as the tool output.
  */
 class ReadBudget implements Tool
 {
@@ -49,7 +54,9 @@ class ReadBudget implements Tool
             return (string) __('coach.read_budget.none');
         }
 
-        return '{{budget:current}}';
+        // Expand the placeholder server-side so the LLM receives real budget
+        // data (markdown table + breakdowns) instead of the template string.
+        return (new PlaceholderRenderer)->render('{{budget:current}}', $userId);
     }
 
     public function schema(JsonSchema $schema): array
