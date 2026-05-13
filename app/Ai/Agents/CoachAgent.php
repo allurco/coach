@@ -471,8 +471,9 @@ class CoachAgent implements Agent, Conversational, HasTools
      * Cached in a static property per resolved locale — the markdown is
      * immutable at runtime, so re-reading on every prompt build is wasted I/O.
      *
-     * Contributors: see docs/contributing-locales.md for the expected sections
-     * (fiscal terms, currency format, ID formats, common document types).
+     * Contributor guidance: locale files should cover expected fiscal terms,
+     * currency formatting, ID formats, and common document types for the
+     * target locale.
      */
     protected function localeKnowledge(): string
     {
