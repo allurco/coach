@@ -1,5 +1,7 @@
 <?php
 
+use App\Domains\Finance\FinanceServiceProvider;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -77,5 +79,40 @@ return [
     'seeder' => [
         'admin_email' => env('SEEDER_ADMIN_EMAIL'),
         'admin_name' => env('SEEDER_ADMIN_NAME', 'Admin'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enabled Domain Packs
+    |--------------------------------------------------------------------------
+    |
+    | Each entry is the FQCN of a DomainPack service provider. The
+    | PackServiceProvider registers each one at boot, and each pack
+    | adds itself to the PackRegistry under its own label.
+    |
+    | Remove an entry to disable that pack — its tools, models, lang,
+    | and signals stop loading. A fork that wants Coach without finance
+    | (e.g. a fitness-only edition) ships an empty array here.
+    |
+    | See ADR 0001 for why Goal.label is the pack identifier, and
+    | ADR 0002 for the signal contract.
+    |
+    */
+    'enabled_packs' => [
+        FinanceServiceProvider::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Agent layer
+    |--------------------------------------------------------------------------
+    |
+    | The coaching agent — see ADR 0003. Set COACH_AGENT_ENABLED=false
+    | to ship a Coach fork without the chat (Filament admin only, no
+    | LLM, no conversation, no agent memory).
+    |
+    */
+    'agent' => [
+        'enabled' => env('COACH_AGENT_ENABLED', true),
     ],
 ];
