@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Budget;
+use App\Domains\Finance\Models\Budget;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

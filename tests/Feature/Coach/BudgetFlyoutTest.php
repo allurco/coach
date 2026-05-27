@@ -1,8 +1,8 @@
 <?php
 
+use App\Domains\Finance\Models\Budget;
 use App\Filament\Pages\Coach;
 use App\Mail\Share;
-use App\Models\Budget;
 use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;

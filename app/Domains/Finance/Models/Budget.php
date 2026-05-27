@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Models;
+namespace App\Domains\Finance\Models;
 
+use App\Models\Goal;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Budget extends Model
 {
-    protected $table = 'coach_budgets';
+    protected $table = 'finance_budgets';
 
     protected $fillable = [
         'user_id',

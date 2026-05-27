@@ -1,7 +1,7 @@
 <?php
 
-use App\Ai\Tools\ReadBudget;
-use App\Models\Budget;
+use App\Domains\Finance\Models\Budget;
+use App\Domains\Finance\Tools\ReadBudget;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;
 

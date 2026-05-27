@@ -3,13 +3,13 @@
 namespace App\Filament\Pages;
 
 use App\Ai\Agents\CoachAgent;
-use App\Ai\Tools\BudgetSnapshot;
+use App\Domains\Finance\Models\Budget;
+use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Filament\Pages\Concerns\HasBudgetFlyout;
 use App\Filament\Pages\Concerns\HasBudgetShare;
 use App\Filament\Pages\Concerns\HasPlanFlyout;
 use App\Filament\Pages\Concerns\HasShareMessageModal;
 use App\Models\Action;
-use App\Models\Budget;
 use App\Models\CoachMemory;
 use App\Models\Goal;
 use App\Services\TipResolver;

@@ -1,8 +1,8 @@
 <?php
 
+use App\Domains\Finance\Models\Budget;
 use App\Filament\Pages\Coach;
 use App\Models\Action;
-use App\Models\Budget;
 use App\Models\Goal;
 use App\Models\User;
 use Livewire\Livewire;

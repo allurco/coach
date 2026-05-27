@@ -1,8 +1,8 @@
 <?php
 
-use App\Ai\Tools\BudgetSnapshot;
+use App\Domains\Finance\Models\Budget;
+use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Models\Action;
-use App\Models\Budget;
 use App\Models\Goal;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;
