@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages\Concerns;
+namespace App\Domains\Finance\Filament\Concerns;
 
 use App\Exceptions\ShareFailedException;
 use App\Services\Sharer;

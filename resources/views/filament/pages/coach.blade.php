@@ -20,14 +20,14 @@
         </div>
 
         @include('filament.pages.coach._plan-flyout')
-        @include('filament.pages.coach._budget-flyout')
+        @include('finance::_budget-flyout')
     </div>
 
     @include('filament.pages.coach._history-panel')
     @include('filament.pages.coach._new-goal-modal')
     @include('filament.pages.coach._complete-action-modal')
     @include('filament.pages.coach._share-message-modal')
-    @include('filament.pages.coach._budget-share-modal')
+    @include('finance::_budget-share-modal')
     @include('filament.pages.coach._footer-script')
 </div>
 </x-filament-panels::page>

@@ -4,10 +4,10 @@ namespace App\Filament\Pages;
 
 use App\Agent\Agents\CoachAgent;
 use App\Agent\Models\CoachMemory;
+use App\Domains\Finance\Filament\Concerns\HasBudgetFlyout;
+use App\Domains\Finance\Filament\Concerns\HasBudgetShare;
 use App\Domains\Finance\Models\Budget;
 use App\Domains\Finance\Tools\BudgetSnapshot;
-use App\Filament\Pages\Concerns\HasBudgetFlyout;
-use App\Filament\Pages\Concerns\HasBudgetShare;
 use App\Filament\Pages\Concerns\HasPlanFlyout;
 use App\Filament\Pages\Concerns\HasShareMessageModal;
 use App\Models\Action;
