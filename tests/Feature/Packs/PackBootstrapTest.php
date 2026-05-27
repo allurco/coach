@@ -1,7 +1,9 @@
 <?php
 
+use App\Agent\Filament\Pages\Coach;
 use App\Domains\Finance\FinanceServiceProvider;
 use App\Packs\PackRegistry;
+use Filament\Facades\Filament;
 
 /**
  * Integration: the Pack bootstrap flow wired through Laravel's SP boot —
@@ -57,4 +59,22 @@ it('registers the finance:: view namespace so the pack ships its own Blade parti
     // resources/views path. See ADR 0004.
     expect(view()->exists('finance::_budget-flyout'))->toBeTrue();
     expect(view()->exists('finance::_budget-share-modal'))->toBeTrue();
+});
+
+it('registers the agent:: view namespace for the chat page Blade tree', function () {
+    // Same vertical-slice claim for the Agent layer (Phase 6b / ADR 0004):
+    // the chat page's Blade views live inside app/Agent/resources/views and
+    // are resolved through the agent:: namespace.
+    expect(view()->exists('agent::coach'))->toBeTrue();
+    expect(view()->exists('agent::coach._chat-thread'))->toBeTrue();
+    expect(view()->exists('agent::coach._composer'))->toBeTrue();
+});
+
+it('discovers the chat page when the agent is enabled', function () {
+    // Default config has coach.agent.enabled = true. Filament's panel
+    // discovery walks app/Agent/Filament/Pages and registers Coach.
+    $coachPage = Filament::getPanel('admin')
+        ->getPages();
+
+    expect($coachPage)->toContain(Coach::class);
 });

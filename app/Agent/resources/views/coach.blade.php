@@ -9,25 +9,25 @@
          @keydown.escape.window="planOpen = false; sidebarOpen = false; budgetOpen = false">
 
         <div class="coach-shell">
-            @include('filament.pages.coach._sidebar')
+            @include('agent::coach._sidebar')
 
             <div class="coach-main">
-                @include('filament.pages.coach._tip-banner')
-                @include('filament.pages.coach._header')
-                @include('filament.pages.coach._chat-thread')
-                @include('filament.pages.coach._composer')
+                @include('agent::coach._tip-banner')
+                @include('agent::coach._header')
+                @include('agent::coach._chat-thread')
+                @include('agent::coach._composer')
             </div>
         </div>
 
-        @include('filament.pages.coach._plan-flyout')
+        @include('agent::coach._plan-flyout')
         @include('finance::_budget-flyout')
     </div>
 
-    @include('filament.pages.coach._history-panel')
-    @include('filament.pages.coach._new-goal-modal')
-    @include('filament.pages.coach._complete-action-modal')
-    @include('filament.pages.coach._share-message-modal')
+    @include('agent::coach._history-panel')
+    @include('agent::coach._new-goal-modal')
+    @include('agent::coach._complete-action-modal')
+    @include('agent::coach._share-message-modal')
     @include('finance::_budget-share-modal')
-    @include('filament.pages.coach._footer-script')
+    @include('agent::coach._footer-script')
 </div>
 </x-filament-panels::page>

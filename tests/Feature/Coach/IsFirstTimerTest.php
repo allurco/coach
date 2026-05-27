@@ -1,7 +1,7 @@
 <?php
 
+use App\Agent\Filament\Pages\Coach;
 use App\Agent\Models\CoachMemory;
-use App\Filament\Pages\Coach;
 use App\Models\Action;
 use App\Models\User;
 

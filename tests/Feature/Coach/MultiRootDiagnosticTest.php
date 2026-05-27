@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Pages\Coach;
+use App\Agent\Filament\Pages\Coach;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -61,7 +61,7 @@ it('reports root counts across 4 parse strategies', function () {
         $results[$name] = countRoots($variant);
     }
 
-    $msg = "Root counts: ".json_encode($results)."\n\n"
+    $msg = 'Root counts: '.json_encode($results)."\n\n"
         ."If any strategy returns 1, that's the parser quirk to neutralize.\n"
         ."If all return 2, the issue is deeper than charset/comments/whitespace.\n\n"
         ."HTML head:\n".substr($base, 0, 3000);

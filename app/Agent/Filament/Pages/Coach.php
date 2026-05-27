@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Agent\Filament\Pages;
 
 use App\Agent\Agents\CoachAgent;
 use App\Agent\Models\CoachMemory;
@@ -8,8 +8,8 @@ use App\Domains\Finance\Filament\Concerns\HasBudgetFlyout;
 use App\Domains\Finance\Filament\Concerns\HasBudgetShare;
 use App\Domains\Finance\Models\Budget;
 use App\Domains\Finance\Tools\BudgetSnapshot;
-use App\Filament\Pages\Concerns\HasPlanFlyout;
-use App\Filament\Pages\Concerns\HasShareMessageModal;
+use App\Agent\Filament\Concerns\HasPlanFlyout;
+use App\Agent\Filament\Concerns\HasShareMessageModal;
 use App\Models\Action;
 use App\Models\Goal;
 use App\Services\TipResolver;
@@ -44,7 +44,7 @@ class Coach extends Page implements HasForms
     use HasShareMessageModal;
     use InteractsWithForms;
 
-    protected string $view = 'filament.pages.coach';
+    protected string $view = 'agent::coach';
 
     protected static ?string $slug = '/';
 

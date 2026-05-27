@@ -1,7 +1,7 @@
 <?php
 
+use App\Agent\Filament\Pages\Coach;
 use App\Domains\Finance\Models\Budget;
-use App\Filament\Pages\Coach;
 use App\Mail\Share;
 use App\Models\Contact;
 use App\Models\User;
