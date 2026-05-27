@@ -46,12 +46,12 @@ class ReadBudget implements Tool
     {
         $userId = auth()->id();
         if (! $userId) {
-            return (string) __('coach.read_budget.unauthenticated');
+            return (string) __('finance::read_budget.unauthenticated');
         }
 
         $budget = Budget::currentForUser($userId);
         if (! $budget) {
-            return (string) __('coach.read_budget.none');
+            return (string) __('finance::read_budget.none');
         }
 
         // Expand the placeholder server-side so the LLM receives real budget

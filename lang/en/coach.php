@@ -255,48 +255,6 @@ return [
         ],
     ],
 
-    'budget' => [
-        'auto_close_note' => 'Closed automatically when snapshot #:snapshot_id was generated.',
-    ],
-
-    'budget_flyout' => [
-        'toggle' => 'Budget',
-        'title' => 'Current budget',
-        'subtitle' => 'Month :month',
-        'eyebrow' => 'Budget',
-        'net_income' => 'Monthly net income',
-        'fixed_costs' => 'Fixed costs',
-        'investments' => 'Investments',
-        'savings' => 'Savings',
-        'leisure' => 'Leisure (leftover)',
-        'total' => 'Total',
-        'subtotal' => 'Subtotal',
-        'total_with_buffer' => 'Total with 15% buffer',
-        'buffer_note' => 'subtotal :subtotal · +15% buffer :buffer',
-        'empty_bucket' => 'No lines yet — add one below.',
-        'deficit_warning' => 'Shortfall of :amount — planned buckets exceed income.',
-        'line_label_placeholder' => 'description',
-        'add_line' => 'add line',
-        'remove_line' => 'Remove line',
-        'save' => 'Save',
-        'saved' => 'Budget saved.',
-        'share' => 'Share',
-        'share_modal_title' => 'Share this budget',
-        'share_subject_default' => 'My budget for :month',
-        'share_body_default' => "Hi,\n\nHere's my current budget:\n\n{{budget:current}}\n\nLet me know if you have questions.",
-        'share_recipient_label' => 'To',
-        'share_recipient_placeholder' => 'email or saved contact name',
-        'share_subject_label' => 'Subject',
-        'share_body_label' => 'Message',
-        'share_send' => 'Send',
-        'share_cancel' => 'Cancel',
-    ],
-
-    'read_budget' => [
-        'unauthenticated' => 'Error: user not authenticated.',
-        'none' => 'No budget yet — you have never run BudgetSnapshot. To create one we need your net income + a list of fixed costs.',
-    ],
-
     'life_context' => [
         'header' => 'Life context (cuts across every goal — use it to inform advice in any area):',
         'budget' => [

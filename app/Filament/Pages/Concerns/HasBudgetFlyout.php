@@ -190,7 +190,7 @@ trait HasBudgetFlyout
         $this->budgetData['id'] = $new->id;
 
         Notification::make()
-            ->title((string) __('coach.budget_flyout.saved'))
+            ->title((string) __('finance::budget_flyout.saved'))
             ->success()
             ->send();
     }
