@@ -1,13 +1,28 @@
 <?php
 
-use App\Agent\Filament\Pages\Coach;
+use App\Livewire\PlanFlyout;
 use App\Models\Action;
 use App\Models\User;
 
+/**
+ * Phase 8 — these tests used to instantiate the Coach Filament page and
+ * call its trait-provided loadPlan(). The trait moved into a shared
+ * PlanFlyout Livewire component (ADR 0005); tests now target the
+ * component directly. Same assertions, smaller surface.
+ */
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
 });
+
+function makePlanFlyout(string $filter = 'pending'): PlanFlyout
+{
+    $component = new PlanFlyout;
+    $component->planFilter = $filter;
+    $component->loadPlan();
+
+    return $component;
+}
 
 it('exposes detail fields for a pending action', function () {
     Action::create([
@@ -20,12 +35,11 @@ it('exposes detail fields for a pending action', function () {
         'status' => 'pending',
     ]);
 
-    $page = new Coach;
-    $page->loadPlan();
+    $component = makePlanFlyout();
 
-    expect($page->planActions)->toHaveCount(1);
+    expect($component->planActions)->toHaveCount(1);
 
-    $row = $page->planActions[0];
+    $row = $component->planActions[0];
 
     expect($row)
         ->toHaveKey('description', 'Ligar 4004-4828 e pedir saldo devedor')
@@ -53,12 +67,10 @@ it('formats snooze_until and completed_at as date strings', function () {
         'result_notes' => 'Pago via Pix',
     ]);
 
-    $page = new Coach;
-    $page->planFilter = 'all';
-    $page->loadPlan();
+    $component = makePlanFlyout('all');
 
-    $snoozed = collect($page->planActions)->firstWhere('title', 'Snoozed task');
-    $done = collect($page->planActions)->firstWhere('title', 'Done task');
+    $snoozed = collect($component->planActions)->firstWhere('title', 'Snoozed task');
+    $done = collect($component->planActions)->firstWhere('title', 'Done task');
 
     expect($snoozed['snooze_until'])->toBe('15/06/2026');
     expect($done['completed_at'])->toBe('10/04/2026');
@@ -75,10 +87,9 @@ it('exposes attachment metadata as a list', function () {
         ],
     ]);
 
-    $page = new Coach;
-    $page->loadPlan();
+    $component = makePlanFlyout();
 
-    $row = $page->planActions[0];
+    $row = $component->planActions[0];
 
     expect($row['attachments'])->toBeArray()->toHaveCount(2);
     expect($row['attachments'][0])->toHaveKey('path', 'coach-uploads/fatura-itau.pdf');
@@ -93,10 +104,9 @@ it('handles null attachments without crashing', function () {
         'attachments' => null,
     ]);
 
-    $page = new Coach;
-    $page->loadPlan();
+    $component = makePlanFlyout();
 
-    expect($page->planActions[0]['attachments'])->toBeArray()->toBeEmpty();
+    expect($component->planActions[0]['attachments'])->toBeArray()->toBeEmpty();
 });
 
 it('flags has_details true when description, snooze, attachments or completion data is present', function () {
@@ -116,11 +126,9 @@ it('flags has_details true when description, snooze, attachments or completion d
         'attachments' => ['coach-uploads/file.pdf'],
     ]);
 
-    $page = new Coach;
-    $page->planFilter = 'all';
-    $page->loadPlan();
+    $component = makePlanFlyout('all');
 
-    foreach ($page->planActions as $row) {
+    foreach ($component->planActions as $row) {
         expect($row['has_details'])->toBeTrue();
     }
 });
@@ -135,10 +143,9 @@ it('flags has_details true even for a bare action because importance/difficulty 
         'status' => 'pending',
     ]);
 
-    $page = new Coach;
-    $page->loadPlan();
+    $component = makePlanFlyout();
 
-    expect($page->planActions[0]['has_details'])->toBeTrue();
+    expect($component->planActions[0]['has_details'])->toBeTrue();
 });
 
 it('does not leak details from another user\'s action', function () {
@@ -151,8 +158,7 @@ it('does not leak details from another user\'s action', function () {
         'status' => 'pending',
     ]);
 
-    $page = new Coach;
-    $page->loadPlan();
+    $component = makePlanFlyout();
 
-    expect($page->planActions)->toBeEmpty();
+    expect($component->planActions)->toBeEmpty();
 });
