@@ -44,7 +44,7 @@ it('creates an action with required title only', function () {
     $action = Action::first();
     expect($action->title)->toBe('Pagar fatura')
         ->and($action->status)->toBe('pending')
-        ->and($action->category)->toBe('financial')
+        ->and($action->category)->toBe('general')
         ->and($action->priority)->toBe('medium')
         ->and($action->deadline)->toBeNull();
 });

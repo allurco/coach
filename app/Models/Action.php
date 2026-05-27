@@ -33,16 +33,27 @@ class Action extends Model
     ];
 
     /**
-     * Enum value catalogs. Keys are the canonical English identifiers
-     * persisted in the database; values are the default English labels
-     * used in dev tooling (Filament internals, factories, etc.).
-     * User-facing UI must localize via `__('coach.action.<column>.<key>')`.
+     * Core-shipped Action categories. Intentionally minimal — `general`
+     * is the only category the core knows about. Domain Packs are
+     * expected to contribute their own sub-categories (`financial` from
+     * Finance, `tax` from a future Legal pack, etc.) when the
+     * pack-contributed-category contract lands. See CONTEXT.md note on
+     * Action: the central enum should not enumerate pack-specific values.
+     *
+     * Legacy data may still carry `financial`, `tax`, `operational`,
+     * `growth` from before Phase 5 — the DB column is a plain string
+     * with no constraint, so those rows continue to work; they just
+     * aren't in this enum anymore. The accompanying migration backfills
+     * `operational` and `growth` (vestigial PJ-business values) to
+     * `general`. `financial` and `tax` rows are left untouched.
+     *
+     * Other enums (priorities, importances, etc.) below follow the
+     * same shape: keys are the canonical English strings persisted in
+     * the DB; values are the default English labels used in dev tooling.
+     * User-facing UI localizes via `__('coach.action.<column>.<key>')`.
      */
     public const CATEGORIES = [
-        'financial' => 'Financial',
-        'tax' => 'Tax',
-        'operational' => 'Operational',
-        'growth' => 'Growth',
+        'general' => 'General',
     ];
 
     public const PRIORITIES = [

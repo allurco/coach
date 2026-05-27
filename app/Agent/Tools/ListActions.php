@@ -14,7 +14,7 @@ class ListActions implements Tool
     {
         return 'Lists the actions in the user\'s plan. '
             .'Use to understand the current state before nudging, suggesting, creating a new action, or answering any question about the plan. '
-            .'Can filter by status (pending, in_progress, completed, cancelled) or by category (financial, tax, operational, growth).';
+            .'Can filter by status (pending, in_progress, completed, cancelled) or by category (free-form lowercase tag — e.g. "general", "financial", "health").';
     }
 
     public function handle(Request $request): Stringable|string
@@ -69,8 +69,7 @@ class ListActions implements Tool
         return [
             'status' => $schema->string()
                 ->enum(['pending', 'in_progress', 'completed', 'cancelled']),
-            'category' => $schema->string()
-                ->enum(['financial', 'tax', 'operational', 'growth']),
+            'category' => $schema->string(),
             'only_overdue' => $schema->boolean(),
         ];
     }

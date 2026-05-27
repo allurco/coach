@@ -27,11 +27,12 @@ class CreateAction implements Tool
         return 'Creates a new action in the user\'s plan. '
             .'Use only after the user verbally confirms they want to add the action. '
             .'Enum values below are the EXACT strings the schema accepts — pass them as-is, not translations: '
-            .'Categories: financial, tax, operational, growth. '
             .'Priorities: high, medium, low. '
             .'Importance: critical, important, routine. '
             .'Difficulty: quick, medium, heavy. '
-            .'Status always starts as "pending" (set automatically).';
+            .'Status always starts as "pending" (set automatically). '
+            .'Category: free-form short lowercase tag (e.g. "general", "financial", "health"). '
+            .'Default is "general"; pass a domain-relevant label when the action clearly belongs to one.';
     }
 
     public function handle(Request $request): Stringable|string
@@ -39,7 +40,7 @@ class CreateAction implements Tool
         $payload = [
             'title' => $request['title'],
             'description' => $request['description'] ?? null,
-            'category' => $request['category'] ?? 'financial',
+            'category' => $request['category'] ?? 'general',
             'priority' => $request['priority'] ?? 'medium',
             'importance' => $request['importance'] ?? 'important',
             'difficulty' => $request['difficulty'] ?? 'medium',
@@ -133,8 +134,7 @@ class CreateAction implements Tool
             'title' => $schema->string()
                 ->required(),
             'description' => $schema->string(),
-            'category' => $schema->string()
-                ->enum(['financial', 'tax', 'operational', 'growth']),
+            'category' => $schema->string(),
             'priority' => $schema->string()
                 ->enum(['high', 'medium', 'low']),
             'importance' => $schema->string()
