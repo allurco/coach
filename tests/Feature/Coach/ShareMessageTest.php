@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Pages\Coach;
+use App\Agent\Filament\Pages\Coach;
 use App\Mail\Share;
 use App\Models\Contact;
 use App\Models\User;

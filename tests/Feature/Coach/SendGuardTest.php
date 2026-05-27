@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Pages\Coach;
+use App\Agent\Filament\Pages\Coach;
 use App\Models\User;
 
 beforeEach(function () {

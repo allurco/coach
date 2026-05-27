@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Coach;
+use App\Agent\Filament\Pages\Coach;
 use App\Filament\Resources\Users\UserResource;
 use App\Http\Middleware\ApplyUserLocale;
 use Filament\Http\Middleware\Authenticate;
@@ -44,8 +44,24 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            // Agent-owned Filament pages (chat surface) discovered conditionally
+            // per ADR 0004 — when coach.agent.enabled is false, the path isn't
+            // scanned and the chat page disappears from the panel entirely.
+            ->when(
+                config('coach.agent.enabled', true),
+                fn (Panel $p) => $p->discoverPages(
+                    in: app_path('Agent/Filament/Pages'),
+                    for: 'App\\Agent\\Filament\\Pages'
+                )
+            )
             ->pages([])
-            ->homeUrl(fn (): string => Coach::getUrl())
+            // Home points at the chat page when the agent is enabled; otherwise
+            // fall back to the panel root so Filament renders its own dashboard
+            // (or whatever cross-cutting page a fork adds later). A fork with no
+            // agent must not crash on Coach::getUrl() — the page isn't registered.
+            ->homeUrl(
+                fn (): ?string => config('coach.agent.enabled', true) ? Coach::getUrl() : null
+            )
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
             ->userMenuItems([

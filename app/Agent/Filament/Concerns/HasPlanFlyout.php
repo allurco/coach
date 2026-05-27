@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages\Concerns;
+namespace App\Agent\Filament\Concerns;
 
 use App\Models\Action;
 use Carbon\CarbonInterface;
