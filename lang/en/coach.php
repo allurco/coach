@@ -257,12 +257,10 @@ return [
 
     'life_context' => [
         'header' => 'Life context (cuts across every goal — use it to inform advice in any area):',
-        'budget' => [
-            'none' => 'Finance: no budget set yet.',
-            'surplus' => 'Finance: budget for :month with a monthly slack of :amount.',
-            'deficit' => 'Finance: budget for :month with a monthly shortfall of :amount.',
-            'balanced' => 'Finance: budget for :month with income matching planned spend.',
-        ],
+        // The Finance signal previously lived here under `budget.*`. It moved
+        // into the Finance pack at app/Domains/Finance/lang/{locale}/signal.php
+        // and is now contributed via FinanceServiceProvider::contributeSignal()
+        // — see ADR 0002.
         'tool_hint' => 'Whenever the conversation touches big numbers or financial commitments (even outside the finance goal), call BudgetSnapshot for detail before advising. If a budget already exists (the line above tells you which month), DO NOT ask the user to create a new one from scratch — call ReadBudget to pull what exists.',
     ],
 
