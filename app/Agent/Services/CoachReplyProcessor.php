@@ -2,17 +2,27 @@
 
 namespace App\Agent\Services;
 
-use App\Agent\Agents\CoachAgent;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Laravel\Ai\Enums\Lab;
 
+/**
+ * Email-reply entry point into the agent. Resolves the right conversation
+ * (explicit id wins, then subaddressing in the To: header — handled by
+ * the webhook controller — then subject-line matching here), then hands
+ * off to CoachInteraction for the actual agent orchestration.
+ *
+ * Was previously a near-duplicate of Coach.php::runAi without the retry,
+ * decoration, or conversation-goal stamping. After Phase 7 the email
+ * path gets all three for free by routing through CoachInteraction.
+ */
 class CoachReplyProcessor
 {
+    public function __construct(protected CoachInteraction $interaction) {}
+
     /**
-     * Process an inbound email reply: route to existing conversation if any,
-     * otherwise start a new one. Coach response is persisted via the
-     * Conversational trait — user can see it in the web chat.
+     * Process an inbound email reply: route to the matching conversation
+     * (if any) and prompt the agent. The response is persisted via the
+     * SDK's Conversational trait — the user can see it in the web chat.
      *
      * @return array{conversation_id: string, response: string}
      */
@@ -22,33 +32,24 @@ class CoachReplyProcessor
         ?string $conversationId = null,
         ?string $subjectHint = null,
     ): array {
-        // Authenticate so any tools the agent calls (CreateAction, UpdateAction,
-        // ListActions) are scoped to this user via the Action global scope.
-        auth()->login($user);
-
         if ($conversationId === null) {
             $conversationId = $this->guessConversationFromSubject($user, $subjectHint);
         }
 
-        $coach = $conversationId
-            ? (new CoachAgent)->continue($conversationId, as: $user)
-            : (new CoachAgent)->forUser($user);
-
-        // System-level note prepended to the user's email body so the agent
-        // knows this came in via email (vs the web chat) and is allowed to
-        // act on it normally — including calling tools to update the plan
-        // if the user explicitly asked.
-        $promptPrefix = "[message arrived via email — process normally; you may use tools to update the plan if the user asked you to mark something, create an action, or save a fact]\n\n";
-
-        $response = $coach->prompt(
-            $promptPrefix.$reply,
-            provider: Lab::Gemini,
-            model: 'gemini-2.5-flash',
+        $result = $this->interaction->run(
+            user: $user,
+            promptText: $reply,
+            conversationId: $conversationId,
+            // Lets the agent know this came in via email vs the web chat and
+            // is allowed to use tools (mark something, create an action, save
+            // a fact) when the user explicitly asked.
+            promptPrefix: "[message arrived via email — process normally; you may use tools to update the plan if the user asked you to mark something, create an action, or save a fact]\n\n",
+            modelKey: 'background',
         );
 
         return [
-            'conversation_id' => $response->conversationId ?? $conversationId,
-            'response' => trim((string) $response),
+            'conversation_id' => $result->conversationId ?? $conversationId,
+            'response' => $result->text,
         ];
     }
 

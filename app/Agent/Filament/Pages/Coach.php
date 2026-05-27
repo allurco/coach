@@ -2,14 +2,13 @@
 
 namespace App\Agent\Filament\Pages;
 
-use App\Agent\Agents\CoachAgent;
-use App\Agent\Models\CoachMemory;
-use App\Domains\Finance\Filament\Concerns\HasBudgetFlyout;
-use App\Domains\Finance\Filament\Concerns\HasBudgetShare;
-use App\Domains\Finance\Models\Budget;
-use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Agent\Filament\Concerns\HasPlanFlyout;
 use App\Agent\Filament\Concerns\HasShareMessageModal;
+use App\Agent\Models\CoachMemory;
+use App\Agent\Services\CoachInteraction;
+use App\Domains\Finance\Filament\Concerns\HasBudgetFlyout;
+use App\Domains\Finance\Filament\Concerns\HasBudgetShare;
+use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Models\Action;
 use App\Models\Goal;
 use App\Services\TipResolver;
@@ -28,12 +27,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Files\Document;
 use Laravel\Ai\Files\Image;
-use Laravel\Ai\Streaming\Events\TextDelta;
-use Laravel\Ai\Streaming\Events\ToolCall;
-use Laravel\Ai\Streaming\Events\ToolResult;
 use Throwable;
 
 class Coach extends Page implements HasForms
@@ -573,16 +568,6 @@ class Coach extends Page implements HasForms
                 }
             }
 
-            $coach = new CoachAgent;
-
-            if ($this->conversationId) {
-                $coach = $coach->continue($this->conversationId, as: auth()->user());
-            } else {
-                $coach = $coach->forUser(auth()->user());
-            }
-
-            $coach = $coach->forGoal($this->activeGoalId);
-
             $documents = [];
             foreach ($attachmentPaths as $relativePath) {
                 if (! Storage::disk('local')->exists($relativePath)) {
@@ -637,106 +622,36 @@ class Coach extends Page implements HasForms
 
             $this->streamingText = '';
 
-            ['text' => $accumulated, 'tools' => $toolActivity, 'streamText' => $streamText] =
-                $this->streamOnePass($coach, $promptToSend, $documents);
+            // Delegate the agent orchestration (build, stream, retry-on-broken,
+            // decorate, persist) to CoachInteraction. The chat page keeps only
+            // what's UI-flavoured: form state, Livewire streaming, drift
+            // detection, Markdown rendering, and the messages array. The same
+            // service runs from the email webhook so both paths share retry,
+            // decoration, and goal-stamping behaviour.
+            $result = app(CoachInteraction::class)->run(
+                user: auth()->user(),
+                promptText: $promptToSend,
+                documents: $documents,
+                conversationId: $this->conversationId,
+                activeGoalId: $this->activeGoalId,
+                onChunk: fn (string $chunk) => $this->stream(to: 'coach-stream', content: $chunk),
+                modelKey: 'interactive',
+            );
 
-            // Auto-retry once if the first pass shows truncation or
-            // hallucinated tool calls. The model continues the same
-            // conversation, so it sees its prior (broken) reply and the
-            // corrective nudge below — a clean second attempt is usually
-            // enough for Gemini to finish the work.
-            $rawText = trim($accumulated !== '' ? $accumulated : (string) ($streamText ?? ''));
-            $shouldRetry = $rawText !== ''
-                && $this->decorateAssistantResponse($rawText, $toolActivity) !== $rawText;
-
-            if ($shouldRetry) {
-                Log::warning('Coach auto-retrying after broken first pass', [
-                    'goal_id' => $this->activeGoalId,
-                    'tools_called' => array_column($toolActivity, 'name'),
-                    'accumulated_tail' => mb_substr($rawText, -120),
-                ]);
-
-                $this->stream(to: 'coach-stream', content: "\n\n— _retrying…_ —\n\n");
-
-                $retryPrompt = '[System]: Your previous response narrated actions ("created", "added", "updated", "marked") '
-                    .'but did NOT call the corresponding tools (CreateAction / UpdateAction / RememberFact), '
-                    .'OR ended mid-sentence. Execute the necessary tools NOW and finish with a short text. '
-                    .'DO NOT narrate — execute. If a list is needed, call ListActions.';
-
-                ['text' => $retryAccumulated, 'tools' => $retryTools, 'streamText' => $retryStreamText] =
-                    $this->streamOnePass($coach, $retryPrompt, []);
-
-                $accumulated = $retryAccumulated;
-                $toolActivity = array_merge($toolActivity, $retryTools);
-                $streamText = $retryStreamText;
-            }
-
-            // Capture the conversation ID after streaming so the next turn continues it.
-            $this->conversationId = $coach->currentConversation() ?? $this->conversationId;
+            $this->conversationId = $result->conversationId;
+            $this->activeGoalId = $result->effectiveGoalId;
+            $rawText = $result->text;
 
             // laravel/ai inserts agent_conversations rows without our goal_id.
             // Stamp the active goal so this thread is owned by the right
             // workspace (sidebar ordering, history, plan scoping all rely
-            // on it).
+            // on it). The service handles the SwitchToGoal sync, but not the
+            // initial stamping for a freshly-started conversation.
             if ($this->conversationId !== null && $this->activeGoalId !== null) {
                 DB::table('agent_conversations')
                     ->where('id', $this->conversationId)
                     ->whereNull('goal_id')
                     ->update(['goal_id' => $this->activeGoalId]);
-            }
-
-            // SwitchToGoal tool may have re-pointed the conversation at a
-            // different goal during this turn. Re-read the conversation's
-            // goal_id and sync activeGoalId so the sidebar highlight, plan
-            // flyout, and CreateAction default all follow the move.
-            if ($this->conversationId !== null) {
-                $convGoalId = DB::table('agent_conversations')
-                    ->where('id', $this->conversationId)
-                    ->value('goal_id');
-
-                if ($convGoalId !== null && $convGoalId !== $this->activeGoalId) {
-                    $this->activeGoalId = $convGoalId;
-                }
-            }
-
-            $rawText = trim($accumulated !== '' ? $accumulated : (string) ($streamText ?? ''));
-
-            if ($rawText === '') {
-                $rawText = $this->summarizeToolActivity($toolActivity);
-            } else {
-                $rawText = $this->decorateAssistantResponse($rawText, $toolActivity);
-            }
-
-            // Diagnostic: log when the response shows signs of a Gemini
-            // truncation or hallucinated tool call so we can correlate
-            // user reports with server-side state.
-            if ($rawText !== $accumulated) {
-                Log::warning('Coach response decorated', [
-                    'conversation_id' => $this->conversationId,
-                    'goal_id' => $this->activeGoalId,
-                    'accumulated_length' => mb_strlen($accumulated),
-                    'tools_called' => array_column($toolActivity, 'name'),
-                    'accumulated_tail' => mb_substr(trim($accumulated), -120),
-                ]);
-            }
-
-            // The AI SDK persists the bare model text in
-            // agent_conversation_messages.content. We overwrite that with
-            // $rawText so verbatim-injected tool output (e.g. the
-            // BudgetSnapshot table) and any decorator warnings survive a
-            // page reload or goal switch — otherwise the table is only
-            // visible during the live stream and disappears afterward.
-            if ($this->conversationId !== null && $rawText !== '' && $rawText !== ($streamText ?? '')) {
-                $latestAssistantId = DB::table('agent_conversation_messages')
-                    ->where('conversation_id', $this->conversationId)
-                    ->where('role', 'assistant')
-                    ->orderByDesc('created_at')
-                    ->value('id');
-                if ($latestAssistantId !== null) {
-                    DB::table('agent_conversation_messages')
-                        ->where('id', $latestAssistantId)
-                        ->update(['content' => $rawText, 'updated_at' => now()]);
-                }
             }
 
             $renderable = BudgetSnapshot::expandPlaceholders($rawText);
@@ -798,207 +713,6 @@ class Coach extends Page implements HasForms
     public function newConversation(): void
     {
         $this->startNewConversationInActiveGoal();
-    }
-
-    /**
-     * Single streaming pass: accumulates text deltas, batches tool
-     * calls into UI indicators, and returns the final text + activity
-     * log. Extracted so runAi() can call it twice when an auto-retry
-     * is warranted.
-     *
-     * @return array{text:string, tools:list<array{name:string,count:int,ok:int}>, streamText:?string}
-     */
-    protected function streamOnePass(CoachAgent $coach, string $promptToSend, array $documents): array
-    {
-        $accumulated = '';
-        $toolLabels = (array) __('coach.tool_labels');
-        // Tools whose markdown output should be rendered verbatim in the
-        // chat. The agent tends to paraphrase, but for these the structured
-        // output IS the message — we want the user to see the actual table.
-        $verbatimTools = ['BudgetSnapshot'];
-        $batch = ['name' => null, 'calls' => 0, 'ok' => 0, 'verbatim' => []];
-        $toolActivity = [];
-        // Verbatim payloads collected across all batches in this pass —
-        // persisted into this pass's assistant message so the placeholder
-        // survives an auto-retry that drops it from $accumulated.
-        $passVerbatims = [];
-
-        $flushBatch = function () use (&$batch, &$toolActivity, &$accumulated, &$passVerbatims, $toolLabels) {
-            if ($batch['name'] === null) {
-                return;
-            }
-            $label = $toolLabels[$batch['name']] ?? $batch['name'];
-            $count = $batch['calls'];
-            $allOk = $batch['ok'] === $count;
-            $icon = $allOk ? '✓' : '⚠';
-            $suffix = $count > 1 ? " ({$count}x)" : '';
-            $this->stream(to: 'coach-stream', content: " {$icon}{$suffix}\n\n");
-            foreach ($batch['verbatim'] as $payload) {
-                // Persist the raw placeholder so coach_budgets remains the
-                // source of truth at view time. But the live stream needs
-                // the expanded markdown — the user is watching the bubble
-                // fill in, and a literal `{{budget:5}}` would flash by.
-                $expanded = BudgetSnapshot::expandPlaceholders($payload);
-                $this->stream(to: 'coach-stream', content: $expanded."\n\n");
-                $accumulated .= $payload."\n\n";
-                $passVerbatims[] = $payload;
-            }
-            $toolActivity[] = ['name' => $batch['name'], 'count' => $count, 'ok' => $batch['ok']];
-            $batch = ['name' => null, 'calls' => 0, 'ok' => 0, 'verbatim' => []];
-        };
-
-        $stream = $coach->stream(
-            $promptToSend,
-            attachments: $documents,
-            provider: Lab::Gemini,
-            model: config('coach.models.interactive'),
-        );
-
-        foreach ($stream as $event) {
-            if ($event instanceof TextDelta) {
-                $flushBatch();
-                $accumulated .= $event->delta;
-                $this->stream(to: 'coach-stream', content: $event->delta);
-            } elseif ($event instanceof ToolCall) {
-                if ($batch['name'] !== null && $batch['name'] !== $event->toolCall->name) {
-                    $flushBatch();
-                }
-                if ($batch['name'] === null) {
-                    $label = $toolLabels[$event->toolCall->name] ?? $event->toolCall->name;
-                    $this->stream(to: 'coach-stream', content: "\n⏳ {$label}…");
-                    $batch['name'] = $event->toolCall->name;
-                }
-                $batch['calls']++;
-            } elseif ($event instanceof ToolResult) {
-                if ($event->successful) {
-                    $batch['ok']++;
-                    $name = $event->toolResult->name;
-                    if (in_array($name, $verbatimTools, true) && $batch['name'] === $name) {
-                        $batch['verbatim'][] = (string) $event->toolResult->result;
-                    }
-                }
-            }
-        }
-
-        $flushBatch();
-
-        // Anchor the verbatim placeholders to THIS pass's assistant
-        // message. The SDK has already persisted $stream->text into
-        // agent_conversation_messages.content; we prepend our placeholders
-        // so a follow-up auto-retry (which writes its own message and may
-        // overwrite later) can't strip the snapshot from the conversation.
-        $conversationId = $this->conversationId ?? $coach->currentConversation();
-        if (! empty($passVerbatims) && $conversationId !== null) {
-            $latest = DB::table('agent_conversation_messages')
-                ->where('conversation_id', $conversationId)
-                ->where('role', 'assistant')
-                ->orderByDesc('created_at')
-                ->first(['id', 'content']);
-            if ($latest !== null) {
-                $merged = implode("\n\n", $passVerbatims)."\n\n".(string) $latest->content;
-                DB::table('agent_conversation_messages')
-                    ->where('id', $latest->id)
-                    ->update(['content' => $merged, 'updated_at' => now()]);
-            }
-        }
-
-        return [
-            'text' => $accumulated,
-            'tools' => $toolActivity,
-            'streamText' => $stream->text ?? null,
-        ];
-    }
-
-    /**
-     * Append a discreet warning when the assistant response looks
-     * truncated (ends mid-thought) or narrates an action it didn't
-     * actually execute as a tool call. Both patterns happen when
-     * Gemini stops mid-stream — the "criei" word is in the text,
-     * but no CreateAction tool fired, so the plan is unchanged.
-     *
-     * @param  list<array{name:string,count:int,ok:int}>  $toolActivity
-     */
-    protected function decorateAssistantResponse(string $text, array $toolActivity = []): string
-    {
-        $trimmed = trim($text);
-        if ($trimmed === '') {
-            return $text;
-        }
-
-        $toolsCalled = collect($toolActivity)->pluck('name')->all();
-
-        // A trailing colon (or em-dash) usually opens a list/sentence that
-        // was never finished — the LLM cut off before the tool call or the
-        // continuation. Check this BEFORE the narration heuristic so a
-        // truncated response gets the right hint even when its dangling
-        // text happens to mention an action verb.
-        $endsOpenEnded = preg_match('/[:\-—]\s*$/u', $trimmed) === 1;
-        if ($endsOpenEnded && empty($toolsCalled)) {
-            return $trimmed."\n\n".__('coach.errors.truncated_warning');
-        }
-
-        // Verb forms only — adjectives like "atualizado" / "concluída" can
-        // appear in normal commentary without claiming a tool ran. We only
-        // flag clear 1st/3rd-person preterite forms.
-        $createPattern = '/\b(criei|criou|adicionei|adicionou|cadastrei|cadastrou)\b/iu';
-        $updatePattern = '/\b(atualizei|atualizou|marquei|conclu[íi]|adiei|adiou)\b/iu';
-        $rememberPattern = '/\b(salvei|guardei|anotei|memorizei)\b/iu';
-
-        $missingCreate = preg_match($createPattern, $trimmed) === 1
-            && ! in_array('CreateAction', $toolsCalled, true);
-        $missingUpdate = preg_match($updatePattern, $trimmed) === 1
-            && ! in_array('UpdateAction', $toolsCalled, true);
-        $missingRemember = preg_match($rememberPattern, $trimmed) === 1
-            && ! in_array('RememberFact', $toolsCalled, true);
-
-        if ($missingCreate || $missingUpdate || $missingRemember) {
-            return $trimmed."\n\n".__('coach.errors.narrated_no_tool');
-        }
-
-        return $text;
-    }
-
-    protected function summarizeToolActivity(array $activity): string
-    {
-        if (empty($activity)) {
-            return __('coach.errors.no_text_returned');
-        }
-
-        $created = 0;
-        $updated = 0;
-        $remembered = 0;
-
-        foreach ($activity as $entry) {
-            match ($entry['name']) {
-                'CreateAction' => $created += $entry['ok'],
-                'UpdateAction' => $updated += $entry['ok'],
-                'RememberFact' => $remembered += $entry['ok'],
-                default => null,
-            };
-        }
-
-        $parts = [];
-        if ($created > 0) {
-            $parts[] = $created === 1
-                ? __('coach.recap.created_one')
-                : __('coach.recap.created_many', ['count' => $created]);
-        }
-        if ($updated > 0) {
-            $parts[] = $updated === 1
-                ? __('coach.recap.updated_one')
-                : __('coach.recap.updated_many', ['count' => $updated]);
-        }
-        if ($remembered > 0) {
-            $parts[] = $remembered === 1
-                ? __('coach.recap.remembered_one')
-                : __('coach.recap.remembered_many', ['count' => $remembered]);
-        }
-
-        if (empty($parts)) {
-            return __('coach.recap.done');
-        }
-
-        return __('coach.recap.with_results', ['parts' => implode(', ', $parts)]);
     }
 
     protected function humanTime($timestamp): string
