@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Ai\Tools;
+namespace App\Domains\Finance\Tools;
 
+use App\Domains\Finance\Models\Budget;
 use App\Models\Action;
-use App\Models\Budget;
 use App\Services\PlaceholderRenderer;
 use Carbon\Carbon;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -29,7 +29,7 @@ class BudgetSnapshot implements Tool
             .'Fixed Costs (target 50-60% of income), Investments (target 10%), '
             .'Reserves (target 5-10%), Leisure (automatic remainder, target 20-35%). '
             .'Applies a 15% buffer over fixed costs to cover forgotten line items. '
-            .'Persists to coach_budgets for future revisit. Returns analysis in markdown '
+            .'Persists to finance_budgets for future revisit. Returns analysis in markdown '
             .'with diff vs target. Use when the user is being interviewed about '
             .'income + expenses, or explicitly asks for a financial plan.';
     }
@@ -72,7 +72,7 @@ class BudgetSnapshot implements Tool
         $this->autoCloseSetupActions($budget);
 
         // Return a placeholder reference rather than the rendered markdown.
-        // coach_budgets is the source of truth — the chat persists the
+        // finance_budgets is the source of truth — the chat persists the
         // placeholder, and view-time rendering expands it from the row.
         // The agent's next turn still gets the input args via tool_calls,
         // so it can reason about the snapshot without the markdown.

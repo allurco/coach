@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Budget;
+use App\Domains\Finance\Models\Budget;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Support\Carbon;

@@ -1,9 +1,9 @@
 <?php
 
 use App\Ai\Tools\ShareViaEmail;
+use App\Domains\Finance\Models\Budget;
 use App\Mail\Share;
 use App\Models\Action;
-use App\Models\Budget;
 use App\Models\Contact;
 use App\Models\Goal;
 use App\Models\User;

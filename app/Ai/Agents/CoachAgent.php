@@ -2,14 +2,12 @@
 
 namespace App\Ai\Agents;
 
-use App\Ai\Tools\BudgetSnapshot;
 use App\Ai\Tools\CreateAction;
 use App\Ai\Tools\CreateGoal;
 use App\Ai\Tools\ListActions;
 use App\Ai\Tools\LogWhy;
 use App\Ai\Tools\LogWorry;
 use App\Ai\Tools\MoveAction;
-use App\Ai\Tools\ReadBudget;
 use App\Ai\Tools\RecallFacts;
 use App\Ai\Tools\RememberFact;
 use App\Ai\Tools\ShareViaEmail;
@@ -17,8 +15,10 @@ use App\Ai\Tools\SwitchToGoal;
 use App\Ai\Tools\UpdateAction;
 use App\Ai\Tools\WebFetch;
 use App\Ai\Tools\WebSearch;
+use App\Domains\Finance\Models\Budget;
+use App\Domains\Finance\Tools\BudgetSnapshot;
+use App\Domains\Finance\Tools\ReadBudget;
 use App\Models\Action;
-use App\Models\Budget;
 use App\Models\CoachMemory;
 use App\Models\Goal;
 use Illuminate\Support\Facades\DB;

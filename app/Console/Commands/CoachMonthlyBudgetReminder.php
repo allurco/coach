@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Ai\Agents\CoachAgent;
+use App\Domains\Finance\Models\Budget;
 use App\Mail\BudgetReminder;
-use App\Models\Budget;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Console\Attributes\Description;

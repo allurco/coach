@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Ai\Tools;
+namespace App\Domains\Finance\Tools;
 
-use App\Models\Budget;
+use App\Domains\Finance\Models\Budget;
 use App\Services\PlaceholderRenderer;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;

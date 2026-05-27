@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages\Concerns;
 
-use App\Models\Budget;
+use App\Domains\Finance\Models\Budget;
 use Filament\Notifications\Notification;
 
 /**

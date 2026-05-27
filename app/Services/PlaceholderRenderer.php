@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Ai\Tools\BudgetSnapshot;
+use App\Domains\Finance\Models\Budget;
+use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Models\Action;
-use App\Models\Budget;
 
 /**
  * Expands `{{placeholder}}` tokens inside agent/email markdown into
