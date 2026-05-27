@@ -16,7 +16,11 @@ function callProtected(object $obj, string $method, array $args = []): mixed
 
 beforeEach(function () {
     $this->user = User::factory()->create(['email' => 'admin@example.com']);
-    $this->processor = new CoachReplyProcessor;
+    // CoachReplyProcessor now depends on CoachInteraction (Phase 7). The
+    // tests in this file only exercise the subject-guessing helper, which
+    // doesn't reach into CoachInteraction — resolve via the container so
+    // the DI works without us having to stub the dependency.
+    $this->processor = app(CoachReplyProcessor::class);
 });
 
 function seedConversation(int $userId, string $title): string
