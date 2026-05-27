@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ai\Tools;
+namespace App\Agent\Tools;
 
 use App\Models\Action;
 use App\Models\Goal;

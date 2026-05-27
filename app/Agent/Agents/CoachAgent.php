@@ -1,25 +1,25 @@
 <?php
 
-namespace App\Ai\Agents;
+namespace App\Agent\Agents;
 
-use App\Ai\Tools\CreateAction;
-use App\Ai\Tools\CreateGoal;
-use App\Ai\Tools\ListActions;
-use App\Ai\Tools\LogWhy;
-use App\Ai\Tools\LogWorry;
-use App\Ai\Tools\MoveAction;
-use App\Ai\Tools\RecallFacts;
-use App\Ai\Tools\RememberFact;
-use App\Ai\Tools\ShareViaEmail;
-use App\Ai\Tools\SwitchToGoal;
-use App\Ai\Tools\UpdateAction;
-use App\Ai\Tools\WebFetch;
-use App\Ai\Tools\WebSearch;
+use App\Agent\Tools\CreateAction;
+use App\Agent\Tools\CreateGoal;
+use App\Agent\Tools\ListActions;
+use App\Agent\Tools\LogWhy;
+use App\Agent\Tools\LogWorry;
+use App\Agent\Tools\MoveAction;
+use App\Agent\Tools\RecallFacts;
+use App\Agent\Tools\RememberFact;
+use App\Agent\Tools\ShareViaEmail;
+use App\Agent\Tools\SwitchToGoal;
+use App\Agent\Tools\UpdateAction;
+use App\Agent\Tools\WebFetch;
+use App\Agent\Tools\WebSearch;
 use App\Domains\Finance\Models\Budget;
 use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Domains\Finance\Tools\ReadBudget;
 use App\Models\Action;
-use App\Models\CoachMemory;
+use App\Agent\Models\CoachMemory;
 use App\Models\Goal;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Concerns\RemembersConversations;

@@ -2,7 +2,7 @@
 
 namespace App\Tips;
 
-use App\Models\CoachMemory;
+use App\Agent\Models\CoachMemory;
 use App\Models\Goal;
 use App\Models\User;
 

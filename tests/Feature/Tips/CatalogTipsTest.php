@@ -1,8 +1,8 @@
 <?php
 
+use App\Agent\Models\CoachMemory;
 use App\Domains\Finance\Models\Budget;
 use App\Models\Action;
-use App\Models\CoachMemory;
 use App\Models\Goal;
 use App\Models\User;
 use App\Tips\AddFirstAction;

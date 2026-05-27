@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Agents\CoachAgent;
+use App\Agent\Agents\CoachAgent;
 use App\Models\User;
 use Illuminate\JsonSchema\JsonSchemaTypeFactory;
 use Illuminate\JsonSchema\Types\Type;

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Agent\Models\AgentConversation;
+use App\Agent\Models\CoachMemory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

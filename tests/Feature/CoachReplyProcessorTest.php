@@ -1,7 +1,7 @@
 <?php
 
+use App\Agent\Services\CoachReplyProcessor;
 use App\Models\User;
-use App\Services\CoachReplyProcessor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 

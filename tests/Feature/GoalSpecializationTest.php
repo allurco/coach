@@ -1,7 +1,7 @@
 <?php
 
-use App\Ai\Agents\CoachAgent;
-use App\Models\CoachMemory;
+use App\Agent\Agents\CoachAgent;
+use App\Agent\Models\CoachMemory;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;

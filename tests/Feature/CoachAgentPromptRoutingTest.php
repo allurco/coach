@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Agents\CoachAgent;
+use App\Agent\Agents\CoachAgent;
 use App\Models\Action;
 use App\Models\Goal;
 use App\Models\User;

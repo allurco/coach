@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ai\Tools;
+namespace App\Agent\Tools;
 
 use App\Exceptions\ShareFailedException;
 use App\Services\Sharer;

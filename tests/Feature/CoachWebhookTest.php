@@ -1,7 +1,7 @@
 <?php
 
+use App\Agent\Services\CoachReplyProcessor;
 use App\Models\User;
-use App\Services\CoachReplyProcessor;
 
 beforeEach(function () {
     config(['coach.webhook_secret' => 'test-secret-123']);

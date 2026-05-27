@@ -1,8 +1,8 @@
 <?php
 
+use App\Agent\Models\CoachMemory;
 use App\Filament\Pages\Coach;
 use App\Models\Action;
-use App\Models\CoachMemory;
 use App\Models\User;
 
 beforeEach(function () {

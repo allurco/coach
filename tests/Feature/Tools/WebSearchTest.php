@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Tools\WebSearch;
+use App\Agent\Tools\WebSearch;
 use Illuminate\Support\Facades\Http;
 use Laravel\Ai\Tools\Request;
 

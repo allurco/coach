@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Ai\Tools;
+namespace App\Agent\Tools;
 
-use App\Models\CoachMemory;
+use App\Agent\Models\CoachMemory;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ai\Tools;
+namespace App\Agent\Tools;
 
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\Http;

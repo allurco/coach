@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Tools\SwitchToGoal;
+use App\Agent\Tools\SwitchToGoal;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;

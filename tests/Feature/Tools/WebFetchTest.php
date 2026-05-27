@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Tools\WebFetch;
+use App\Agent\Tools\WebFetch;
 use Illuminate\Support\Facades\Http;
 use Laravel\Ai\Tools\Request;
 
