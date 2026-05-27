@@ -57,7 +57,19 @@ class Goal extends Model
         // Refuse to archive the user's last active goal — every action and
         // conversation needs at least one workspace to attach to. Use raw
         // queries to bypass when you really need to (migrations, tests).
+        //
+        // The safeguard only applies to EXISTING goals being archived.
+        // Brand-new archived goals are fine: they don't reduce the active-
+        // workspace count (the user must already have at least one active
+        // workspace by the time they create a goal — see UserObserver).
+        // Also, on create the `saving` hook runs BEFORE the `creating`
+        // hook sets user_id, so the safeguard query would fire against
+        // user_id = null and silently throw — guard against that here.
         static::saving(function (Goal $goal) {
+            if (! $goal->exists) {
+                return;
+            }
+
             if (! $goal->is_archived || ! $goal->isDirty('is_archived')) {
                 return;
             }

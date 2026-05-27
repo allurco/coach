@@ -1,24 +1,35 @@
 <?php
 
-namespace App\Agent\Filament\Concerns;
+namespace App\Livewire;
 
 use App\Models\Action;
 use Carbon\CarbonInterface;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 /**
- * State + behavior do flyout do Plano: lista de actions com filtros,
- * concluir (com modal de notes), adiar (snooze).
+ * Plan view — the user's open and completed actions, with complete-with-notes
+ * and snooze interactions. Two consumers:
  *
- * Dependências:
- * - $activeGoalId (do componente principal) — usado em loadPlan pra
- *   filtrar actions do goal corrente.
- * - $memoPendingPlanCount (memoization private no componente).
+ *   - The Coach chat page (agent layer) embeds this as a sidebar drawer
+ *     bound to the active goal.
+ *   - The Plan tool page (core) embeds this at full width with a goal
+ *     picker, no drawer chrome.
+ *
+ * Cross-layer UI: lives in app/Livewire/ per ADR 0005. Depends only on
+ * the core Action model so every layer can safely consume it.
  */
-trait HasPlanFlyout
+class PlanFlyout extends Component
 {
-    public array $planActions = [];
+    public ?int $activeGoalId = null;
+
+    public bool $showGoalPicker = false;
+
+    public bool $asDrawer = true;
 
     public string $planFilter = 'pending';
+
+    public array $planActions = [];
 
     public ?int $completingActionId = null;
 
@@ -26,12 +37,44 @@ trait HasPlanFlyout
 
     public string $completingNotes = '';
 
+    public function mount(
+        ?int $activeGoalId = null,
+        bool $showGoalPicker = false,
+        bool $asDrawer = true,
+    ): void {
+        $this->activeGoalId = $activeGoalId;
+        $this->showGoalPicker = $showGoalPicker;
+        $this->asDrawer = $asDrawer;
+        $this->loadPlan();
+    }
+
     /**
-     * Carrega o plano do goal ativo (ou todas as actions do user se
-     * sem goal). Renderiza em array shape pro view consumir — inclui
-     * is_overdue/is_due_soon/has_details pré-computados pra evitar
-     * lógica no Blade.
+     * Parent components dispatch `plan-refreshed` after they create or
+     * update actions (chat page after runAi completes) OR when the
+     * active goal changes (chat sidebar click). The optional goalId
+     * param lets the parent push the new active goal into the embedded
+     * component without forcing a full re-mount — Livewire's embedded
+     * child components persist their own state across requests, so
+     * prop changes don't reach them automatically.
      */
+    #[On('plan-refreshed')]
+    public function refreshPlan(?int $activeGoalId = null): void
+    {
+        if ($activeGoalId !== null) {
+            $this->activeGoalId = $activeGoalId;
+        }
+        $this->loadPlan();
+    }
+
+    /**
+     * Reload when the in-component goal-picker (Plan tool page) changes
+     * the selection via wire:model.
+     */
+    public function updatedActiveGoalId(): void
+    {
+        $this->loadPlan();
+    }
+
     public function loadPlan(): void
     {
         $query = Action::query();
@@ -152,36 +195,24 @@ trait HasPlanFlyout
     }
 
     /**
-     * Open + in-progress actions in the current plan view — drives o
-     * badge do botão "Plano" no header. Memoizado (cache vive em
-     * $memoPendingPlanCount no componente).
+     * Open + in-progress actions in the current plan view — drives badge
+     * counts in parent components. Computed from the already-loaded
+     * planActions so it doesn't fire another query.
      */
-    public function pendingPlanCount(): int
+    public function pendingCount(): int
     {
-        return $this->memoPendingPlanCount ??= collect($this->planActions)
+        return collect($this->planActions)
             ->whereIn('status', Action::OPEN_STATUSES)
             ->count();
     }
 
     /**
-     * Formata a deadline como label natural-language quando perto, ou
-     * data completa quando distante:
-     *
-     *   - Hoje, amanhã, ontem    → "hoje" / "amanhã" / "ontem"
-     *   - 2-14 dias futuros      → "em 5 dias"
-     *   - 2-14 dias passados     → "há 5 dias"
-     *   - Mais que isso          → "DD/MM/YYYY"
-     *
-     * 14 dias é amplo o bastante pra cobrir overdue de meses (até 2
-     * semanas) e planejamento de até 2 semanas — onde "há N dias" /
-     * "em N dias" é mais cognitivamente útil que "20/05/2026". Pra
-     * deadlines mais distantes a data exata vale mais (planejamento
-     * de longo prazo). A cor do pill (overdue/soon/neutral) continua
-     * carregando o status visual independente do label.
+     * Natural-language deadline labels for nearby dates, ISO dates for
+     * distant ones. 14 days covers most overdue/upcoming planning where
+     * "in N days" reads more naturally than the full date.
      */
     protected function formatDeadlineLabel(CarbonInterface $date): string
     {
-        // diffInDays(today, signed=true) → positivo se futuro, negativo se passado
         $diff = (int) today()->diffInDays($date->copy()->startOfDay(), false);
 
         return match (true) {
@@ -192,5 +223,10 @@ trait HasPlanFlyout
             $diff < -1 && $diff >= -14 => (string) __('coach.plan.deadline.days_ago', ['n' => abs($diff)]),
             default => $date->format('d/m/Y'),
         };
+    }
+
+    public function render()
+    {
+        return view('livewire.plan-flyout');
     }
 }

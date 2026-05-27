@@ -2,7 +2,6 @@
 
 namespace App\Agent\Filament\Pages;
 
-use App\Agent\Filament\Concerns\HasPlanFlyout;
 use App\Agent\Filament\Concerns\HasShareMessageModal;
 use App\Agent\Models\CoachMemory;
 use App\Agent\Services\CoachInteraction;
@@ -35,7 +34,6 @@ class Coach extends Page implements HasForms
 {
     use HasBudgetFlyout;
     use HasBudgetShare;
-    use HasPlanFlyout;
     use HasShareMessageModal;
     use InteractsWithForms;
 
@@ -170,7 +168,31 @@ class Coach extends Page implements HasForms
 
         $this->historyOpen = false;
         $this->goalHistory = [];
-        $this->loadPlan();
+        $this->memoPendingPlanCount = null;
+        // Tell the embedded PlanFlyout component to switch goals and reload —
+        // Livewire children persist their own state across requests, so prop
+        // changes alone don't propagate. See ADR 0005.
+        $this->dispatch('plan-refreshed', activeGoalId: $goal->id);
+    }
+
+    /**
+     * Open + in-progress action count for the active goal — drives the
+     * "Plan" header badge in the chat. Independent query from the
+     * embedded PlanFlyout component so the badge works without
+     * round-tripping component state. Memoised per request.
+     */
+    public function pendingPlanCount(): int
+    {
+        if ($this->memoPendingPlanCount !== null) {
+            return $this->memoPendingPlanCount;
+        }
+
+        $query = Action::query()->whereIn('status', Action::OPEN_STATUSES);
+        if ($this->activeGoalId !== null) {
+            $query->where('goal_id', $this->activeGoalId);
+        }
+
+        return $this->memoPendingPlanCount = $query->count();
     }
 
     public function form(Schema $schema): Schema
@@ -246,7 +268,12 @@ class Coach extends Page implements HasForms
             return 'coach.suggestions_first';
         }
 
-        if (! empty($this->planActions)) {
+        // Was: `! empty($this->planActions)`. Phase 8 moved planActions
+        // into the PlanFlyout Livewire component, so the chat page no
+        // longer holds that state. pendingPlanCount() runs a focused
+        // count query against the active goal — same semantics: "user
+        // has open work" → active suggestions.
+        if ($this->pendingPlanCount() > 0) {
             return 'coach.suggestions_active';
         }
 
@@ -668,7 +695,11 @@ class Coach extends Page implements HasForms
 
             $this->streamingText = null;
             $this->loadGoals();
-            $this->loadPlan();
+            $this->memoPendingPlanCount = null;
+            // Ask the embedded PlanFlyout to refresh after the agent may
+            // have created/updated actions via tools. The current goal id
+            // is passed so the component picks up SwitchToGoal moves too.
+            $this->dispatch('plan-refreshed', activeGoalId: $this->activeGoalId);
         } catch (Throwable $e) {
             // When the upstream LLM (Gemini) rejects the request, the
             // RequestException carries a Response with the real reason

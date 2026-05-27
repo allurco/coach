@@ -19,13 +19,12 @@
             </div>
         </div>
 
-        @include('agent::coach._plan-flyout')
+        <livewire:plan-flyout :active-goal-id="$activeGoalId" :as-drawer="true" />
         @include('finance::_budget-flyout')
     </div>
 
     @include('agent::coach._history-panel')
     @include('agent::coach._new-goal-modal')
-    @include('agent::coach._complete-action-modal')
     @include('agent::coach._share-message-modal')
     @include('finance::_budget-share-modal')
     @include('agent::coach._footer-script')
