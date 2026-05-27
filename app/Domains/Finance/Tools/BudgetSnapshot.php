@@ -103,7 +103,7 @@ class BudgetSnapshot implements Tool
             ->each(fn (Action $a) => $a->update([
                 'status' => 'completed',
                 'completed_at' => now(),
-                'result_notes' => __('coach.budget.auto_close_note', ['snapshot_id' => $budget->id]),
+                'result_notes' => __('finance::budget.auto_close_note', ['snapshot_id' => $budget->id]),
             ]));
     }
 

@@ -42,10 +42,10 @@ trait HasBudgetShare
 
         $this->budgetShareOpen = true;
         $this->budgetShareRecipient = '';
-        $this->budgetShareSubject = (string) __('coach.budget_flyout.share_subject_default', [
+        $this->budgetShareSubject = (string) __('finance::budget_flyout.share_subject_default', [
             'month' => (string) ($this->budgetData['month'] ?? ''),
         ]);
-        $this->budgetShareBody = (string) __('coach.budget_flyout.share_body_default');
+        $this->budgetShareBody = (string) __('finance::budget_flyout.share_body_default');
         $this->budgetShareError = null;
     }
 
