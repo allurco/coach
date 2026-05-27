@@ -82,3 +82,11 @@ it('respects custom days param for due soon', function () {
     expect($action->isDueSoon(3))->toBeFalse()
         ->and($action->isDueSoon(7))->toBeTrue();
 });
+
+it('only enumerates "general" in CATEGORIES (pack-specific values removed)', function () {
+    // Pre-Phase-5: ['financial', 'tax', 'operational', 'growth']
+    // Post-Phase-5: pack-contributed categories come back through the
+    // future pack contract; the central enum is intentionally minimal.
+    expect(Action::CATEGORIES)
+        ->toBe(['general' => 'General']);
+});
