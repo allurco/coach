@@ -49,3 +49,12 @@ it('honours COACH_AGENT_ENABLED=false at the config layer', function () {
 
     expect(config('coach.agent.enabled'))->toBeFalse();
 });
+
+it('registers the finance:: view namespace so the pack ships its own Blade partials', function () {
+    // Sanity check the vertical-slice claim: when Finance ships UI bits
+    // (budget flyout + share modal Blade partials), they're resolvable
+    // through the pack's own view namespace, not the central
+    // resources/views path. See ADR 0004.
+    expect(view()->exists('finance::_budget-flyout'))->toBeTrue();
+    expect(view()->exists('finance::_budget-share-modal'))->toBeTrue();
+});

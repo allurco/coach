@@ -32,6 +32,7 @@ class FinanceServiceProvider extends DomainPack
         parent::boot();
 
         $this->loadTranslationsFrom(__DIR__.'/lang', 'finance');
+        $this->loadViewsFrom(__DIR__.'/resources/views', 'finance');
     }
 
     public function contributeSignal(User $user, ?Goal $activeGoal = null): ?string
