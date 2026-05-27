@@ -257,12 +257,12 @@ return [
 
     'life_context' => [
         'header' => 'Contexto de vida (transversal a todos os goals — use pra orientar conselhos em qualquer área):',
-        'budget' => [
-            'none' => 'Financeiro: sem orçamento ainda.',
-            'surplus' => 'Financeiro: orçamento de :month com folga mensal de :amount.',
-            'deficit' => 'Financeiro: orçamento de :month com déficit mensal de :amount.',
-            'balanced' => 'Financeiro: orçamento de :month com renda e gastos batendo.',
-        ],
+        // O sinal de Finanças vivia aqui em `budget.*`. Migrou pro pack
+        // Finance em app/Domains/Finance/lang/{locale}/signal.php — agora
+        // é contribuído via FinanceServiceProvider::contributeSignal(),
+        // veja ADR 0002. Eu também atualizei as strings do pt_BR pra
+        // bater 100% com o que o usuário falaria — "Finanças" no lugar
+        // de "Financeiro", "sobra" no lugar de "folga".
         'tool_hint' => 'Quando a conversa tocar em valores grandes ou compromissos financeiros (mesmo fora do goal de finanças), chame BudgetSnapshot pra ver o detalhe antes de aconselhar. Se já existe orçamento (a linha acima diz qual mês), NÃO peça pro usuário criar um novo do zero — chame ReadBudget pra puxar o que existe.',
     ],
 

@@ -2,6 +2,7 @@
 
 namespace App\Agent\Agents;
 
+use App\Agent\Models\CoachMemory;
 use App\Agent\Tools\CreateAction;
 use App\Agent\Tools\CreateGoal;
 use App\Agent\Tools\ListActions;
@@ -15,12 +16,12 @@ use App\Agent\Tools\SwitchToGoal;
 use App\Agent\Tools\UpdateAction;
 use App\Agent\Tools\WebFetch;
 use App\Agent\Tools\WebSearch;
-use App\Domains\Finance\Models\Budget;
 use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Domains\Finance\Tools\ReadBudget;
 use App\Models\Action;
-use App\Agent\Models\CoachMemory;
 use App\Models\Goal;
+use App\Models\User;
+use App\Packs\PackRegistry;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
@@ -538,6 +539,21 @@ class CoachAgent implements Agent, Conversational, HasTools
      * across every prompt. Full detail is reached on-demand via the
      * dedicated tool (e.g. BudgetSnapshot).
      */
+    /**
+     * Build the "life context" block of the system prompt by asking every
+     * enabled Domain Pack for its Signal — see ADR 0002. The agent stays
+     * domain-blind: it doesn't know what each pack publishes, only that
+     * each one might have a one-line summary to contribute.
+     *
+     * When no pack contributes anything (no user, no enabled packs, or
+     * all packs return null), the whole block is omitted.
+     *
+     * The tool_hint string at the bottom is still finance-flavoured copy
+     * living in the coach lang namespace — a known leak documented in
+     * Phase 4's commit. Cleaning it up requires a pack contribution
+     * mechanism for tool hints, deferred until a second pack pressures
+     * the same pattern.
+     */
     protected function lifeContext(): string
     {
         $userId = auth()->id();
@@ -545,38 +561,33 @@ class CoachAgent implements Agent, Conversational, HasTools
             return '';
         }
 
+        $user = User::find($userId);
+        if (! $user) {
+            return '';
+        }
+
+        $activeGoal = $this->activeGoalId
+            ? Goal::find($this->activeGoalId)
+            : null;
+
+        $signalLines = [];
+        foreach (app(PackRegistry::class)->enabled() as $pack) {
+            $signal = $pack->contributeSignal($user, $activeGoal);
+            if ($signal !== null) {
+                $signalLines[] = '- '.$signal;
+            }
+        }
+
+        if (empty($signalLines)) {
+            return '';
+        }
+
         $lines = [(string) __('coach.life_context.header')];
-
-        $budget = Budget::currentForUser($userId);
-        $lines[] = '- '.$this->budgetSignal($budget);
-
+        $lines = array_merge($lines, $signalLines);
         $lines[] = '';
         $lines[] = (string) __('coach.life_context.tool_hint');
 
         return implode("\n", $lines);
-    }
-
-    protected function budgetSignal(?Budget $budget): string
-    {
-        if ($budget === null) {
-            return (string) __('coach.life_context.budget.none');
-        }
-
-        $delta = $budget->monthly_delta;
-        $args = [
-            'month' => (string) $budget->month,
-            'amount' => 'R$ '.number_format(abs($delta), 0, ',', '.'),
-        ];
-
-        if ($delta > 0) {
-            return (string) __('coach.life_context.budget.surplus', $args);
-        }
-
-        if ($delta < 0) {
-            return (string) __('coach.life_context.budget.deficit', $args);
-        }
-
-        return (string) __('coach.life_context.budget.balanced', $args);
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Packs;
 
+use App\Models\Goal;
+use App\Models\User;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -21,5 +23,19 @@ abstract class DomainPack extends ServiceProvider
     public function boot(): void
     {
         $this->app->make(PackRegistry::class)->add($this);
+    }
+
+    /**
+     * Contribute a Signal to the agent's prompt — see ADR 0002 and
+     * CONTEXT.md "Signal". The agent collects every enabled pack's
+     * signal on every prompt, regardless of which pack owns the
+     * active goal. That's what makes the coach holistic.
+     *
+     * Default: return null (pack contributes nothing for this user).
+     * Override in subclasses to publish a domain-specific summary.
+     */
+    public function contributeSignal(User $user, ?Goal $activeGoal = null): ?string
+    {
+        return null;
     }
 }
