@@ -1,7 +1,7 @@
 <?php
 
-use App\Ai\Tools\LogWorry;
-use App\Models\CoachMemory;
+use App\Agent\Models\CoachMemory;
+use App\Agent\Tools\LogWorry;
 use App\Models\Goal;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;

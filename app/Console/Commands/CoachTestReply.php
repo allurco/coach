@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Agent\Services\CoachReplyProcessor;
+use App\Agent\Services\EmailReplyParser;
 use App\Models\User;
-use App\Services\CoachReplyProcessor;
-use App\Services\EmailReplyParser;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

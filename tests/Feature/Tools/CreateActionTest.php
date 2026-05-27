@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Tools\CreateAction;
+use App\Agent\Tools\CreateAction;
 use App\Models\Action;
 use App\Models\Goal;
 use App\Models\User;

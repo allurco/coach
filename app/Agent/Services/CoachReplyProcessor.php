@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Agent\Services;
 
-use App\Ai\Agents\CoachAgent;
+use App\Agent\Agents\CoachAgent;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Enums\Lab;

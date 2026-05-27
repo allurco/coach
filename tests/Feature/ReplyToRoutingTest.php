@@ -1,8 +1,8 @@
 <?php
 
+use App\Agent\Services\CoachReplyProcessor;
 use App\Mail\CoachPing;
 use App\Models\User;
-use App\Services\CoachReplyProcessor;
 use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {

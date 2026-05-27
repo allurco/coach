@@ -1,12 +1,12 @@
 <?php
 
-use App\Ai\Tools\CreateAction;
-use App\Ai\Tools\ListActions;
-use App\Ai\Tools\RecallFacts;
-use App\Ai\Tools\RememberFact;
-use App\Ai\Tools\UpdateAction;
+use App\Agent\Models\CoachMemory;
+use App\Agent\Tools\CreateAction;
+use App\Agent\Tools\ListActions;
+use App\Agent\Tools\RecallFacts;
+use App\Agent\Tools\RememberFact;
+use App\Agent\Tools\UpdateAction;
 use App\Models\Action;
-use App\Models\CoachMemory;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;
 

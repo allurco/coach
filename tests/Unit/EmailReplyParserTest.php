@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\EmailReplyParser;
+use App\Agent\Services\EmailReplyParser;
 
 it('returns the body unchanged when there is no quoted history', function () {
     $body = 'Já paguei a fatura, marca como concluído.';

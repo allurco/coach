@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\CoachWebhookController;
 use App\Http\Controllers\InvitationController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/webhooks/coach-email', [CoachWebhookController::class, 'handle'])
-    ->name('coach.webhook');
+// The /webhooks/coach-email route used to live here. It moved to
+// app/Agent/routes.php so it can be gated by coach.agent.enabled —
+// a fork that ships without the agent doesn't expose the endpoint.
 
 Route::get('/accept-invite/{token}', [InvitationController::class, 'show'])
     ->name('invitation.show');

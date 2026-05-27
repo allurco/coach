@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Agents\CoachAgent;
+use App\Agent\Agents\CoachAgent;
 use App\Domains\Finance\Models\Budget;
 use App\Models\Action;
 use App\Models\Goal;

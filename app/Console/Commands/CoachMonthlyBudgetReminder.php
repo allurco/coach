@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Ai\Agents\CoachAgent;
+use App\Agent\Agents\CoachAgent;
 use App\Domains\Finance\Models\Budget;
 use App\Mail\BudgetReminder;
 use App\Models\Goal;

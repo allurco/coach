@@ -7,26 +7,26 @@ use Illuminate\Support\ServiceProvider;
 /**
  * The Agent layer — see ADR 0003.
  *
- * Phase 1 (this PR): only registers the config flag and short-circuits
- * if disabled. No agent code has moved here yet — CoachAgent, tools,
- * Conversation, Memory, the webhook controller, and the chat page all
- * still live under app/Ai, app/Models, app/Services, app/Http, and
- * app/Filament. They move in Phase 3.
+ * Owns:
+ *  - CoachAgent + the tool registry (app/Agent/Tools/)
+ *  - AgentConversation + CoachMemory models (app/Agent/Models/)
+ *  - CoachReplyProcessor + EmailReplyParser (app/Agent/Services/)
+ *  - CoachWebhookController + the /webhooks/coach-email route
+ *
+ * Gating: when `coach.agent.enabled` is false (env COACH_AGENT_ENABLED=false),
+ * boot() short-circuits before loading any of the agent's external surface
+ * (currently the webhook route). The Filament chat page is still discovered
+ * by the panel today — moving it under app/Agent and gating its registration
+ * here is Candidate 1 / a later phase.
  */
 class AgentServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        // Phase 3: bind agent services into the container.
-    }
-
     public function boot(): void
     {
         if (! config('coach.agent.enabled', true)) {
             return;
         }
 
-        // Phase 3: register the webhook route, the chat page, the tool
-        // registry, and the prompt builder.
+        $this->loadRoutesFrom(__DIR__.'/routes.php');
     }
 }

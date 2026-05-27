@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Agent\Http\Controllers;
 
+use App\Agent\Services\CoachReplyProcessor;
+use App\Agent\Services\EmailReplyParser;
+use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\CoachReplyProcessor;
-use App\Services\EmailReplyParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

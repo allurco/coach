@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Tools\UpdateAction;
+use App\Agent\Tools\UpdateAction;
 use App\Models\Action;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;

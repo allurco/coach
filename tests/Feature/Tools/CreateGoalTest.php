@@ -1,6 +1,6 @@
 <?php
 
-use App\Ai\Tools\CreateGoal;
+use App\Agent\Tools\CreateGoal;
 use App\Models\Goal;
 use App\Models\User;
 use Laravel\Ai\Tools\Request;
