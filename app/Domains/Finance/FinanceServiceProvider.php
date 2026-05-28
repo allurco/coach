@@ -11,6 +11,8 @@ use App\Models\Goal;
 use App\Models\User;
 use App\Packs\DomainPack;
 use App\Services\TipResolver;
+use App\Tools\Tool;
+use App\Tools\ToolRegistry;
 use Illuminate\Console\Scheduling\Schedule;
 
 /**
@@ -45,6 +47,19 @@ class FinanceServiceProvider extends DomainPack
         // so append order is irrelevant.
         $this->app->extend(TipResolver::class, function (TipResolver $resolver) {
             return $resolver->register(new SetUpBudget, new RefreshBudget);
+        });
+
+        // Contribute the Budget Tool to the workspace — the Finance pack's
+        // primary Tool, shown only on finance Goals (ADR 0007).
+        $this->app->extend(ToolRegistry::class, function (ToolRegistry $registry) {
+            return $registry->register(new Tool(
+                key: 'budget',
+                label: 'finance::budget_flyout.toggle',
+                icon: 'heroicon-o-wallet',
+                component: 'budget-tool',
+                isPrimary: true,
+                scope: 'finance',
+            ));
         });
 
         // The pack owns its scheduled jobs end to end — registration and
