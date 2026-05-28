@@ -104,6 +104,26 @@ it('returns null when every applicable tip is dismissed', function () {
     expect($resolver->pick($this->user, null, dismissed: ['a', 'b']))->toBeNull();
 });
 
+it('register() appends tips so they become pickable', function () {
+    $resolver = new TipResolver([
+        fakeTip('core', 10, applies: true),
+    ]);
+
+    $resolver->register(fakeTip('pack', 100, applies: true));
+
+    // The appended pack tip outranks the core one on priority.
+    expect($resolver->pick($this->user, null)?->id())->toBe('pack');
+});
+
+it('register() accepts several tips at once and is chainable', function () {
+    $resolver = (new TipResolver([]))
+        ->register(fakeTip('x', 1, applies: false), fakeTip('y', 2, applies: false));
+
+    expect($resolver)->toBeInstanceOf(TipResolver::class)
+        ->and($resolver->find('x'))->not->toBeNull()
+        ->and($resolver->find('y'))->not->toBeNull();
+});
+
 it('passes the active goal into applies()', function () {
     $goal = Goal::create(['label' => 'finance', 'name' => 'Finance']);
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Domains\Finance\Console\Commands;
 
 use App\Domains\Finance\Models\Budget;
 use Illuminate\Console\Attributes\Description;

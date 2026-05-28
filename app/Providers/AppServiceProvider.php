@@ -9,11 +9,9 @@ use App\Tips\AddSecondGoal;
 use App\Tips\LogFirstWin;
 use App\Tips\LogTheWhy;
 use App\Tips\PickFocusArea;
-use App\Tips\RefreshBudget;
 use App\Tips\ReviewOverdue;
 use App\Tips\RevisitDormantGoal;
 use App\Tips\RevisitWorry;
-use App\Tips\SetUpBudget;
 use App\Tips\TrimHeavyPlan;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -35,21 +33,21 @@ class AppServiceProvider extends ServiceProvider
             ResetPassword::class,
         );
 
-        // Tip catalog — adding a new tip is just appending a class here
-        // and shipping its lang keys. Order doesn't matter; the resolver
-        // sorts by priority().
+        // Core tip catalog — adding a Core tip is just appending a class
+        // here and shipping its lang keys. Order doesn't matter; the
+        // resolver sorts by priority(). Domain Packs contribute their own
+        // tips by extending this singleton from their ServiceProvider
+        // (see ADR 0006) — Core never lists pack-owned tips.
         $this->app->singleton(TipResolver::class, fn () => new TipResolver([
             new PickFocusArea,
             new AddFirstAction,
             new ReviewOverdue,
             new TrimHeavyPlan,
-            new RefreshBudget,
             new LogTheWhy,
             new LogFirstWin,
             new RevisitWorry,
             new RevisitDormantGoal,
             new AddSecondGoal,
-            new SetUpBudget,
         ]));
     }
 

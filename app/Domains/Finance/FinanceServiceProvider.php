@@ -2,10 +2,16 @@
 
 namespace App\Domains\Finance;
 
+use App\Domains\Finance\Console\Commands\CoachCarryBudgetForward;
+use App\Domains\Finance\Console\Commands\CoachMonthlyBudgetReminder;
 use App\Domains\Finance\Models\Budget;
+use App\Domains\Finance\Tips\RefreshBudget;
+use App\Domains\Finance\Tips\SetUpBudget;
 use App\Models\Goal;
 use App\Models\User;
 use App\Packs\DomainPack;
+use App\Services\TipResolver;
+use Illuminate\Console\Scheduling\Schedule;
 
 /**
  * The Finance Domain Pack — Coach's first pack and the reference
@@ -33,6 +39,41 @@ class FinanceServiceProvider extends DomainPack
 
         $this->loadTranslationsFrom(__DIR__.'/lang', 'finance');
         $this->loadViewsFrom(__DIR__.'/resources/views', 'finance');
+
+        // Contribute the pack's Tips to Core's catalog without Core having
+        // to know they exist (ADR 0006). The resolver sorts by priority(),
+        // so append order is irrelevant.
+        $this->app->extend(TipResolver::class, function (TipResolver $resolver) {
+            return $resolver->register(new SetUpBudget, new RefreshBudget);
+        });
+
+        // The pack owns its scheduled jobs end to end — registration and
+        // schedule both live here, not in Core's routes/console.php (ADR 0006).
+        $this->commands([
+            CoachCarryBudgetForward::class,
+            CoachMonthlyBudgetReminder::class,
+        ]);
+
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+            // Carry-forward do orçamento: dia 28 às 06h, ANTES do reminder
+            // das 19h. Idempotente: rodar 2x não duplica.
+            $schedule->command('coach:carry-budget-forward')
+                ->monthlyOn(28, '06:00')
+                ->timezone('America/Fortaleza')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->emailOutputOnFailure(env('COACH_NOTIFICATION_EMAIL'));
+
+            // Lembrete mensal do Planejador Financeiro: dia 28 às 19h,
+            // DEPOIS do carry-forward, então o user já vê o snapshot
+            // pré-populado pra ajustar.
+            $schedule->command('coach:monthly-budget-reminder')
+                ->monthlyOn(28, '19:00')
+                ->timezone('America/Fortaleza')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->emailOutputOnFailure(env('COACH_NOTIFICATION_EMAIL'));
+        });
     }
 
     public function contributeSignal(User $user, ?Goal $activeGoal = null): ?string

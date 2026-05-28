@@ -183,14 +183,6 @@ return [
             'title' => 'Em que área quer focar primeiro?',
             'prompt' => 'Em que área eu deveria começar?',
         ],
-        'set_up_budget' => [
-            'title' => 'Monta seu plano financeiro',
-            'prompt' => 'Quero montar meu plano financeiro do mês.',
-        ],
-        'refresh_budget' => [
-            'title' => 'Atualiza o orçamento do mês',
-            'prompt' => 'Bora atualizar o orçamento desse mês.',
-        ],
         'add_first_action' => [
             'title' => 'Cria a primeira ação concreta',
             'prompt' => 'Me ajuda a definir a primeira ação concreta desse goal.',

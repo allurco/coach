@@ -1,6 +1,6 @@
 <?php
 
-use App\Console\Commands\CoachMonthlyBudgetReminder;
+use App\Domains\Finance\Console\Commands\CoachMonthlyBudgetReminder;
 use App\Models\Goal;
 use App\Models\User;
 
