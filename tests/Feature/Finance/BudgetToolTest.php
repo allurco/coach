@@ -1,6 +1,6 @@
 <?php
 
-use App\Agent\Filament\Pages\Coach;
+use App\Domains\Finance\Livewire\BudgetTool;
 use App\Domains\Finance\Models\Budget;
 use App\Mail\Share;
 use App\Models\Contact;
@@ -33,14 +33,14 @@ function makeFlyoutBudget(array $overrides = []): Budget
 // hasBudget() — drives whether the header button renders --------------------
 
 it('hasBudget returns false for a brand new user', function () {
-    $page = new Coach;
+    $page = new BudgetTool;
 
     expect($page->hasBudget())->toBeFalse();
 });
 
 it('hasBudget returns true when the user has at least one budget', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
 
     expect($page->hasBudget())->toBeTrue();
 });
@@ -59,7 +59,7 @@ it('hasBudget does not pick up another user\'s budget (multi-tenant)', function 
         'leisure_amount' => 9999,
     ]);
 
-    $page = new Coach;
+    $page = new BudgetTool;
 
     expect($page->hasBudget())->toBeFalse();
 });
@@ -68,7 +68,7 @@ it('hasBudget does not pick up another user\'s budget (multi-tenant)', function 
 
 it('openBudget loads the current budget into the flyout state', function () {
     $budget = makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
 
     $page->openBudget();
 
@@ -82,7 +82,7 @@ it('openBudget loads the current budget into the flyout state', function () {
 
 it('openBudget exposes line arrays for all three editable buckets (indexed shape so wire:model can bind cells)', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
 
     $page->openBudget();
 
@@ -98,7 +98,7 @@ it('openBudget exposes line arrays for all three editable buckets (indexed shape
 
 it('addBudgetLine appends an empty line to a bucket', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->addBudgetLine('fixed_costs');
@@ -109,7 +109,7 @@ it('addBudgetLine appends an empty line to a bucket', function () {
 
 it('addBudgetLine suggests 10% of net_income for investments', function () {
     makeFlyoutBudget(['net_income' => 8000]);
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->addBudgetLine('investments');
@@ -120,7 +120,7 @@ it('addBudgetLine suggests 10% of net_income for investments', function () {
 
 it('addBudgetLine suggests 7% of net_income for savings (midpoint of 5-10% target)', function () {
     makeFlyoutBudget(['net_income' => 10000]);
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->addBudgetLine('savings');
@@ -131,7 +131,7 @@ it('addBudgetLine suggests 7% of net_income for savings (midpoint of 5-10% targe
 
 it('addBudgetLine ignores invalid bucket names', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $before = $page->budgetData['fixed_costs_lines'];
 
@@ -142,7 +142,7 @@ it('addBudgetLine ignores invalid bucket names', function () {
 
 it('removeBudgetLine drops the line at the given index', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->removeBudgetLine('fixed_costs', 0); // remove Aluguel
@@ -154,7 +154,7 @@ it('removeBudgetLine drops the line at the given index', function () {
 
 it('removeBudgetLine on out-of-range index is a no-op', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $before = $page->budgetData['fixed_costs_lines'];
 
@@ -167,7 +167,7 @@ it('removeBudgetLine on out-of-range index is a no-op', function () {
 
 it('recalcBudget recomputes subtotal, total with buffer, and leisure', function () {
     makeFlyoutBudget(['net_income' => 7000]);
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     // Simulate the user editing the Aluguel line up to 2000.
@@ -186,7 +186,7 @@ it('recalcBudget treats blank-label lines as still counted (recalc on amount onl
     // labels still count toward the total — the rule that drops blank
     // labels only kicks in on save.
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->addBudgetLine('investments'); // adds line with 10% suggestion (720)
@@ -200,7 +200,7 @@ it('recalcBudget treats blank-label lines as still counted (recalc on amount onl
 
 it('saveBudget persists a new Budget row preserving history', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->budgetData['fixed_costs_lines'][0]['amount'] = 2000; // bump Aluguel
@@ -217,7 +217,7 @@ it('saveBudget persists a new Budget row preserving history', function () {
 
 it('saveBudget filters out empty-label or zero-amount lines on persist', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->budgetData['fixed_costs_lines'][] = ['label' => '', 'amount' => 500];     // empty label
@@ -230,7 +230,7 @@ it('saveBudget filters out empty-label or zero-amount lines on persist', functio
 
 it('saveBudget refreshes budgetData.id to point at the new snapshot', function () {
     $original = makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     expect($page->budgetData['id'])->toBe($original->id);
@@ -244,7 +244,7 @@ it('saveBudget refreshes budgetData.id to point at the new snapshot', function (
 
 it('saveBudget keeps multi-tenant scoping (intruder cannot save into another user)', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $page->saveBudget();
 
@@ -260,7 +260,7 @@ it('saveBudget keeps multi-tenant scoping (intruder cannot save into another use
 
 it('openBudgetShare pre-fills subject + body with the current snapshot placeholder', function () {
     makeFlyoutBudget(['month' => '2026-06']);
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     $page->openBudgetShare();
@@ -273,7 +273,7 @@ it('openBudgetShare pre-fills subject + body with the current snapshot placehold
 });
 
 it('openBudgetShare no-ops when the flyout is not open (no budgetData)', function () {
-    $page = new Coach;
+    $page = new BudgetTool;
 
     $page->openBudgetShare();
 
@@ -282,7 +282,7 @@ it('openBudgetShare no-ops when the flyout is not open (no budgetData)', functio
 
 it('cancelBudgetShare wipes the share state', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $page->openBudgetShare();
     $page->budgetShareRecipient = 'ana@example.com';
@@ -303,7 +303,7 @@ it('confirmBudgetShare sends the Share mailable to a literal email and closes th
     $this->user->update(['email' => 'me@example.com', 'name' => 'Rogers']);
 
     makeFlyoutBudget(['month' => '2026-06']);
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $page->openBudgetShare();
     $page->budgetShareRecipient = 'ana@example.com';
@@ -331,7 +331,7 @@ it('confirmBudgetShare resolves a saved Contact label to its email', function ()
         'email' => 'joao@example.com',
     ]);
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $page->openBudgetShare();
     $page->budgetShareRecipient = 'contador';
@@ -347,7 +347,7 @@ it('confirmBudgetShare auto-bccs the authenticated user', function () {
     $this->user->update(['email' => 'me@example.com']);
 
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $page->openBudgetShare();
     $page->budgetShareRecipient = 'ana@example.com';
@@ -361,7 +361,7 @@ it('confirmBudgetShare surfaces an error and keeps the modal open on bad recipie
     Mail::fake();
 
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $page->openBudgetShare();
     $page->budgetShareRecipient = 'nope-not-an-email-nor-a-label';
@@ -386,7 +386,7 @@ it('confirmBudgetShare does not resolve another user\'s contact label', function
     ]);
 
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
     $page->openBudgetShare();
     $page->budgetShareRecipient = 'contador';
@@ -398,7 +398,7 @@ it('confirmBudgetShare does not resolve another user\'s contact label', function
 });
 
 it('openBudget is a no-op when the user has no budget', function () {
-    $page = new Coach;
+    $page = new BudgetTool;
 
     $page->openBudget();
 
@@ -408,7 +408,7 @@ it('openBudget is a no-op when the user has no budget', function () {
 
 it('closeBudget clears the flyout state', function () {
     makeFlyoutBudget();
-    $page = new Coach;
+    $page = new BudgetTool;
 
     $page->openBudget();
     $page->closeBudget();
@@ -431,7 +431,7 @@ it('openBudget never returns another user\'s budget (multi-tenant)', function ()
         'leisure_amount' => 9999,
     ]);
 
-    $page = new Coach;
+    $page = new BudgetTool;
     $page->openBudget();
 
     expect($page->budgetOpen)->toBeFalse()

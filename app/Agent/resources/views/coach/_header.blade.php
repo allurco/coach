@@ -29,14 +29,10 @@
         </div>
     </div>
 
-    @if ($this->hasBudget())
-        <button type="button" class="plan-toggle-btn budget-toggle-btn"
-                wire:click="openBudget"
-                @click="budgetOpen = true">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span class="budget-toggle-label">{{ __('finance::budget_flyout.toggle') }}</span>
-        </button>
-    @endif
+    {{-- Budget Tool (Finance pack): renders its own toggle button + drawer
+         + share modal. Self-contained so the Agent header carries no Finance
+         dependency (ADR 0007). --}}
+    <livewire:budget-tool />
 
     <button type="button" class="plan-toggle-btn" @click="planOpen = true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6"/><path d="M9 16h6"/></svg>

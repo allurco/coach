@@ -1,33 +1,50 @@
 <?php
 
-namespace App\Domains\Finance\Filament\Concerns;
+namespace App\Domains\Finance\Livewire;
 
 use App\Domains\Finance\Models\Budget;
+use App\Exceptions\ShareFailedException;
+use App\Services\Sharer;
 use Filament\Notifications\Notification;
+use Livewire\Component;
 
 /**
- * State + behavior do flyout de Budget (header button → drawer →
- * edição inline + recálculo + save como novo snapshot).
+ * The Budget Tool — the Finance pack's primary workspace Tool (ADR 0007).
+ * A header button opens a drawer to edit the current month's budget
+ * snapshot inline (recalc as you type, save as a new snapshot) and share
+ * it by email.
  *
- * Dependências do componente que o usa:
- * - currentForUser(int $userId): ?Budget (via Budget model)
- * - Notification facade (pra feedback de save)
+ * Self-contained Livewire component, pack-owned (app/Domains/Finance/
+ * Livewire/), registered as the 'budget-tool' alias in
+ * FinanceServiceProvider. Replaces the old HasBudgetFlyout/HasBudgetShare
+ * traits that were mixed into the Agent's Coach page — extracting them
+ * here removes the Agent→Finance trait coupling.
  *
- * Pareado com HasBudgetShare (modal de "Compartilhar este orçamento"
- * que abre de dentro deste flyout). Separados por concern — cada um
- * tem seu próprio state + métodos.
+ * Open/close is local Alpine state (`budgetOpen`); the drawer + share
+ * modal teleport to <body> so they stack above the app regardless of
+ * where the component is embedded.
  */
-trait HasBudgetFlyout
+class BudgetTool extends Component
 {
     public bool $budgetOpen = false;
 
-    /** Snapshot row pro flyout, hidratado por openBudget(). */
+    /** Snapshot row for the flyout, hydrated by openBudget(). */
     public ?array $budgetData = null;
 
+    // Share modal state.
+    public bool $budgetShareOpen = false;
+
+    public string $budgetShareRecipient = '';
+
+    public string $budgetShareSubject = '';
+
+    public string $budgetShareBody = '';
+
+    public ?string $budgetShareError = null;
+
     /**
-     * Drives whether the "Budget" header button renders. Lazy: a
-     * cheap COUNT(1) query via Budget::currentForUser. Chamado uma
-     * vez por render via accessor na view.
+     * Drives whether the "Budget" toggle button renders. Lazy COUNT via
+     * Budget::currentForUser, called once per render from the view.
      */
     public function hasBudget(): bool
     {
@@ -35,10 +52,8 @@ trait HasBudgetFlyout
     }
 
     /**
-     * Hydrata $budgetData do snapshot atual do usuário e abre o
-     * flyout. No-op silencioso quando não há budget — o botão nem
-     * renderiza nesse estado, então chegar aqui significa cliente
-     * stale ou chamada programática.
+     * Hydrate $budgetData from the user's current snapshot. Re-runs on
+     * every open so the drawer always reflects the latest snapshot.
      */
     public function openBudget(): void
     {
@@ -72,10 +87,9 @@ trait HasBudgetFlyout
     }
 
     /**
-     * Adiciona linha editável a um dos três buckets. Investimentos e
-     * reservas ganham valor sugerido derivado da renda (10% / 7% — o
-     * último é o midpoint do alvo 5-10%). Custos fixos vai em 0 — o
-     * usuário sabe o valor exato e default errado é pior que vazio.
+     * Add an editable line to one of the three buckets. Investments and
+     * savings get a suggested value derived from income (10% / 7%); fixed
+     * costs start at 0 — a wrong default is worse than empty there.
      */
     public function addBudgetLine(string $bucket): void
     {
@@ -119,10 +133,9 @@ trait HasBudgetFlyout
     }
 
     /**
-     * Recomputa subtotais/totais/lazer a partir do state atual.
-     * Aritmética em memória, dispara em todo edit via
-     * updatedBudgetData() — usuário vê o delta do lazer settando
-     * enquanto digita.
+     * Recompute subtotals/totals/leisure from current state. In-memory
+     * arithmetic, fires on every edit via updatedBudgetData() so the user
+     * sees the leisure delta settle as they type.
      */
     public function recalcBudget(): void
     {
@@ -151,9 +164,9 @@ trait HasBudgetFlyout
     }
 
     /**
-     * Persiste o state atual como NOVO Budget row — snapshots são
-     * imutáveis, cada save cria uma row e "current" é o mais recente.
-     * Mesmo padrão do BudgetSnapshot tool, preserva histórico.
+     * Persist the current state as a NEW Budget row — snapshots are
+     * immutable, each save creates a row and "current" is the most recent.
+     * Same pattern as the BudgetSnapshot tool; preserves history.
      */
     public function saveBudget(): void
     {
@@ -196,9 +209,9 @@ trait HasBudgetFlyout
     }
 
     /**
-     * Livewire lifecycle hook — dispara em toda mutação de budgetData
-     * vinda do cliente (wire:model.live nos cells). Mantém derived
-     * fields em sync enquanto o user digita.
+     * Livewire lifecycle hook — fires on every budgetData mutation from
+     * the client (wire:model.live on the cells). Keeps derived fields in
+     * sync while the user types.
      */
     public function updatedBudgetData(): void
     {
@@ -206,9 +219,9 @@ trait HasBudgetFlyout
     }
 
     /**
-     * Bucket status pill: percent of net income, in-range icon,
-     * human target label. Mirra o semantic ✓/⚠ da BudgetSnapshot
-     * tool — flyout e output do agente lêem os mesmos alvos.
+     * Bucket status pill: percent of net income, in-range flag, human
+     * target label. Mirrors the BudgetSnapshot tool's targets so the
+     * flyout and the agent's output read the same ranges.
      *
      * @return array{pct:int, target:string, in_range:bool}
      */
@@ -226,8 +239,8 @@ trait HasBudgetFlyout
     }
 
     /**
-     * "2026-12" → "dez/2026". Fallback no ISO raw se não conseguir
-     * parsear, pra não produzir valor date-like que mente.
+     * "2026-12" → "dez/2026". Falls back to the raw ISO if it can't parse,
+     * so we never produce a date-like value that lies.
      */
     public function prettyMonth(string $iso): string
     {
@@ -239,10 +252,74 @@ trait HasBudgetFlyout
         return ($names[$m[2]] ?? $m[2]).'/'.$m[1];
     }
 
+    // Share modal ---------------------------------------------------------
+
     /**
-     * Converte breakdown label-keyed (shape persistido) → indexed
-     * line shape (shape de edit na UI). Amounts em float pra que o
-     * type-coerce da view não surpreenda.
+     * Open the share modal. Pre-fills the body with the {{budget:current}}
+     * placeholder — PlaceholderRenderer expands it at send, so even if the
+     * user saves a fresh snapshot between opening and sending, the
+     * recipient gets the latest. Subject includes the month for context.
+     */
+    public function openBudgetShare(): void
+    {
+        if ($this->budgetData === null) {
+            return;
+        }
+
+        $this->budgetShareOpen = true;
+        $this->budgetShareRecipient = '';
+        $this->budgetShareSubject = (string) __('finance::budget_flyout.share_subject_default', [
+            'month' => (string) ($this->budgetData['month'] ?? ''),
+        ]);
+        $this->budgetShareBody = (string) __('finance::budget_flyout.share_body_default');
+        $this->budgetShareError = null;
+    }
+
+    public function cancelBudgetShare(): void
+    {
+        $this->budgetShareOpen = false;
+        $this->budgetShareRecipient = '';
+        $this->budgetShareSubject = '';
+        $this->budgetShareBody = '';
+        $this->budgetShareError = null;
+    }
+
+    public function confirmBudgetShare(): void
+    {
+        if (! $this->budgetShareOpen) {
+            return;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            $this->budgetShareError = (string) __('coach.share.errors.unauthenticated');
+
+            return;
+        }
+
+        try {
+            $message = app(Sharer::class)->send(
+                user: $user,
+                to: $this->budgetShareRecipient,
+                subject: $this->budgetShareSubject,
+                body: $this->budgetShareBody,
+            );
+
+            Notification::make()
+                ->title($message)
+                ->success()
+                ->send();
+
+            $this->cancelBudgetShare();
+        } catch (ShareFailedException $e) {
+            $this->budgetShareError = $e->getMessage();
+        }
+    }
+
+    /**
+     * Convert a label-keyed breakdown (persisted shape) → indexed line
+     * shape (edit shape in the UI). Amounts as float so the view's type
+     * coercion doesn't surprise.
      *
      * @param  mixed  $breakdown
      * @return list<array{label:string,amount:float}>
@@ -262,9 +339,9 @@ trait HasBudgetFlyout
     }
 
     /**
-     * Inverso — pra hora de persistir. Dropa linhas com label vazio
-     * ou amount zero/negative, pra que linhas rascunho que o user
-     * não preencheu não poluam o snapshot.
+     * Inverse — for persisting. Drops lines with an empty label or
+     * zero/negative amount, so draft lines the user didn't fill don't
+     * pollute the snapshot.
      *
      * @param  array<int,array<string,mixed>>  $lines
      * @return array<string,float>
@@ -281,5 +358,10 @@ trait HasBudgetFlyout
         }
 
         return $out;
+    }
+
+    public function render()
+    {
+        return view('finance::budget-tool');
     }
 }
