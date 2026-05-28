@@ -1,5 +1,12 @@
-{{-- Coach header — sidebar toggle, active goal title + meta, Budget + Plano buttons --}}
+{{-- Coach header — back to Goals, sidebar toggle, active goal title + meta, Budget + Plano buttons --}}
 <div class="coach-header">
+    <button type="button" class="sidebar-toggle-btn"
+            wire:click="backToGoals"
+            aria-label="{{ __('coach.header.back_to_goals') }}"
+            title="{{ __('coach.header.back_to_goals') }}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+
     <button type="button" class="sidebar-toggle-btn"
             @click="sidebarOpen = true"
             aria-label="Abrir conversas">

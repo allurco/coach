@@ -3,8 +3,8 @@
 use App\Agent\Filament\Pages\Coach;
 use App\Domains\Finance\Livewire\BudgetTool;
 use App\Domains\Finance\Models\Budget;
+use App\Livewire\PlanFlyout;
 use App\Models\Action;
-use App\Models\Goal;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -15,14 +15,15 @@ beforeEach(function () {
 
 // Plan list — date alignment + overdue stripe regression ----------------------
 
+// The plan list is rendered by the PlanFlyout component (embedded in the
+// Workspace). Target it directly so these layout regressions don't depend
+// on the Coach landing flow (ADR 0007).
 it('puts every plan-item deadline in its own grid column (alignment regression)', function () {
-    // Use the user's auto-created default goal — that's what activeGoalId
-    // points at after mount, so loadPlan() filters by it.
     $goalId = $this->user->defaultGoal()->id;
     Action::create(['goal_id' => $goalId, 'title' => 'Action with deadline', 'status' => 'pending', 'deadline' => now()->addDays(5)]);
     Action::create(['goal_id' => $goalId, 'title' => 'Action without deadline', 'status' => 'pending']);
 
-    Livewire::test(Coach::class)
+    Livewire::test(PlanFlyout::class, ['activeGoalId' => $goalId])
         ->assertSeeHtmlInOrder([
             'plan-item-main',
             'plan-item-deadline-col',
@@ -38,7 +39,7 @@ it('marks overdue plan-items with the is-overdue class for the left-edge stripe'
         'deadline' => now()->subDays(3)->toDateString(),
     ]);
 
-    $html = (string) Livewire::test(Coach::class)->html();
+    $html = (string) Livewire::test(PlanFlyout::class, ['activeGoalId' => $goalId])->html();
 
     expect($html)->toContain('is-overdue');
 });
@@ -52,7 +53,7 @@ it('does NOT mark non-overdue items with is-overdue', function () {
         'deadline' => now()->addDays(10)->toDateString(),
     ]);
 
-    $html = (string) Livewire::test(Coach::class)->html();
+    $html = (string) Livewire::test(PlanFlyout::class, ['activeGoalId' => $goalId])->html();
 
     expect($html)->not->toContain('is-overdue');
 });

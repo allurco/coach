@@ -59,6 +59,11 @@ return [
     'header' => [
         'new_thread' => 'nova conversa',
         'history' => 'histórico',
+        'back_to_goals' => 'Voltar às metas',
+    ],
+
+    'goals_screen' => [
+        'title' => 'Suas metas',
     ],
 
     'new_goal_modal' => [

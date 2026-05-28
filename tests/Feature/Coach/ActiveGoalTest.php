@@ -51,16 +51,21 @@ it('returns null defensively when goals is empty even with an activeGoalId set',
     expect($page->activeGoal())->toBeNull();
 });
 
-it('returns the goal matching activeGoalId after mount populates state', function () {
-    // UserObserver auto-creates a "Geral" goal for every new user, so by the
-    // time mount() runs the sidebar already has one entry and activeGoalId
-    // points at it. activeGoal() should resolve that pairing.
+it('lands on the Goals start screen with no active goal, and resolves once a goal is opened', function () {
+    // Per ADR 0007 the Workspace lands on the Goals start screen when there
+    // is no ?goal — mount() no longer auto-activates a goal.
     $page = new Coach;
     $page->mount();
 
-    $active = $page->activeGoal();
+    expect($page->activeGoalId)->toBeNull();
 
-    expect($page->activeGoalId)->not->toBeNull()
+    // Opening a goal (UserObserver auto-creates "Geral") enters its Workspace
+    // and activeGoal() resolves the pairing.
+    $goal = Goal::query()->first();
+    $page->setActiveGoal($goal->id);
+
+    $active = $page->activeGoal();
+    expect($page->activeGoalId)->toBe($goal->id)
         ->and($active)->not->toBeNull()
-        ->and($active['id'])->toBe($page->activeGoalId);
+        ->and($active['id'])->toBe($goal->id);
 });
