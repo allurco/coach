@@ -13,6 +13,8 @@ use App\Tips\ReviewOverdue;
 use App\Tips\RevisitDormantGoal;
 use App\Tips\RevisitWorry;
 use App\Tips\TrimHeavyPlan;
+use App\Tools\Tool;
+use App\Tools\ToolRegistry;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
@@ -49,6 +51,15 @@ class AppServiceProvider extends ServiceProvider
             new RevisitDormantGoal,
             new AddSecondGoal,
         ]));
+
+        // Core Tool catalog — the workspace surfaces every Goal has. Domain
+        // Packs contribute their own Tools by extending this singleton from
+        // their ServiceProvider (see ADR 0006/0007); Core never lists pack
+        // Tools. Each `component` is a Livewire alias the Workspace mounts.
+        $this->app->singleton(ToolRegistry::class, fn () => (new ToolRegistry)->register(
+            new Tool(key: 'plan', label: 'tools.plan', icon: 'heroicon-o-clipboard-document-list', component: 'plan-flyout', scope: 'core'),
+            new Tool(key: 'contacts', label: 'tools.contacts', icon: 'heroicon-o-users', component: 'contacts-tool', scope: 'core'),
+        ));
     }
 
     public function boot(): void
