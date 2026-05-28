@@ -1,6 +1,7 @@
 <?php
 
 use App\Agent\Agents\CoachAgent;
+use App\Agent\Services\CoachPromptBuilder;
 use App\Domains\Finance\Models\Budget;
 use App\Models\Action;
 use App\Models\Goal;
@@ -12,12 +13,24 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
+/**
+ * Phase 9 — lifeContext logic moved to CoachPromptBuilder. The helper
+ * now invokes the builder's method against the authenticated user so
+ * the tests stay terse at the call sites.
+ */
 function lifeContextOf(CoachAgent $coach): string
 {
-    $ref = new ReflectionMethod($coach, 'lifeContext');
+    $builder = new CoachPromptBuilder;
+    $ref = new ReflectionMethod($builder, 'lifeContext');
     $ref->setAccessible(true);
 
-    return (string) $ref->invoke($coach);
+    // The agent's $activeGoalId is the relevant input — pull it via
+    // reflection to mirror the legacy call shape `lifeContextOf((new CoachAgent)->forGoal($id))`.
+    $goalRef = new ReflectionProperty($coach, 'activeGoalId');
+    $goalRef->setAccessible(true);
+    $activeGoalId = $goalRef->getValue($coach);
+
+    return (string) $ref->invoke($builder, auth()->user(), $activeGoalId);
 }
 
 function makeLifeContextBudget(array $overrides = []): Budget

@@ -2,6 +2,7 @@
 
 use App\Agent\Agents\CoachAgent;
 use App\Agent\Models\CoachMemory;
+use App\Agent\Services\CoachPromptBuilder;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -12,12 +13,26 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
+/**
+ * Phase 9 — goalContext moved to CoachPromptBuilder. The helper reads
+ * the agent's state via reflection and invokes the builder so call
+ * sites stay the same.
+ */
 function goalContextOf(CoachAgent $coach): string
 {
-    $ref = new ReflectionMethod($coach, 'goalContext');
+    $builder = new CoachPromptBuilder;
+    $ref = new ReflectionMethod($builder, 'goalContext');
     $ref->setAccessible(true);
 
-    return (string) $ref->invoke($coach);
+    $goalRef = new ReflectionProperty($coach, 'activeGoalId');
+    $goalRef->setAccessible(true);
+    $activeGoalId = $goalRef->getValue($coach);
+
+    $convRef = new ReflectionProperty($coach, 'conversationId');
+    $convRef->setAccessible(true);
+    $conversationId = $convRef->getValue($coach);
+
+    return (string) $ref->invoke($builder, auth()->user(), $activeGoalId, $conversationId);
 }
 
 function setActive(Goal $goal): CoachAgent
