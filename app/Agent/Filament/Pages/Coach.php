@@ -10,6 +10,8 @@ use App\Models\Action;
 use App\Models\Goal;
 use App\Services\TipResolver;
 use App\Tips\Tip;
+use App\Tools\Tool;
+use App\Tools\ToolRegistry;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Forms\Components\FileUpload;
@@ -64,6 +66,15 @@ class Coach extends Page implements HasForms
      */
     #[Url(as: 'goal')]
     public ?int $activeGoalId = null;
+
+    /**
+     * The open Tool within the Workspace (Plan, Budget, Contacts…), or
+     * null for the chat. Synced to ?tool= so a Tool deep-links and the
+     * back button returns to the chat. The set of Tools comes from the
+     * ToolRegistry, keyed by the active Goal's pack (ADR 0007).
+     */
+    #[Url(as: 'tool')]
+    public ?string $activeTool = null;
 
     public array $goalHistory = [];
 
@@ -153,6 +164,7 @@ class Coach extends Page implements HasForms
     public function backToGoals(): void
     {
         $this->activeGoalId = null;
+        $this->activeTool = null;
         $this->messages = [];
         $this->conversationId = null;
         $this->historyOpen = false;
@@ -182,6 +194,7 @@ class Coach extends Page implements HasForms
 
         $this->historyOpen = false;
         $this->goalHistory = [];
+        $this->activeTool = null;
         $this->memoPendingPlanCount = null;
         $this->memoActiveGoal = null;
         $this->memoActiveGoalResolved = false;
@@ -329,6 +342,59 @@ class Coach extends Page implements HasForms
         }
 
         $this->activateGoal($goal);
+    }
+
+    /**
+     * The Tools available in the active Goal's Workspace — core Tools plus
+     * the active pack's Tools, from the ToolRegistry (ADR 0007). Shaped for
+     * the tab bar / rail; labels resolved through __(). Empty on the Goals
+     * start screen.
+     *
+     * @return list<array{key:string,label:string,icon:string,component:string,is_primary:bool}>
+     */
+    public function workspaceTools(): array
+    {
+        $goal = $this->activeGoal();
+        if ($goal === null) {
+            return [];
+        }
+
+        return collect(app(ToolRegistry::class)->forGoalLabel($goal['label']))
+            ->map(fn (Tool $t) => [
+                'key' => $t->key,
+                'label' => (string) __($t->label),
+                'icon' => $t->icon,
+                'component' => $t->component,
+                'is_primary' => $t->isPrimary,
+            ])
+            ->all();
+    }
+
+    /**
+     * The active pack's primary Tool key — the slot next to Chat in the
+     * tab bar (Finance → 'budget'). Null when the active Goal's pack has
+     * no primary (e.g. a 'general' Goal).
+     */
+    public function primaryToolKey(): ?string
+    {
+        $goal = $this->activeGoal();
+
+        return $goal ? app(ToolRegistry::class)->primaryFor($goal['label'])?->key : null;
+    }
+
+    /**
+     * Open a Tool in the Workspace. Ignores keys that aren't available for
+     * the active Goal (stale client, foreign pack), falling back to chat.
+     */
+    public function openTool(string $key): void
+    {
+        $available = collect($this->workspaceTools())->pluck('key')->all();
+        $this->activeTool = in_array($key, $available, true) ? $key : null;
+    }
+
+    public function closeTool(): void
+    {
+        $this->activeTool = null;
     }
 
     public function startNewConversationInActiveGoal(): void
