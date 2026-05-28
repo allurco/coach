@@ -1,6 +1,7 @@
 <?php
 
 use App\Agent\Filament\Pages\Coach;
+use App\Domains\Finance\Livewire\BudgetTool;
 use App\Domains\Finance\Models\Budget;
 use App\Models\Action;
 use App\Models\Goal;
@@ -75,16 +76,19 @@ function makePlanLayoutBudget(array $overrides = []): Budget
     ], $overrides));
 }
 
-it('renders the Budget toggle button in the header when a budget exists', function () {
+// Budget rendering/integration now lives in the BudgetTool component
+// (ADR 0007). These assert the component renders + behaves when embedded;
+// unit coverage of every method is in tests/Feature/Finance/BudgetToolTest.
+it('renders the Budget toggle button when a budget exists', function () {
     makePlanLayoutBudget();
 
-    Livewire::test(Coach::class)
+    Livewire::test(BudgetTool::class)
         ->assertSeeHtml('budget-toggle-btn')
         ->assertSeeHtml('wire:click="openBudget"');
 });
 
 it('hides the Budget toggle button when no budget exists', function () {
-    $rendered = (string) Livewire::test(Coach::class)->html();
+    $rendered = (string) Livewire::test(BudgetTool::class)->html();
 
     expect($rendered)->not->toContain('budget-toggle-btn');
 });
@@ -92,7 +96,7 @@ it('hides the Budget toggle button when no budget exists', function () {
 it('opens the flyout with editable inputs bound to budgetData paths', function () {
     makePlanLayoutBudget();
 
-    $page = Livewire::test(Coach::class)
+    $page = Livewire::test(BudgetTool::class)
         ->call('openBudget')
         ->assertSet('budgetOpen', true)
         ->assertSet('budgetData.month', '2026-06');
@@ -108,7 +112,7 @@ it('opens the flyout with editable inputs bound to budgetData paths', function (
 it('full edit cycle: open → add line → save creates a new snapshot', function () {
     makePlanLayoutBudget();
 
-    Livewire::test(Coach::class)
+    Livewire::test(BudgetTool::class)
         ->call('openBudget')
         ->call('addBudgetLine', 'investments')
         ->call('saveBudget')
@@ -121,7 +125,7 @@ it('full edit cycle: open → add line → save creates a new snapshot', functio
 it('share modal opens with pre-filled subject and body placeholder', function () {
     makePlanLayoutBudget(['month' => '2026-06']);
 
-    $page = Livewire::test(Coach::class)
+    $page = Livewire::test(BudgetTool::class)
         ->call('openBudget')
         ->call('openBudgetShare')
         ->assertSet('budgetShareOpen', true);

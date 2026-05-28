@@ -5,8 +5,6 @@ namespace App\Agent\Filament\Pages;
 use App\Agent\Filament\Concerns\HasShareMessageModal;
 use App\Agent\Models\CoachMemory;
 use App\Agent\Services\CoachInteraction;
-use App\Domains\Finance\Filament\Concerns\HasBudgetFlyout;
-use App\Domains\Finance\Filament\Concerns\HasBudgetShare;
 use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Models\Action;
 use App\Models\Goal;
@@ -32,8 +30,6 @@ use Throwable;
 
 class Coach extends Page implements HasForms
 {
-    use HasBudgetFlyout;
-    use HasBudgetShare;
     use HasShareMessageModal;
     use InteractsWithForms;
 

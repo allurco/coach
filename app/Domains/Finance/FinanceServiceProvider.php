@@ -4,6 +4,7 @@ namespace App\Domains\Finance;
 
 use App\Domains\Finance\Console\Commands\CoachCarryBudgetForward;
 use App\Domains\Finance\Console\Commands\CoachMonthlyBudgetReminder;
+use App\Domains\Finance\Livewire\BudgetTool;
 use App\Domains\Finance\Models\Budget;
 use App\Domains\Finance\Tips\RefreshBudget;
 use App\Domains\Finance\Tips\SetUpBudget;
@@ -14,6 +15,7 @@ use App\Services\TipResolver;
 use App\Tools\Tool;
 use App\Tools\ToolRegistry;
 use Illuminate\Console\Scheduling\Schedule;
+use Livewire\Livewire;
 
 /**
  * The Finance Domain Pack — Coach's first pack and the reference
@@ -41,6 +43,11 @@ class FinanceServiceProvider extends DomainPack
 
         $this->loadTranslationsFrom(__DIR__.'/lang', 'finance');
         $this->loadViewsFrom(__DIR__.'/resources/views', 'finance');
+
+        // Pack-owned Livewire component (not in app/Livewire, so not
+        // auto-discovered) — register its alias so <livewire:budget-tool />
+        // and the ToolRegistry 'budget-tool' descriptor resolve.
+        Livewire::component('budget-tool', BudgetTool::class);
 
         // Contribute the pack's Tips to Core's catalog without Core having
         // to know they exist (ADR 0006). The resolver sorts by priority(),
