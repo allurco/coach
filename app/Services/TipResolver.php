@@ -24,6 +24,22 @@ class TipResolver
     public function __construct(protected array $tips) {}
 
     /**
+     * Append one or more Tips to the catalog. The contribution seam for
+     * Domain Packs: a pack registers its own Tips from its ServiceProvider
+     * via `$this->app->extend(TipResolver::class, …)` so Core never has to
+     * enumerate pack-owned tips (see ADR 0006). Order is irrelevant —
+     * pick() sorts by priority().
+     */
+    public function register(Tip ...$tips): self
+    {
+        foreach ($tips as $tip) {
+            $this->tips[] = $tip;
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns the tip with the highest priority among the ones that
      * apply to (user, goal) and haven't been dismissed. Null when no
      * tip qualifies.

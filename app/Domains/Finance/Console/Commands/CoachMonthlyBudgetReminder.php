@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Domains\Finance\Console\Commands;
 
 use App\Agent\Agents\CoachAgent;
 use App\Domains\Finance\Models\Budget;

@@ -13,8 +13,10 @@ use App\Models\User;
  * of the app changes.
  *
  * Conventions:
- *   - id() returns a stable, kebab-case slug. It doubles as the lang
- *     namespace (`coach.tips.{id}.title|prompt`) and the dismissal key.
+ *   - id() returns a stable, kebab-case slug. It doubles as the dismissal
+ *     key. Core tips draw their copy from `coach.tips.{id}.title|prompt`;
+ *     pack-owned tips namespace their own copy in the pack's lang
+ *     namespace (e.g. `finance::tips.{id}.title|prompt`) — see ADR 0006.
  *   - priority() is 0-100. Higher wins ties. Roughly: 90+ = onboarding /
  *     blocking gaps, 60-89 = feature discovery, 30-59 = housekeeping,
  *     0-29 = idle nudges.

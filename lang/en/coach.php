@@ -183,14 +183,6 @@ return [
             'title' => 'Which area do you want to focus on first?',
             'prompt' => 'Which area should I start with?',
         ],
-        'set_up_budget' => [
-            'title' => 'Set up your monthly budget',
-            'prompt' => "Let's build my budget for this month.",
-        ],
-        'refresh_budget' => [
-            'title' => "Refresh this month's budget",
-            'prompt' => "Let's refresh the budget for this month.",
-        ],
         'add_first_action' => [
             'title' => 'Pin down the first concrete step',
             'prompt' => 'Help me set the first concrete action for this goal.',
