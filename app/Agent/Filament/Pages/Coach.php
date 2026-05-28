@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Ai\Files\Document;
 use Laravel\Ai\Files\Image;
+use Livewire\Attributes\Url;
 use Throwable;
 
 class Coach extends Page implements HasForms
@@ -56,6 +57,12 @@ class Coach extends Page implements HasForms
     /** Each entry: [id, name, label, last_activity_label]. */
     public array $goals = [];
 
+    /**
+     * The open Workspace's Goal, or null for the Goals start screen.
+     * Synced to ?goal= so a Workspace deep-links and the browser back
+     * button returns to the Goals screen (ADR 0007).
+     */
+    #[Url(as: 'goal')]
     public ?int $activeGoalId = null;
 
     public array $goalHistory = [];
@@ -123,25 +130,36 @@ class Coach extends Page implements HasForms
         //      calls loadPlan(), so we don't call loadPlan() again here.
         $this->form->fill();
         $this->loadGoals();
-        $this->activateDefaultGoal();
+
+        // Deep link / refresh with ?goal=N opens that Workspace (Goal::find
+        // is owner-scoped, so a stale or foreign id falls back to the Goals
+        // start screen). No ?goal → land on the Goals start screen with no
+        // active Goal (ADR 0007).
+        if ($this->activeGoalId !== null) {
+            $goal = Goal::find($this->activeGoalId);
+
+            if ($goal) {
+                $this->activateGoal($goal);
+            } else {
+                $this->activeGoalId = null;
+            }
+        }
     }
 
     /**
-     * Pick the user's defaultGoal as the active workspace and load its
-     * latest conversation. No-op when the user has no goals (shouldn't
-     * happen — UserObserver creates one on signup).
+     * Return to the Goals start screen — clears the active Goal and its
+     * conversation thread. Synced to the URL (?goal drops off).
      */
-    protected function activateDefaultGoal(): void
+    public function backToGoals(): void
     {
-        $defaultGoal = auth()->user()?->defaultGoal();
-
-        if ($defaultGoal === null) {
-            return;
-        }
-
-        // setActiveGoal does its own Goal::find. Hand off the already-
-        // resolved Goal model to skip the redundant lookup.
-        $this->activateGoal($defaultGoal);
+        $this->activeGoalId = null;
+        $this->messages = [];
+        $this->conversationId = null;
+        $this->historyOpen = false;
+        $this->goalHistory = [];
+        $this->memoActiveGoal = null;
+        $this->memoActiveGoalResolved = false;
+        $this->memoPendingPlanCount = null;
     }
 
     /**
@@ -165,6 +183,8 @@ class Coach extends Page implements HasForms
         $this->historyOpen = false;
         $this->goalHistory = [];
         $this->memoPendingPlanCount = null;
+        $this->memoActiveGoal = null;
+        $this->memoActiveGoalResolved = false;
         // Tell the embedded PlanFlyout component to switch goals and reload —
         // Livewire children persist their own state across requests, so prop
         // changes alone don't propagate. See ADR 0005.

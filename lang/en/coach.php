@@ -59,6 +59,11 @@ return [
     'header' => [
         'new_thread' => 'new thread',
         'history' => 'history',
+        'back_to_goals' => 'Back to goals',
+    ],
+
+    'goals_screen' => [
+        'title' => 'Your goals',
     ],
 
     'new_goal_modal' => [
