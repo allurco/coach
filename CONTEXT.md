@@ -93,7 +93,8 @@ Agent-owned concepts:
 - The coaching persona (the prompt voice)
 - The prompt builder (composes core context + every enabled Pack's
   signals into the system prompt)
-- The tool registry (what the agent can do)
+- The Agent Tool registry (the Agent Tools the agent may call — see
+  **Agent Tool**, distinct from **Tool**)
 - AgentConversation (the persisted thread per Goal)
 - Agent Memory (free-form facts the agent stores about the user,
   pack-agnostic — currently `CoachMemory`)
@@ -101,6 +102,48 @@ Agent-owned concepts:
 The Agent is what makes Coach holistic in practice. Packs publish
 facts in isolation; the Agent is the only thing that sees the whole
 person at once.
+
+## Tool
+
+A **workspace UI surface** the user opens — the Budget planner, the
+Plan, the Contacts manager. Tools are what the Workspace's tab bar
+(mobile) / right rail (desktop) shows, and what the **ToolRegistry**
+lists. A Tool is either **core** (applies to every Goal — Plan,
+Contacts) or **pack-contributed** (scoped to a Pack's Goals — Budget
+belongs to Finance). Each Pack may designate one **primary** Tool: the
+slot that sits next to Chat in the tab bar and changes with the active
+Goal's pack (Finance → Budget, a future Fitness pack → a workout Tool).
+
+Packs contribute Tools by self-registering into the core `ToolRegistry`
+from their ServiceProvider, the same self-registration pattern as
+Tips and commands (see [ADR 0006](docs/adr/0006-packs-self-register-into-core-catalogs.md)).
+A Tool is a self-contained Livewire component, so it can be embedded
+in the Workspace on mobile and desktop alike.
+
+**Tool ≠ Agent Tool.** A Pack often ships both for the same area:
+Finance contributes a *Budget* **Tool** (the visible planner) and a
+*ReadBudget* **Agent Tool** (the invisible LLM function). They are
+different artifacts that may share a topic.
+
+"Tool Box" is **retired terminology** — it named the old standalone
+Filament pages (Plan/Goals/Contacts) that the Workspace replaces.
+
+## Agent Tool
+
+An **LLM-callable function** the Agent invokes mid-conversation —
+`ReadBudget`, `CreateAction`, `ShareViaEmail`. Invisible to the user;
+the user sees only its effect. Registered in the Agent layer
+(`CoachAgent`), distinct from the user-facing **Tool**.
+
+## Workspace
+
+The **per-Goal screen**: the chat plus that Goal's Tools. The user
+reaches a Workspace by selecting a Goal from the Goals start screen.
+On mobile the Workspace fills the screen and a bottom tab bar swaps
+between Chat and the Goal's Tools (drill in; go back to switch Goals).
+On desktop it's master–detail: a persistent Goals rail, the chat, and
+a right rail that opens the selected Tool. Same screen, two layouts at
+a breakpoint.
 
 ## Core
 

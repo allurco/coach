@@ -1,7 +1,16 @@
 # ADR 0005 — Shared UI between layers lives as a Livewire component in `app/Livewire/`
 
-- **Status:** Accepted
+- **Status:** Accepted (amended by [ADR 0007](./0007-chat-centric-workspace-and-tool-contribution.md))
 - **Date:** 2026-05-27
+
+> **Amendment (2026-05-28, ADR 0007):** The original motivation below was
+> that `PlanFlyout` is shared between **two host pages** — the Coach chat
+> page and a standalone Plan tool page. ADR 0007 retires the standalone
+> Plan page; `PlanFlyout` is now embedded in the single **Workspace**,
+> reused across breakpoints (mobile tab view + desktop right rail) and
+> wrapped as the `Plan` **Tool**. The `app/Livewire/` convention and the
+> layer-neutral discipline still hold — only the "two host pages"
+> justification is superseded.
 
 ## Context
 
