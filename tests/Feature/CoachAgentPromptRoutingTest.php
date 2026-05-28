@@ -1,6 +1,7 @@
 <?php
 
 use App\Agent\Agents\CoachAgent;
+use App\Agent\Services\CoachPromptBuilder;
 use App\Models\Action;
 use App\Models\Goal;
 use App\Models\User;
@@ -163,8 +164,9 @@ it('serves the en_US attachment template with English field labels and US docume
  * regex BEFORE the path is built.
  */
 it('rejects locale values that could escape the prompts/locale directory', function () {
-    $coach = new CoachAgent;
-    $resolveLocale = new ReflectionMethod($coach, 'resolveLocale');
+    // Phase 9 — resolveLocale moved from CoachAgent to CoachPromptBuilder.
+    $builder = new CoachPromptBuilder;
+    $resolveLocale = new ReflectionMethod($builder, 'resolveLocale');
     $resolveLocale->setAccessible(true);
 
     $malicious = [
@@ -182,8 +184,8 @@ it('rejects locale values that could escape the prompts/locale directory', funct
 
     foreach ($malicious as $input) {
         $this->user->update(['locale' => $input]);
-        expect($resolveLocale->invoke($coach))
-            ->toBe('en_US', "locale '{$input}' should fall back to en_US, got: ".$resolveLocale->invoke($coach));
+        expect($resolveLocale->invoke($builder, $this->user->fresh()))
+            ->toBe('en_US', "locale '{$input}' should fall back to en_US, got: ".$resolveLocale->invoke($builder, $this->user->fresh()));
     }
 });
 
@@ -211,16 +213,16 @@ it('falls back to en_US knowledge when the user locale file does not exist', fun
  * `en_US`. Makes the resolved value honest and the cache key consistent.
  */
 it('normalizes bare en to en_US and en-US to en_US', function () {
-    $coach = new CoachAgent;
-    $resolveLocale = new ReflectionMethod($coach, 'resolveLocale');
+    $builder = new CoachPromptBuilder;
+    $resolveLocale = new ReflectionMethod($builder, 'resolveLocale');
     $resolveLocale->setAccessible(true);
 
     $this->user->update(['locale' => 'en']);
-    expect($resolveLocale->invoke($coach))->toBe('en_US');
+    expect($resolveLocale->invoke($builder, $this->user->fresh()))->toBe('en_US');
 
     $this->user->update(['locale' => 'en-US']);
-    expect($resolveLocale->invoke($coach))->toBe('en_US');
+    expect($resolveLocale->invoke($builder, $this->user->fresh()))->toBe('en_US');
 
     $this->user->update(['locale' => 'pt-BR']);
-    expect($resolveLocale->invoke($coach))->toBe('pt_BR');
+    expect($resolveLocale->invoke($builder, $this->user->fresh()))->toBe('pt_BR');
 });
