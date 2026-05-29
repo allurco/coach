@@ -10,7 +10,8 @@
 <nav class="tool-tabbar" aria-label="{{ __('coach.tabbar.chat') }}">
     <button type="button"
             class="tool-tab {{ $activeTool === null ? 'is-active' : '' }}"
-            wire:click="closeTool">
+            :class="! railOpen ? 'is-active' : ''"
+            @click="toolClose()">
         <svg class="tool-tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span>{{ __('coach.tabbar.chat') }}</span>
     </button>
@@ -18,7 +19,7 @@
     @if ($primary)
         <button type="button"
                 class="tool-tab {{ $activeTool === $primary['key'] ? 'is-active' : '' }}"
-                wire:click="openTool('{{ $primary['key'] }}')">
+                @click="toolOpen('{{ $primary['key'] }}')">
             @svg($primary['icon'], 'tool-tab-icon')
             <span>{{ $primary['label'] }}</span>
         </button>

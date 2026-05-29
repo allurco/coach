@@ -24,7 +24,7 @@
             <button type="button"
                     class="conv-item {{ $activeGoalId === $goal['id'] ? 'active' : '' }}"
                     wire:click="setActiveGoal({{ $goal['id'] }})"
-                    @click="sidebarOpen = false">
+                    @click="sidebarOpen = false; railOpen = false">
                 <div class="conv-item-title">{{ $goal['name'] }}</div>
                 <div class="conv-item-time">
                     @if ($goal['last_activity_label'])

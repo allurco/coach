@@ -4,6 +4,7 @@
 <div class="coach-header">
     <button type="button" class="coach-back-btn"
             wire:click="backToGoals"
+            @click="railOpen = false"
             aria-label="{{ __('coach.header.back_to_goals') }}"
             title="{{ __('coach.header.back_to_goals') }}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -24,7 +25,7 @@
             @foreach ($this->workspaceTools() as $tool)
                 <button type="button"
                         class="coach-tool-btn {{ $activeTool === $tool['key'] ? 'is-active' : '' }}"
-                        wire:click="openTool('{{ $tool['key'] }}')"
+                        @click="toolOpen('{{ $tool['key'] }}')"
                         title="{{ $tool['label'] }}">
                     @svg($tool['icon'], 'coach-tool-btn-icon')
                     <span>{{ $tool['label'] }}</span>

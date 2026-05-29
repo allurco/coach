@@ -4,15 +4,18 @@
      ADR 0007. --}}
 @php $tool = $activeTool ? collect($this->workspaceTools())->firstWhere('key', $activeTool) : null; @endphp
 
-<div class="plan-overlay tool-rail-overlay {{ $activeTool ? 'is-open' : '' }}"
-     @if (! $activeTool) style="display:none" @endif
-     wire:click="closeTool"></div>
+<div class="plan-overlay tool-rail-overlay"
+     :class="railOpen ? 'is-open' : ''"
+     x-show="railOpen"
+     x-transition.opacity.duration.200ms
+     @click="toolClose()"
+     style="display:none"></div>
 
-<aside class="plan-drawer tool-rail {{ $activeTool ? 'is-open' : '' }}">
+<aside class="plan-drawer tool-rail" :class="railOpen ? 'is-open' : ''">
     @if ($tool)
         <div class="tool-rail-bar">
             <span class="tool-rail-title">{{ $tool['label'] }}</span>
-            <button type="button" class="plan-close-btn" wire:click="closeTool" aria-label="{{ __('coach.tabbar.chat') }}">
+            <button type="button" class="plan-close-btn" @click="toolClose()" aria-label="{{ __('coach.tabbar.chat') }}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>

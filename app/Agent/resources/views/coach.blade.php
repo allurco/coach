@@ -3,9 +3,30 @@
      Goals start screen; once a Goal is selected it shows that Goal's
      Workspace (chat + tools). State synced to ?goal= (ADR 0007). --}}
 <div class="coach-root"
-     x-data="{ sidebarOpen: false, moreOpen: false }"
+     x-data="{
+        sidebarOpen: false,
+        moreOpen: false,
+        /* Alpine owns the rail's VISUAL open/close so content stays present
+           during the hide animation; Livewire's activeTool (content + ?tool=)
+           is cleared only AFTER the animation finishes. railOpen is a constant
+           in x-data (no server interpolation, so morphs don't re-init it) and
+           seeded once from the server in x-init. (ADR 0007) */
+        railOpen: false,
+        toolOpen(key) {
+            if (this.$wire.activeTool === key) { this.toolClose(); return; }
+            this.railOpen = true;
+            this.moreOpen = false;
+            this.$wire.openTool(key);
+        },
+        toolClose() {
+            if (! this.railOpen) return;
+            this.railOpen = false;
+            setTimeout(() => this.$wire.closeTool(), 320);
+        },
+     }"
+     x-init="railOpen = ($wire.activeTool !== null)"
      x-effect="document.body.classList.toggle('coach-overlay-locked', sidebarOpen || moreOpen)"
-     @keydown.escape.window="sidebarOpen = false; moreOpen = false">
+     @keydown.escape.window="sidebarOpen = false; moreOpen = false; toolClose()">
     @if ($activeGoalId === null)
         @include('agent::coach._goals-screen')
     @else

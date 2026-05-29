@@ -12,8 +12,7 @@
             @continue($tool['is_primary'])
             <button type="button"
                     class="more-item"
-                    wire:click="openTool('{{ $tool['key'] }}')"
-                    @click="moreOpen = false">
+                    @click="moreOpen = false; toolOpen('{{ $tool['key'] }}')">
                 <span class="more-item-icon">@svg($tool['icon'], 'more-svg')</span>
                 <span class="more-item-label">{{ $tool['label'] }}</span>
             </button>
