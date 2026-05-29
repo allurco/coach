@@ -33,9 +33,8 @@
         {{-- .is-workspace lets CSS hide Filament's top nav (logo + avatar) in
              the Workspace, where the slim goal bar takes over. The Filament
              top nav stays on the Goals start screen (its home top bar).
-             wire:transition shares a view-transition-name with the Goals
-             screen so the drill-in slides (native View Transitions, ADR 0007). --}}
-        <div class="coach-page is-workspace" wire:transition="coach-screen">
+             Goals⇄Workspace is a plain swap (no animation). --}}
+        <div class="coach-page is-workspace">
 
             <div class="coach-shell">
                 @include('agent::coach._sidebar')
@@ -48,15 +47,17 @@
                     @include('agent::coach._header')
                     @include('agent::coach._chat-thread')
                     @include('agent::coach._composer')
-                    @include('agent::coach._tab-bar')
                 </div>
 
                 {{-- Tool rail: a third column inside the shell on desktop (the
-                     chat shrinks to make room); a full-screen overlay on mobile.
-                     ADR 0007. --}}
+                     chat shrinks to make room); on mobile the chat slides out
+                     and this slides in — a pager between screens. ADR 0007. --}}
                 @include('agent::coach._tool-rail')
             </div>
 
+            {{-- Tab bar lives outside .coach-main so it stays put (fixed footer)
+                 while the chat pane slides on mobile. Desktop hides it. --}}
+            @include('agent::coach._tab-bar')
             @include('agent::coach._more-sheet')
         </div>
     @endif

@@ -1,7 +1,7 @@
 {{-- Goals start screen — the Workspace's home. Pick a Goal to drill into
      its Workspace; "nova" creates one. Proper goal cards (ADR 0007 /
      design pass). --}}
-<div class="goals-screen" wire:transition="coach-screen">
+<div class="goals-screen">
     <header class="goals-head">
         <h1 class="goals-title">{{ __('coach.goals_screen.title') }}</h1>
         <button type="button" class="goals-new-btn" wire:click="openNewGoal" title="{{ __('coach.sidebar.new_goal') }}">

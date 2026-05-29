@@ -2925,26 +2925,6 @@ body:has(.coach-page.is-workspace) .fi-page-content {
 }
 .more-svg, .more-item-icon svg { width: 22px; height: 22px; }
 
-/* Goals ⇄ Workspace drill-in slide (native View Transitions via
-   wire:transition="coach-screen", Livewire 4 / ADR 0007). The outgoing
-   screen slides left + fades; the incoming slides in from the right. */
-::view-transition-old(coach-screen) {
-    animation: 280ms cubic-bezier(.4,0,.2,1) both coach-screen-out;
-}
-::view-transition-new(coach-screen) {
-    animation: 300ms cubic-bezier(.4,0,.2,1) both coach-screen-in;
-}
-@keyframes coach-screen-out {
-    to { transform: translateX(-18%); opacity: 0; }
-}
-@keyframes coach-screen-in {
-    from { transform: translateX(100%); }
-}
-@media (prefers-reduced-motion: reduce) {
-    ::view-transition-old(coach-screen),
-    ::view-transition-new(coach-screen) { animation: none; }
-}
-
 /* ============================================================
    Goals start screen — proper goal cards (design pass / ADR 0007)
    ============================================================ */
@@ -3080,16 +3060,11 @@ body:has(.coach-page.is-workspace) .fi-page-content {
 .coach-tool-btn-icon { width: 16px; height: 16px; }
 
 /* ============================================================
-   Desktop: 3-column workspace + instant screen swap (ADR 0007)
-   - The Goals⇄Workspace slide is MOBILE ONLY (instant on desktop).
-   - Tools open as a third column that SHRINKS the chat (goal rail |
-     chat | tool), not a fixed overlay drawer.
+   Desktop: 3-column workspace (ADR 0007)
+   Tools open as a third column that SHRINKS the chat (goal rail |
+   chat | tool), not a fixed overlay drawer.
    ============================================================ */
 @media (min-width: 769px) {
-    /* slide is mobile-only — no view-transition animation on desktop */
-    ::view-transition-old(coach-screen),
-    ::view-transition-new(coach-screen) { animation: none; }
-
     /* no dimming backdrop on desktop — the rail sits beside the chat */
     .tool-rail-overlay { display: none !important; }
 
@@ -3114,4 +3089,40 @@ body:has(.coach-page.is-workspace) .fi-page-content {
     .coach-shell:has(.tool-rail.is-open) .tool-rail {
         border-left: 1px solid var(--c-line);
     }
+}
+
+/* ============================================================
+   Mobile workspace = a pager between screens (ADR 0007)
+   Tapping a tool slides the chat OUT to the left and the tool IN from the
+   right (you move to that screen) — not a drawer sliding over. The tab bar
+   is a fixed footer that stays put across the slide.
+   ============================================================ */
+@media (max-width: 768px) {
+    .tool-tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+    }
+
+    /* Chat pane slides as a screen; pad the bottom to clear the fixed tab bar */
+    .coach-main {
+        padding-bottom: calc(3.75rem + env(safe-area-inset-bottom));
+        transition: transform .32s cubic-bezier(.32, .72, .24, 1);
+    }
+    .coach-page:has(.tool-rail.is-open) .coach-main {
+        transform: translateX(-100%);
+    }
+
+    /* Tool screen: full width, above the fixed tab bar, slides in from right */
+    .tool-rail {
+        top: 0;
+        bottom: calc(3.75rem + env(safe-area-inset-bottom));
+        height: auto;
+        width: 100vw;
+        box-shadow: none;
+    }
+    /* It's a screen swap, not a drawer — no dimming backdrop */
+    .tool-rail-overlay { display: none !important; }
 }
