@@ -944,10 +944,11 @@ body:has(.complete-modal-overlay) .coach-thread {
     30% { opacity: 1; transform: translateY(-4px); }
 }
 
-/* Composer — single compact row: attach · input pill · icon send. */
+/* Composer — single compact row: attach · input pill · icon send.
+   Center-aligned so the paperclip and send sit level with the input. */
 .composer {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
 }
