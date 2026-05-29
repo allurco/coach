@@ -29,9 +29,13 @@
                     @include('agent::coach._composer')
                     @include('agent::coach._tab-bar')
                 </div>
+
+                {{-- Tool rail: a third column inside the shell on desktop (the
+                     chat shrinks to make room); a full-screen overlay on mobile.
+                     ADR 0007. --}}
+                @include('agent::coach._tool-rail')
             </div>
 
-            @include('agent::coach._tool-rail')
             @include('agent::coach._more-sheet')
         </div>
     @endif

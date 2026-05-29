@@ -397,6 +397,13 @@ class Coach extends Page implements HasForms
      */
     public function openTool(string $key): void
     {
+        // Toggle: tapping the open Tool's button closes it (back to chat).
+        if ($this->activeTool === $key) {
+            $this->activeTool = null;
+
+            return;
+        }
+
         $available = collect($this->workspaceTools())->pluck('key')->all();
         $this->activeTool = in_array($key, $available, true) ? $key : null;
     }

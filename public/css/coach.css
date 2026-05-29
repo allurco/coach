@@ -3064,3 +3064,40 @@ body:has(.coach-page.is-workspace) .fi-page-content {
 .coach-tool-btn:hover { color: var(--c-ink); border-color: color-mix(in srgb, var(--c-accent) 40%, var(--c-line)); }
 .coach-tool-btn.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
 .coach-tool-btn-icon { width: 16px; height: 16px; }
+
+/* ============================================================
+   Desktop: 3-column workspace + instant screen swap (ADR 0007)
+   - The Goals⇄Workspace slide is MOBILE ONLY (instant on desktop).
+   - Tools open as a third column that SHRINKS the chat (goal rail |
+     chat | tool), not a fixed overlay drawer.
+   ============================================================ */
+@media (min-width: 769px) {
+    /* slide is mobile-only — no view-transition animation on desktop */
+    ::view-transition-old(coach-screen),
+    ::view-transition-new(coach-screen) { animation: none; }
+
+    /* no dimming backdrop on desktop — the rail sits beside the chat */
+    .tool-rail-overlay { display: none !important; }
+
+    /* The shell becomes a 3-column grid; the tool column is 0 until a Tool
+       is open, then it expands and the chat (middle column) shrinks. The
+       grid-template-columns transition animates the reflow. */
+    .coach-shell {
+        grid-template-columns: 240px minmax(0, 1fr) 0;
+        transition: grid-template-columns .3s cubic-bezier(.32,.72,.24,1);
+    }
+    .coach-shell:has(.tool-rail.is-open) {
+        grid-template-columns: 240px minmax(0, 1fr) min(420px, 38vw);
+    }
+    .tool-rail {
+        position: static;
+        transform: none;
+        width: auto;
+        box-shadow: none;
+        border-left: none;
+        overflow: hidden;
+    }
+    .coach-shell:has(.tool-rail.is-open) .tool-rail {
+        border-left: 1px solid var(--c-line);
+    }
+}

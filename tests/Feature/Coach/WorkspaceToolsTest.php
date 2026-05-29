@@ -66,6 +66,17 @@ it('opens an available tool and closes back to chat', function () {
     expect($page->activeTool)->toBeNull();
 });
 
+it('toggles a tool closed when openTool is called with the already-open tool', function () {
+    $page = coachOnGoal('finance');
+
+    $page->openTool('budget');
+    expect($page->activeTool)->toBe('budget');
+
+    // Tapping the open tool's button again closes it (back to chat).
+    $page->openTool('budget');
+    expect($page->activeTool)->toBeNull();
+});
+
 it('ignores opening a tool not available for the active goal', function () {
     $page = coachOnGoal('fitness'); // no budget tool here
 
