@@ -2769,7 +2769,12 @@ body:has(.coach-page.is-workspace) .fi-page-content {
 .coach-main { padding: 0; }
 .coach-header { padding-left: 0.85rem; padding-right: 0.6rem; }
 .coach-thread { padding-left: 1rem; padding-right: 1rem; }
-.coach-main > form { padding: 0 0.85rem 0.6rem; }
+/* Opaque composer footer so the scrolling chat doesn't bleed through behind
+   the (now transparent) composer row. */
+.coach-main > form {
+    padding: 0.5rem 0.85rem 0.6rem;
+    background: var(--c-bg);
+}
 
 /* Composer: rounded field + icon-only orange send (prototype). */
 .send-btn {
