@@ -11,8 +11,10 @@
     @else
         {{-- .is-workspace lets CSS hide Filament's top nav (logo + avatar) in
              the Workspace, where the slim goal bar takes over. The Filament
-             top nav stays on the Goals start screen (its home top bar). --}}
-        <div class="coach-page is-workspace">
+             top nav stays on the Goals start screen (its home top bar).
+             wire:transition shares a view-transition-name with the Goals
+             screen so the drill-in slides (native View Transitions, ADR 0007). --}}
+        <div class="coach-page is-workspace" wire:transition="coach-screen">
 
             <div class="coach-shell">
                 @include('agent::coach._sidebar')

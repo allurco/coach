@@ -2911,3 +2911,23 @@ body:has(.coach-page.is-workspace) .fi-page-content {
     background: var(--c-surface, rgba(0,0,0,.05));
 }
 .more-svg, .more-item-icon svg { width: 22px; height: 22px; }
+
+/* Goals ⇄ Workspace drill-in slide (native View Transitions via
+   wire:transition="coach-screen", Livewire 4 / ADR 0007). The outgoing
+   screen slides left + fades; the incoming slides in from the right. */
+::view-transition-old(coach-screen) {
+    animation: 280ms cubic-bezier(.4,0,.2,1) both coach-screen-out;
+}
+::view-transition-new(coach-screen) {
+    animation: 300ms cubic-bezier(.4,0,.2,1) both coach-screen-in;
+}
+@keyframes coach-screen-out {
+    to { transform: translateX(-18%); opacity: 0; }
+}
+@keyframes coach-screen-in {
+    from { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(coach-screen),
+    ::view-transition-new(coach-screen) { animation: none; }
+}

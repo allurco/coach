@@ -1,7 +1,7 @@
 {{-- Goals start screen — the Workspace's home. Pick a Goal to drill into
      its Workspace; "novo" creates one. Reuses the sidebar's conv-item
      styling for the cards (ADR 0007). --}}
-<div class="goals-screen" style="max-width: 680px; margin: 0 auto; padding: 28px 20px;">
+<div class="goals-screen" wire:transition="coach-screen" style="max-width: 680px; margin: 0 auto; padding: 28px 20px;">
     <div class="sidebar-header">
         <div class="sidebar-title">{{ __('coach.goals_screen.title') }}</div>
         <button type="button" class="new-chat-btn" wire:click="openNewGoal" title="{{ __('coach.sidebar.new_goal') }}">
