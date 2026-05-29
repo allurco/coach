@@ -609,8 +609,12 @@ body:has(.complete-modal-overlay) .coach-thread {
     font-size: 0.95rem;
     line-height: 1.5;
     word-wrap: break-word;
-    white-space: pre-wrap;
 }
+
+/* Only the message text preserves newlines; the bubble itself uses normal
+   whitespace so the Blade template's indentation around the text doesn't
+   render as blank lines and balloon the bubble height. */
+.msg-text { white-space: pre-wrap; }
 
 .msg-bubble .msg-attachments {
     margin-top: 0.4rem;
