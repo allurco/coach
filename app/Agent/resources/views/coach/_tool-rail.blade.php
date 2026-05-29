@@ -30,7 +30,7 @@
             <div class="tool-rail-body" wire:key="tool-body-{{ $activeTool }}">
                 @switch($activeTool)
                     @case('plan')
-                        <livewire:plan-flyout :active-goal-id="$activeGoalId" :as-drawer="false" :key="'rail-plan-'.$activeGoalId" />
+                        <livewire:plan-flyout :active-goal-id="$activeGoalId" :as-drawer="false" :show-header="false" :key="'rail-plan-'.$activeGoalId" />
                         @break
                     @case('contacts')
                         <livewire:contacts-tool :key="'rail-contacts'" />
