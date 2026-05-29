@@ -48,7 +48,11 @@
             @if ($msg['role'] === 'user')
                 <div class="msg msg-user">
                     <div class="msg-bubble">
-                        {{ $msg['content'] }}
+                        {{-- Flush span: pre-wrap lives on .msg-text so the bubble
+                             can collapse the template's own indentation/newlines
+                             (otherwise pre-wrap renders them as blank lines and
+                             inflates the bubble). User newlines are preserved. --}}
+                        <span class="msg-text">{{ $msg['content'] }}</span>
                         @if (! empty($msg['attachments']))
                             <div class="msg-attachments">
                                 @foreach ($msg['attachments'] as $name)

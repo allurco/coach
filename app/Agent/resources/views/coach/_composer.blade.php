@@ -14,7 +14,10 @@
           wrap.dataset.optimistic = '1';
           const bubble = document.createElement('div');
           bubble.className = 'msg-bubble';
-          bubble.textContent = text;
+          const span = document.createElement('span');
+          span.className = 'msg-text';
+          span.textContent = text;
+          bubble.appendChild(span);
           wrap.appendChild(bubble);
           thread.appendChild(wrap);
           thread.scrollTop = thread.scrollHeight;
