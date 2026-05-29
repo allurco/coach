@@ -31,9 +31,10 @@ use Laravel\Ai\Streaming\Events\ToolResult;
  *     `config('coach.models.<key>')`. The web chat uses 'interactive'
  *     (Pro); the email path uses 'background' (Flash).
  *
- * Callers do NOT call `auth()->login()`. The service does it once at
- * the start of the turn so global scopes on Action/Memory/Budget work
- * for any tool the agent fires.
+ * Callers do NOT authenticate. The service does it once at the start of
+ * the turn (see authenticateTurn) so global scopes on Action/Memory/Budget
+ * work for any tool the agent fires — without disturbing an already-active
+ * web session.
  *
  * See ADR 0003 (Agent is its own layer) and the Phase 7 commit body.
  */
@@ -64,7 +65,7 @@ class CoachInteraction
     ): InteractionResult {
         // Authenticate once so Action/Memory/Budget global scopes apply
         // for the duration of any tools the agent fires.
-        auth()->login($user);
+        $this->authenticateTurn($user);
 
         $coach = $this->buildAgent($user, $conversationId, $activeGoalId);
 
@@ -148,6 +149,27 @@ class CoachInteraction
             toolActivity: $toolActivity,
             retried: $retried,
         );
+    }
+
+    /**
+     * Make this turn run as $user so the owner global scopes on
+     * Action/Memory/Budget resolve. In the stateless contexts (email webhook,
+     * scheduled command) no one is authenticated, so we log in. In the
+     * interactive web chat the user is ALREADY the authenticated session user;
+     * calling auth()->login() again would migrate the session id (a fresh id
+     * every turn — see SessionGuard::updateSession → session()->regenerate).
+     * The interactive turn runs inside the streamed runAi() response, where the
+     * new session cookie isn't reliably applied in a standalone PWA, so the next
+     * message arrives on the destroyed session id and bounces to login. Skipping
+     * the redundant re-login keeps the session stable across messages.
+     */
+    protected function authenticateTurn(User $user): void
+    {
+        if (auth()->id() === $user->getAuthIdentifier()) {
+            return;
+        }
+
+        auth()->login($user);
     }
 
     protected function buildAgent(User $user, ?string $conversationId, ?int $activeGoalId): CoachAgent
