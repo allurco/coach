@@ -85,9 +85,8 @@ body:has(.complete-modal-overlay) .coach-thread {
 .coach-sidebar {
     display: flex;
     flex-direction: column;
-    padding: 1rem 0;
+    padding: 1rem;
     border-right: 1px solid var(--c-line);
-    padding-right: 1rem;
     overflow: hidden;
 }
 
@@ -2931,3 +2930,137 @@ body:has(.coach-page.is-workspace) .fi-page-content {
     ::view-transition-old(coach-screen),
     ::view-transition-new(coach-screen) { animation: none; }
 }
+
+/* ============================================================
+   Goals start screen — proper goal cards (design pass / ADR 0007)
+   ============================================================ */
+.goals-screen {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vh, 4.5rem) 1.25rem 3rem;
+}
+.goals-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+.goals-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--c-ink);
+}
+.goals-new-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--c-accent);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+}
+.goals-new-btn:hover { filter: brightness(1.06); }
+.goals-new-btn:active { transform: scale(.97); }
+
+.goals-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.goal-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.95rem 1.1rem;
+    border: 1px solid var(--c-line);
+    border-radius: 1rem;
+    background: var(--c-bg);
+    cursor: pointer;
+    transition: border-color .15s, transform .12s, box-shadow .15s, background .15s;
+}
+.goal-card:hover {
+    border-color: color-mix(in srgb, var(--c-accent) 45%, var(--c-line));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px -12px rgba(15,15,15,.25);
+}
+.goal-card:active { transform: translateY(0); }
+
+.goal-card-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #a1a1aa;
+}
+.goal-dot--finance  { background: #10b981; }
+.goal-dot--fitness  { background: #6366f1; }
+.goal-dot--legal    { background: #f59e0b; }
+.goal-dot--health   { background: #ef4444; }
+.goal-dot--emotional{ background: #ec4899; }
+.goal-dot--learning { background: #8b5cf6; }
+
+.goal-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.goal-card-name {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--c-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.goal-card-meta {
+    font-size: 0.74rem;
+    color: var(--c-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.goal-card-label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.62rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    background: var(--c-surface, rgba(0,0,0,.05));
+    color: var(--c-muted);
+}
+.goal-card-chevron { color: var(--c-line); flex-shrink: 0; transition: color .15s, transform .15s; }
+.goal-card:hover .goal-card-chevron { color: var(--c-muted); transform: translateX(2px); }
+
+.goals-empty { color: var(--c-muted); font-size: 0.9rem; padding: 1.5rem 0; }
+
+/* Desktop = master-detail: no bottom tab bar; tools launch from header
+   buttons into the right rail. Mobile keeps the bottom tab bar. (ADR 0007) */
+.coach-header-tools { display: none; }
+@media (min-width: 769px) {
+    .tool-tabbar { display: none; }
+    .coach-header-tools {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-left: auto;
+    }
+    .coach-header-actions { margin-left: 0.3rem; }
+}
+.coach-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--c-line);
+    border-radius: 999px;
+    background: var(--c-bg);
+    color: var(--c-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.coach-tool-btn:hover { color: var(--c-ink); border-color: color-mix(in srgb, var(--c-accent) 40%, var(--c-line)); }
+.coach-tool-btn.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+.coach-tool-btn-icon { width: 16px; height: 16px; }

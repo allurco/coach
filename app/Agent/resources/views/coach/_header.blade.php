@@ -17,6 +17,21 @@
     </div>
 
     @if ($this->activeGoal())
+        {{-- Desktop tool launcher (master-detail): registry-driven buttons that
+             open the right rail. Hidden on mobile, where the bottom tab bar
+             handles this (ADR 0007). --}}
+        <div class="coach-header-tools">
+            @foreach ($this->workspaceTools() as $tool)
+                <button type="button"
+                        class="coach-tool-btn {{ $activeTool === $tool['key'] ? 'is-active' : '' }}"
+                        wire:click="openTool('{{ $tool['key'] }}')"
+                        title="{{ $tool['label'] }}">
+                    @svg($tool['icon'], 'coach-tool-btn-icon')
+                    <span>{{ $tool['label'] }}</span>
+                </button>
+            @endforeach
+        </div>
+
         <div class="coach-header-actions">
             <button type="button" class="coach-icon-btn"
                     wire:click="newConversation"
