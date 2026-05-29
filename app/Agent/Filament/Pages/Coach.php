@@ -380,15 +380,22 @@ class Coach extends Page implements HasForms
     }
 
     /**
-     * The active pack's primary Tool key — the slot next to Chat in the
-     * tab bar (Finance → 'budget'). Null when the active Goal's pack has
-     * no primary (e.g. a 'general' Goal).
+     * The Tool key for the slot next to Chat in the tab bar. Prefers the
+     * pack's designated primary (Finance → 'budget'); when the pack has none
+     * (e.g. a 'general' Goal with only core Tools), promotes the first
+     * available Tool so the slot is never a dead placeholder. Null only on
+     * the Goals start screen (no Tools at all).
      */
     public function primaryToolKey(): ?string
     {
         $goal = $this->activeGoal();
+        if ($goal === null) {
+            return null;
+        }
 
-        return $goal ? app(ToolRegistry::class)->primaryFor($goal['label'])?->key : null;
+        $primary = app(ToolRegistry::class)->primaryFor($goal['label']);
+
+        return $primary?->key ?? ($this->workspaceTools()[0]['key'] ?? null);
     }
 
     /**

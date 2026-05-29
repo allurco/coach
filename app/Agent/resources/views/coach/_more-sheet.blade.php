@@ -7,9 +7,12 @@
 <div class="more-sheet" :class="moreOpen ? 'is-open' : ''">
     <div class="more-sheet-handle" @click="moreOpen = false"></div>
     <div class="more-sheet-title">{{ __('coach.tabbar.more') }}</div>
+    @php $primaryKey = $this->primaryToolKey(); @endphp
     <div class="more-grid">
         @foreach ($this->workspaceTools() as $tool)
-            @continue($tool['is_primary'])
+            {{-- Skip whatever sits in the tab bar's primary slot (the pack
+                 primary, or the promoted first Tool) so it isn't listed twice. --}}
+            @continue($tool['key'] === $primaryKey)
             <button type="button"
                     class="more-item"
                     @click="moreOpen = false; toolOpen('{{ $tool['key'] }}')">

@@ -45,8 +45,19 @@ it('adds the Finance budget tool (and marks it primary) on a finance goal', func
 it('does not expose the budget tool on a non-finance goal', function () {
     $page = coachOnGoal('fitness');
 
-    expect(collect($page->workspaceTools())->pluck('key')->all())->not->toContain('budget')
-        ->and($page->primaryToolKey())->toBeNull();
+    expect(collect($page->workspaceTools())->pluck('key')->all())->not->toContain('budget');
+});
+
+it('promotes the first tool into the primary slot when the pack has no primary', function () {
+    // A general goal carries only core Tools — the pack designates no primary
+    // (ToolRegistry::primaryFor is null), so the tab bar would otherwise show a
+    // dead placeholder. primaryToolKey() promotes the first available Tool.
+    $page = coachOnGoal('general');
+
+    $firstKey = $page->workspaceTools()[0]['key'];
+
+    expect($page->primaryToolKey())->toBe($firstKey)
+        ->and($firstKey)->not->toBeNull();
 });
 
 it('resolves tool labels through translation (not raw keys)', function () {
