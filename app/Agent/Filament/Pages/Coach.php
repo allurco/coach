@@ -150,9 +150,18 @@ class Coach extends Page implements HasForms
             $goal = Goal::find($this->activeGoalId);
 
             if ($goal) {
+                // activateGoal() resets activeTool — capture the URL's ?tool
+                // first and re-open it (validated against this goal's Tools)
+                // so a Tool deep-link / browser back survives the mount.
+                $deepTool = $this->activeTool;
                 $this->activateGoal($goal);
+
+                if ($deepTool !== null) {
+                    $this->openTool($deepTool);
+                }
             } else {
                 $this->activeGoalId = null;
+                $this->activeTool = null;
             }
         }
     }

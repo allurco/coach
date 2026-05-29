@@ -31,6 +31,15 @@ class BudgetTool extends Component
     /** Snapshot row for the flyout, hydrated by openBudget(). */
     public ?array $budgetData = null;
 
+    /**
+     * Embedded in the Workspace tool rail (ADR 0007): auto-hydrate the
+     * current budget so the editor renders inline, no toggle button.
+     */
+    public function mount(): void
+    {
+        $this->openBudget();
+    }
+
     // Share modal state.
     public bool $budgetShareOpen = false;
 

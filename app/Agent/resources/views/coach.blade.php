@@ -3,26 +3,34 @@
      Goals start screen; once a Goal is selected it shows that Goal's
      Workspace (chat + tools). State synced to ?goal= (ADR 0007). --}}
 <div class="coach-root"
-     x-data="{ planOpen: false, sidebarOpen: false }"
-     x-effect="document.body.classList.toggle('coach-overlay-locked', planOpen || sidebarOpen)"
-     @keydown.escape.window="planOpen = false; sidebarOpen = false">
+     x-data="{ sidebarOpen: false, moreOpen: false }"
+     x-effect="document.body.classList.toggle('coach-overlay-locked', sidebarOpen || moreOpen)"
+     @keydown.escape.window="sidebarOpen = false; moreOpen = false">
     @if ($activeGoalId === null)
         @include('agent::coach._goals-screen')
     @else
-        <div class="coach-page">
+        {{-- .is-workspace lets CSS hide Filament's top nav (logo + avatar) in
+             the Workspace, where the slim goal bar takes over. The Filament
+             top nav stays on the Goals start screen (its home top bar). --}}
+        <div class="coach-page is-workspace">
 
             <div class="coach-shell">
                 @include('agent::coach._sidebar')
 
                 <div class="coach-main">
-                    @include('agent::coach._tip-banner')
+                    {{-- TODO(tips): the in-screen tip banner is hidden pending a
+                         new home — it doesn't fit the slim Workspace. Candidate:
+                         deliver tips as push notifications (PWA) instead of an
+                         in-chat banner. See memory project-tips-need-a-home. --}}
                     @include('agent::coach._header')
                     @include('agent::coach._chat-thread')
                     @include('agent::coach._composer')
+                    @include('agent::coach._tab-bar')
                 </div>
             </div>
 
-            <livewire:plan-flyout :active-goal-id="$activeGoalId" :as-drawer="true" />
+            @include('agent::coach._tool-rail')
+            @include('agent::coach._more-sheet')
         </div>
     @endif
 
