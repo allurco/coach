@@ -944,25 +944,33 @@ body:has(.complete-modal-overlay) .coach-thread {
     30% { opacity: 1; transform: translateY(-4px); }
 }
 
-/* Composer */
+/* Composer — single compact row: attach · input pill · icon send. */
 .composer {
-    background: var(--c-bg);
-    border: 1px solid var(--c-line);
-    border-radius: 16px;
-    padding: 0.65rem 1rem 0.55rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
+}
+
+/* The input pill grows to fill the row; the textarea sits transparent inside. */
+.composer-field {
+    flex: 1;
+    min-width: 0;
+    background: var(--c-surface, rgba(0, 0, 0, .04));
+    border: 1px solid var(--c-line);
+    border-radius: 1.35rem;
+    padding: 0.5rem 1rem;
     transition: border-color .15s ease, box-shadow .15s ease;
+}
+.composer-field:focus-within {
+    border-color: var(--c-ink);
+    box-shadow: 0 2px 14px -8px color-mix(in srgb, var(--c-ink) 18%, transparent);
 }
 
 /* The Filament schema container reserves a 24px grid gap between every
-   field, including the now-collapsed FilePond — kill it so the textarea
-   sits flush against the actions row. */
+   field, including the now-collapsed FilePond — kill it so the field stays
+   the height of the textarea. */
 .coach-page .composer .fi-sc { gap: 0 !important; }
-
-.composer:focus-within {
-    border-color: var(--c-ink);
-    box-shadow: 0 4px 24px -8px color-mix(in srgb, var(--c-ink) 15%, transparent);
-}
 
 .coach-page .composer textarea,
 .coach-page .composer .fi-input,
