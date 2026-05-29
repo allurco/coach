@@ -27,6 +27,14 @@ class PlanFlyout extends Component
 
     public bool $asDrawer = true;
 
+    /**
+     * Render the component's own editorial header (eyebrow + count). The
+     * tool rail already shows the Tool's title + close in its bar, so it
+     * embeds this with showHeader=false to avoid a duplicate "PLANO". The
+     * standalone Plan tool page and the chat sidebar drawer keep it.
+     */
+    public bool $showHeader = true;
+
     public string $planFilter = 'pending';
 
     public array $planActions = [];
@@ -41,10 +49,12 @@ class PlanFlyout extends Component
         ?int $activeGoalId = null,
         bool $showGoalPicker = false,
         bool $asDrawer = true,
+        bool $showHeader = true,
     ): void {
         $this->activeGoalId = $activeGoalId;
         $this->showGoalPicker = $showGoalPicker;
         $this->asDrawer = $asDrawer;
+        $this->showHeader = $showHeader;
         $this->loadPlan();
     }
 

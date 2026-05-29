@@ -13,17 +13,19 @@
         <div class="plan-page">
     @endif
 
-        <div class="plan-drawer-header drawer-editorial-header">
-            <div>
-                <div class="drawer-eyebrow">{{ __('coach.plan_flyout.eyebrow') }}</div>
-                <div class="drawer-headline">{{ trans_choice('coach.plan.count', count($planActions), ['count' => count($planActions)]) }}</div>
+        @if ($showHeader)
+            <div class="plan-drawer-header drawer-editorial-header">
+                <div>
+                    <div class="drawer-eyebrow">{{ __('coach.plan_flyout.eyebrow') }}</div>
+                    <div class="drawer-headline">{{ trans_choice('coach.plan.count', count($planActions), ['count' => count($planActions)]) }}</div>
+                </div>
+                @if ($asDrawer)
+                    <button type="button" class="plan-close-btn" @click="planOpen = false">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                @endif
             </div>
-            @if ($asDrawer)
-                <button type="button" class="plan-close-btn" @click="planOpen = false">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            @endif
-        </div>
+        @endif
 
         <div class="plan-filters">
             @foreach (__('coach.plan.filters') as $key => $label)

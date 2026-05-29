@@ -85,9 +85,8 @@ body:has(.complete-modal-overlay) .coach-thread {
 .coach-sidebar {
     display: flex;
     flex-direction: column;
-    padding: 1rem 0;
+    padding: 1rem;
     border-right: 1px solid var(--c-line);
-    padding-right: 1rem;
     overflow: hidden;
 }
 
@@ -419,28 +418,76 @@ body:has(.complete-modal-overlay) .coach-thread {
 }
 
 /* Header */
+/* Slim workspace top bar (prototype / ADR 0007): back · name · label · actions */
 .coach-header {
-    padding: 1rem 0 1.25rem;
+    padding: 0.55rem 0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     border-bottom: 1px solid var(--c-line);
 }
 
-/* The middle text block grows to push plan toggle to the right */
+.coach-back-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: none;
+    border-radius: 999px;
+    color: var(--c-text, #3f3f46);
+    cursor: pointer;
+    transition: background .15s;
+}
+.coach-back-btn:hover { background: var(--c-surface, rgba(0,0,0,.05)); }
+
+/* Name + label sit inline; the block grows to push actions right */
 .coach-header-text {
     flex: 1;
     min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
 }
 
 .coach-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.coach-status-label {
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-muted);
+}
+
+.coach-header-actions {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.15rem;
 }
+.coach-icon-btn {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: none;
+    border-radius: 999px;
+    color: var(--c-muted);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.coach-icon-btn:hover { background: var(--c-surface, rgba(0,0,0,.05)); color: var(--c-text, #3f3f46); }
 
 .coach-status {
     font-size: 0.72rem;
@@ -541,13 +588,38 @@ body:has(.complete-modal-overlay) .coach-thread {
     margin-bottom: 0.2rem;
 }
 
-/* Messages */
+/* Messages — user = right-aligned orange bubble; coach = flat full-width
+   (no avatar) so prose + tables render at full width (prototype / ADR 0007). */
 .msg {
     margin-bottom: 1.25rem;
     display: flex;
     gap: 0.85rem;
     animation: msg-in 220ms cubic-bezier(0.21, 0.95, 0.4, 1) both;
 }
+
+.msg-user { justify-content: flex-end; }
+
+.msg-bubble {
+    max-width: 80%;
+    background: var(--c-accent);
+    color: #fff;
+    padding: 0.55rem 0.9rem;
+    border-radius: 1.1rem;
+    border-bottom-right-radius: 0.35rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.msg-bubble .msg-attachments {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.msg-coach .msg-body { flex: 1; min-width: 0; }
 
 /* Limit the entrance animation to user/error bubbles + the in-flight
    thinking bubble. Once a message is committed (no longer streaming),
@@ -872,25 +944,34 @@ body:has(.complete-modal-overlay) .coach-thread {
     30% { opacity: 1; transform: translateY(-4px); }
 }
 
-/* Composer */
+/* Composer — single compact row: attach · input pill · icon send.
+   Center-aligned so the paperclip and send sit level with the input. */
 .composer {
-    background: var(--c-bg);
-    border: 1px solid var(--c-line);
-    border-radius: 16px;
-    padding: 0.65rem 1rem 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
+}
+
+/* The input pill grows to fill the row; the textarea sits transparent inside. */
+.composer-field {
+    flex: 1;
+    min-width: 0;
+    background: var(--c-surface, rgba(0, 0, 0, .04));
+    border: 1px solid var(--c-line);
+    border-radius: 1.35rem;
+    padding: 0.5rem 1rem;
     transition: border-color .15s ease, box-shadow .15s ease;
+}
+.composer-field:focus-within {
+    border-color: var(--c-ink);
+    box-shadow: 0 2px 14px -8px color-mix(in srgb, var(--c-ink) 18%, transparent);
 }
 
 /* The Filament schema container reserves a 24px grid gap between every
-   field, including the now-collapsed FilePond — kill it so the textarea
-   sits flush against the actions row. */
+   field, including the now-collapsed FilePond — kill it so the field stays
+   the height of the textarea. */
 .coach-page .composer .fi-sc { gap: 0 !important; }
-
-.composer:focus-within {
-    border-color: var(--c-ink);
-    box-shadow: 0 4px 24px -8px color-mix(in srgb, var(--c-ink) 15%, transparent);
-}
 
 .coach-page .composer textarea,
 .coach-page .composer .fi-input,
@@ -2658,4 +2739,433 @@ body:has(.complete-modal-overlay) .coach-thread {
 
 .dark .budget-flyout-actions {
     border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* In the Workspace the slim goal bar replaces Filament's top nav (logo +
+   avatar). Hide the top nav there; it stays on the Goals start screen as
+   the home top bar (prototype / ADR 0007). */
+body:has(.coach-page.is-workspace) .fi-topbar {
+    display: none;
+}
+
+/* In the Workspace, break out of Filament's page padding/max-width so the
+   slim top bar + chat go edge-to-edge like a full-screen app shell
+   (prototype / ADR 0007). Goals start screen keeps Filament's normal padding. */
+body:has(.coach-page.is-workspace) .fi-main {
+    max-width: none;
+    padding: 0;
+}
+body:has(.coach-page.is-workspace) .fi-page-content {
+    padding: 0;
+    margin: 0;
+}
+/* The base .coach-shell height subtracts ~110px for Filament's topbar, but the
+   topbar is hidden in the Workspace — so reclaim that space and fill the
+   viewport. Without this the shell stops ~100px short and the composer floats
+   above a dead band at the bottom. */
+body:has(.coach-page.is-workspace) .fi-page-header-main-ctn {
+    padding-top: 0 !important;
+}
+body:has(.coach-page.is-workspace) .coach-shell {
+    height: 100dvh;
+}
+
+/* ============================================================
+   Workspace tab bar + Tool rail + More sheet + chat padding
+   (prototype / ADR 0007)
+   ============================================================ */
+
+/* Full-bleed workspace: header spans full width; chat + composer get inset
+   horizontal padding so messages aren't flush to the edge. */
+.coach-main { padding: 0; }
+.coach-header { padding-left: 0.85rem; padding-right: 0.6rem; }
+.coach-thread { padding-left: 1rem; padding-right: 1rem; }
+/* Opaque composer footer so the scrolling chat doesn't bleed through behind
+   the (now transparent) composer row. */
+.coach-main > form {
+    padding: 0.5rem 0.85rem 0.6rem;
+    background: var(--c-bg);
+}
+
+/* Composer: rounded field + icon-only orange send (prototype). */
+.send-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 999px;
+    background: var(--c-accent);
+    color: #fff;
+    cursor: pointer;
+    transition: filter .15s, opacity .15s;
+}
+.send-btn:hover { filter: brightness(1.05); }
+.send-btn:disabled { opacity: .5; cursor: default; }
+.composer-attach-btn {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: none;
+    border-radius: 999px;
+    color: var(--c-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.composer-attach-btn:hover { background: var(--c-surface, rgba(0,0,0,.05)); }
+
+/* Bottom tab bar */
+.tool-tabbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--c-line);
+    background: var(--c-bg, #fff);
+}
+.tool-tab {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.35rem 0.25rem;
+    border-radius: 0.6rem;
+    color: var(--c-muted);
+    font-size: 0.68rem;
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color .15s, background .15s;
+}
+.tool-tab:hover { background: var(--c-surface, rgba(0,0,0,.04)); }
+.tool-tab.is-active { color: var(--c-accent); font-weight: 600; }
+.tool-tab.is-disabled { color: var(--c-line); cursor: default; }
+.tool-tab-icon { width: 20px; height: 20px; }
+
+/* Tool rail close bar + body (rail reuses .plan-drawer) */
+.tool-rail-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem 0.5rem;
+    flex-shrink: 0;
+}
+.tool-rail-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-muted);
+}
+.tool-rail-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; padding: 0 0.25rem 1rem; animation: tool-fade .25s ease; }
+
+/* Inner panel holds the bar + body. Default (mobile) it just fills the rail;
+   desktop pins it to the right edge so it can slide in (see desktop block). */
+.tool-rail-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Switching Tools (keyed body re-created) cross-fades the new content in. */
+@keyframes tool-fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Mobile: the rail becomes a full-screen swap */
+@media (max-width: 768px) {
+    .tool-rail { width: 100vw; }
+}
+
+/* "Mais" bottom sheet */
+.more-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 15, 15, 0.32);
+    backdrop-filter: blur(2px);
+    z-index: 60;
+}
+.more-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 61;
+    background: var(--c-bg, #fff);
+    border-top-left-radius: 1.25rem;
+    border-top-right-radius: 1.25rem;
+    padding: 0.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+    box-shadow: 0 -24px 60px -16px rgba(15,15,15,.22);
+    transform: translateY(110%);
+    transition: transform .3s cubic-bezier(.32,.72,.24,1);
+}
+.more-sheet.is-open { transform: translateY(0); }
+.more-sheet-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--c-line);
+    margin: 0.5rem auto 0.9rem;
+    cursor: pointer;
+}
+.more-sheet-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--c-muted);
+    margin-bottom: 0.85rem;
+}
+.more-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.85rem;
+}
+.more-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--c-ink);
+    font-size: 0.7rem;
+}
+.more-item-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 1rem;
+    background: var(--c-surface, rgba(0,0,0,.05));
+}
+.more-svg, .more-item-icon svg { width: 22px; height: 22px; }
+
+/* ============================================================
+   Goals start screen — proper goal cards (design pass / ADR 0007)
+   ============================================================ */
+.goals-screen {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vh, 4.5rem) 1.25rem 3rem;
+}
+.goals-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+.goals-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--c-ink);
+}
+.goals-new-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--c-accent);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+}
+.goals-new-btn:hover { filter: brightness(1.06); }
+.goals-new-btn:active { transform: scale(.97); }
+
+.goals-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.goal-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.95rem 1.1rem;
+    border: 1px solid var(--c-line);
+    border-radius: 1rem;
+    background: var(--c-bg);
+    cursor: pointer;
+    transition: border-color .15s, transform .12s, box-shadow .15s, background .15s;
+}
+.goal-card:hover {
+    border-color: color-mix(in srgb, var(--c-accent) 45%, var(--c-line));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px -12px rgba(15,15,15,.25);
+}
+.goal-card:active { transform: translateY(0); }
+
+.goal-card-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #a1a1aa;
+}
+.goal-dot--finance  { background: #10b981; }
+.goal-dot--fitness  { background: #6366f1; }
+.goal-dot--legal    { background: #f59e0b; }
+.goal-dot--health   { background: #ef4444; }
+.goal-dot--emotional{ background: #ec4899; }
+.goal-dot--learning { background: #8b5cf6; }
+
+.goal-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.goal-card-name {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--c-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.goal-card-meta {
+    font-size: 0.74rem;
+    color: var(--c-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.goal-card-label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.62rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    background: var(--c-surface, rgba(0,0,0,.05));
+    color: var(--c-muted);
+}
+.goal-card-chevron { color: var(--c-line); flex-shrink: 0; transition: color .15s, transform .15s; }
+.goal-card:hover .goal-card-chevron { color: var(--c-muted); transform: translateX(2px); }
+
+.goals-empty { color: var(--c-muted); font-size: 0.9rem; padding: 1.5rem 0; }
+
+/* Desktop = master-detail: no bottom tab bar; tools launch from header
+   buttons into the right rail. Mobile keeps the bottom tab bar. (ADR 0007) */
+.coach-header-tools { display: none; }
+@media (min-width: 769px) {
+    .tool-tabbar { display: none; }
+    .coach-header-tools {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-left: auto;
+    }
+    .coach-header-actions { margin-left: 0.3rem; }
+}
+.coach-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--c-line);
+    border-radius: 999px;
+    background: var(--c-bg);
+    color: var(--c-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.coach-tool-btn:hover { color: var(--c-ink); border-color: color-mix(in srgb, var(--c-accent) 40%, var(--c-line)); }
+.coach-tool-btn.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+.coach-tool-btn-icon { width: 16px; height: 16px; }
+
+/* ============================================================
+   Desktop: 3-column workspace (ADR 0007)
+   Tools open as a third column that SHRINKS the chat (goal rail |
+   chat | tool), not a fixed overlay drawer.
+   ============================================================ */
+@media (min-width: 769px) {
+    /* no dimming backdrop on desktop — the rail sits beside the chat */
+    .tool-rail-overlay { display: none !important; }
+
+    /* The shell becomes a 3-column grid; the tool column is 0 until a Tool
+       is open, then it expands and the chat (middle column) shrinks. The
+       grid-template-columns transition animates the reflow. */
+    .coach-shell {
+        grid-template-columns: 240px minmax(0, 1fr) 0;
+        transition: grid-template-columns .3s cubic-bezier(.32,.72,.24,1);
+    }
+    .coach-shell:has(.tool-rail.is-open) {
+        grid-template-columns: 240px minmax(0, 1fr) min(420px, 38vw);
+    }
+    .tool-rail {
+        position: relative;
+        transform: none;
+        width: auto;
+        box-shadow: none;
+        border-left: none;
+        overflow: hidden;
+    }
+    .coach-shell:has(.tool-rail.is-open) .tool-rail {
+        border-left: 1px solid var(--c-line);
+    }
+
+    /* The inner panel is a fixed-width surface pinned to the rail's right edge.
+       Closed: translated fully off to the right (clipped by the rail's
+       overflow:hidden and the 0-width grid track). Open: slides to translateX(0)
+       in step with the column growing — a finished panel sliding in from the
+       right while the chat shrinks, not content reflowing into a growing box. */
+    .tool-rail-inner {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(420px, 38vw);
+        transform: translateX(100%);
+        transition: transform .3s cubic-bezier(.32, .72, .24, 1);
+    }
+    .coach-shell:has(.tool-rail.is-open) .tool-rail-inner {
+        transform: translateX(0);
+    }
+}
+
+/* ============================================================
+   Mobile workspace = a pager between screens (ADR 0007)
+   Tapping a tool slides the chat OUT to the left and the tool IN from the
+   right (you move to that screen) — not a drawer sliding over. The tab bar
+   is a fixed footer that stays put across the slide.
+   ============================================================ */
+@media (max-width: 768px) {
+    .tool-tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+    }
+
+    /* Chat pane slides as a screen; pad the bottom to clear the fixed tab bar */
+    .coach-main {
+        padding-bottom: calc(3.75rem + env(safe-area-inset-bottom));
+        transition: transform .32s cubic-bezier(.32, .72, .24, 1);
+    }
+    .coach-page:has(.tool-rail.is-open) .coach-main {
+        transform: translateX(-100%);
+    }
+
+    /* Tool screen: full width, above the fixed tab bar, slides in from right */
+    .tool-rail {
+        top: 0;
+        bottom: calc(3.75rem + env(safe-area-inset-bottom));
+        height: auto;
+        width: 100vw;
+        box-shadow: none;
+    }
+    /* It's a screen swap, not a drawer — no dimming backdrop */
+    .tool-rail-overlay { display: none !important; }
 }

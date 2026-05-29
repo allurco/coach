@@ -57,7 +57,8 @@ it('registers the finance:: view namespace so the pack ships its own Blade parti
     // (budget flyout + share modal Blade partials), they're resolvable
     // through the pack's own view namespace, not the central
     // resources/views path. See ADR 0004.
-    expect(view()->exists('finance::_budget-flyout'))->toBeTrue();
+    expect(view()->exists('finance::budget-tool'))->toBeTrue();
+    expect(view()->exists('finance::_budget-body'))->toBeTrue();
     expect(view()->exists('finance::_budget-share-modal'))->toBeTrue();
 });
 

@@ -42,6 +42,12 @@ return [
     'composer' => [
         'placeholder' => 'say something',
         'attach' => 'Attach file',
+        'send' => 'Send',
+    ],
+
+    'tabbar' => [
+        'chat' => 'Chat',
+        'more' => 'More',
     ],
 
     'conversations' => [

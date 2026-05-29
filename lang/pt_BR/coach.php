@@ -42,6 +42,12 @@ return [
     'composer' => [
         'placeholder' => 'fala aí',
         'attach' => 'Anexar arquivo',
+        'send' => 'Enviar',
+    ],
+
+    'tabbar' => [
+        'chat' => 'Chat',
+        'more' => 'Mais',
     ],
 
     'conversations' => [

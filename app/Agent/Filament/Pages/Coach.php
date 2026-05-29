@@ -10,6 +10,8 @@ use App\Models\Action;
 use App\Models\Goal;
 use App\Services\TipResolver;
 use App\Tips\Tip;
+use App\Tools\Tool;
+use App\Tools\ToolRegistry;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Forms\Components\FileUpload;
@@ -64,6 +66,15 @@ class Coach extends Page implements HasForms
      */
     #[Url(as: 'goal')]
     public ?int $activeGoalId = null;
+
+    /**
+     * The open Tool within the Workspace (Plan, Budget, Contacts…), or
+     * null for the chat. Synced to ?tool= so a Tool deep-links and the
+     * back button returns to the chat. The set of Tools comes from the
+     * ToolRegistry, keyed by the active Goal's pack (ADR 0007).
+     */
+    #[Url(as: 'tool')]
+    public ?string $activeTool = null;
 
     public array $goalHistory = [];
 
@@ -139,9 +150,18 @@ class Coach extends Page implements HasForms
             $goal = Goal::find($this->activeGoalId);
 
             if ($goal) {
+                // activateGoal() resets activeTool — capture the URL's ?tool
+                // first and re-open it (validated against this goal's Tools)
+                // so a Tool deep-link / browser back survives the mount.
+                $deepTool = $this->activeTool;
                 $this->activateGoal($goal);
+
+                if ($deepTool !== null) {
+                    $this->openTool($deepTool);
+                }
             } else {
                 $this->activeGoalId = null;
+                $this->activeTool = null;
             }
         }
     }
@@ -153,6 +173,7 @@ class Coach extends Page implements HasForms
     public function backToGoals(): void
     {
         $this->activeGoalId = null;
+        $this->activeTool = null;
         $this->messages = [];
         $this->conversationId = null;
         $this->historyOpen = false;
@@ -182,6 +203,7 @@ class Coach extends Page implements HasForms
 
         $this->historyOpen = false;
         $this->goalHistory = [];
+        $this->activeTool = null;
         $this->memoPendingPlanCount = null;
         $this->memoActiveGoal = null;
         $this->memoActiveGoalResolved = false;
@@ -218,7 +240,7 @@ class Coach extends Page implements HasForms
                 Textarea::make('message')
                     ->hiddenLabel()
                     ->placeholder(__('coach.composer.placeholder'))
-                    ->rows(2)
+                    ->rows(1)
                     ->autosize()
                     ->autofocus()
                     ->extraInputAttributes([
@@ -329,6 +351,73 @@ class Coach extends Page implements HasForms
         }
 
         $this->activateGoal($goal);
+    }
+
+    /**
+     * The Tools available in the active Goal's Workspace — core Tools plus
+     * the active pack's Tools, from the ToolRegistry (ADR 0007). Shaped for
+     * the tab bar / rail; labels resolved through __(). Empty on the Goals
+     * start screen.
+     *
+     * @return list<array{key:string,label:string,icon:string,component:string,is_primary:bool}>
+     */
+    public function workspaceTools(): array
+    {
+        $goal = $this->activeGoal();
+        if ($goal === null) {
+            return [];
+        }
+
+        return collect(app(ToolRegistry::class)->forGoalLabel($goal['label']))
+            ->map(fn (Tool $t) => [
+                'key' => $t->key,
+                'label' => (string) __($t->label),
+                'icon' => $t->icon,
+                'component' => $t->component,
+                'is_primary' => $t->isPrimary,
+            ])
+            ->all();
+    }
+
+    /**
+     * The Tool key for the slot next to Chat in the tab bar. Prefers the
+     * pack's designated primary (Finance → 'budget'); when the pack has none
+     * (e.g. a 'general' Goal with only core Tools), promotes the first
+     * available Tool so the slot is never a dead placeholder. Null only on
+     * the Goals start screen (no Tools at all).
+     */
+    public function primaryToolKey(): ?string
+    {
+        $goal = $this->activeGoal();
+        if ($goal === null) {
+            return null;
+        }
+
+        $primary = app(ToolRegistry::class)->primaryFor($goal['label']);
+
+        return $primary?->key ?? ($this->workspaceTools()[0]['key'] ?? null);
+    }
+
+    /**
+     * Open a Tool in the Workspace. Ignores keys that aren't available for
+     * the active Goal (stale client, foreign pack), falling back to chat.
+     */
+    public function openTool(string $key): void
+    {
+        // Toggle: tapping the open Tool's button closes it (back to chat).
+        if ($this->activeTool === $key) {
+            $this->activeTool = null;
+
+            return;
+        }
+
+        $available = collect($this->workspaceTools())->pluck('key')->all();
+        $this->activeTool = in_array($key, $available, true) ? $key : null;
+    }
+
+    public function closeTool(): void
+    {
+        $this->activeTool = null;
     }
 
     public function startNewConversationInActiveGoal(): void

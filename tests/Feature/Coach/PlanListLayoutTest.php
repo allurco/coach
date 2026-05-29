@@ -77,21 +77,26 @@ function makePlanLayoutBudget(array $overrides = []): Budget
     ], $overrides));
 }
 
-// Budget rendering/integration now lives in the BudgetTool component
-// (ADR 0007). These assert the component renders + behaves when embedded;
-// unit coverage of every method is in tests/Feature/Finance/BudgetToolTest.
-it('renders the Budget toggle button when a budget exists', function () {
+// BudgetTool is now embedded in the Workspace tool rail (ADR 0007): it
+// auto-hydrates on mount and renders the editor body inline (no toggle
+// button — Budget launches from the tab bar). Unit coverage of every
+// method is in tests/Feature/Finance/BudgetToolTest.
+it('renders the budget editor inline (embedded) when a budget exists', function () {
     makePlanLayoutBudget();
 
     Livewire::test(BudgetTool::class)
-        ->assertSeeHtml('budget-toggle-btn')
-        ->assertSeeHtml('wire:click="openBudget"');
+        ->assertSet('budgetData.month', '2026-06')
+        ->assertSeeHtml('budget-flyout-body')
+        ->assertSeeHtml('wire:model.live.debounce.400ms="budgetData.net_income"')
+        ->assertDontSeeHtml('budget-toggle-btn');
 });
 
-it('hides the Budget toggle button when no budget exists', function () {
+it('shows the empty editor body when the user has no budget', function () {
     $rendered = (string) Livewire::test(BudgetTool::class)->html();
 
-    expect($rendered)->not->toContain('budget-toggle-btn');
+    expect($rendered)
+        ->toContain('budget-flyout-body')
+        ->not->toContain('budget-toggle-btn');
 });
 
 it('opens the flyout with editable inputs bound to budgetData paths', function () {
