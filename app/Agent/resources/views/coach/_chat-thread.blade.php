@@ -57,27 +57,35 @@
         <div class="thread-loader"
              wire:key="thread-loader-{{ $conversationId }}"
              x-data="{
-                /* Capture the thread's pre-morph scrollHeight, fire
-                   loadOlderMessages, then restore the user's view (shift
-                   scrollTop by the height added above). Without this the
-                   prepended batch pushes the visible window down and the
-                   user loses context. */
+                loading: false,
+                /* The sentinel sits at the very top, so when it fires the user
+                   IS at the top by definition. Show them what they just
+                   pulled in: park scrollTop at the first message (the newest
+                   of the freshly-prepended older batch), with the sentinel
+                   just above the viewport so the observer doesn't immediately
+                   re-fire. The earlier anchor-preserve math over-corrected
+                   past the new content — landed the user back on the same
+                   messages they were already seeing. */
                 async loadOlder() {
-                    if (! $wire.messagesHasMore) return;
-                    const thread = $el.closest('.coach-thread');
-                    const prevHeight = thread.scrollHeight;
-                    const prevTop = thread.scrollTop;
-                    await $wire.loadOlderMessages();
-                    $nextTick(() => {
-                        thread.scrollTop = (thread.scrollHeight - prevHeight) + prevTop;
-                    });
+                    if (this.loading || ! $wire.messagesHasMore) return;
+                    this.loading = true;
+                    try {
+                        await $wire.loadOlderMessages();
+                        $nextTick(() => {
+                            const thread = $el.closest('.coach-thread');
+                            const firstMsg = thread.querySelector('.msg');
+                            if (firstMsg) thread.scrollTop = firstMsg.offsetTop;
+                        });
+                    } finally {
+                        this.loading = false;
+                    }
                 }
              }"
              x-show="$wire.messagesHasMore"
              x-init="
                 const obs = new IntersectionObserver((entries) => {
                     if (entries[0].isIntersecting) loadOlder();
-                }, { root: $el.closest('.coach-thread'), rootMargin: '200px 0px 0px 0px' });
+                }, { root: $el.closest('.coach-thread') });
                 obs.observe($el);
                 $el._observer = obs;
              "
