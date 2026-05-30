@@ -14,6 +14,7 @@ use App\Agent\Tools\RememberFact;
 use App\Agent\Tools\ShareViaEmail;
 use App\Agent\Tools\SwitchToGoal;
 use App\Agent\Tools\UpdateAction;
+use App\Agent\Tools\VerbatimOutput;
 use App\Agent\Tools\WebFetch;
 use App\Agent\Tools\WebSearch;
 use App\Domains\Finance\Tools\BudgetSnapshot;
@@ -86,6 +87,27 @@ class CoachAgent implements Agent, Conversational, HasTools
             new WebSearch,
             new WebFetch,
         ];
+    }
+
+    /**
+     * Names of the registered tools whose output the chat must treat as
+     * verbatim (preserved through page reload, expanded via placeholder).
+     * Packs opt in by implementing the VerbatimOutput marker interface on
+     * the tool class. Returning names — not instances — because the
+     * stream's ToolResult event only carries the tool's name string.
+     *
+     * @return list<string>
+     */
+    public function verbatimToolNames(): array
+    {
+        $names = [];
+        foreach ($this->tools() as $tool) {
+            if ($tool instanceof VerbatimOutput) {
+                $names[] = class_basename($tool);
+            }
+        }
+
+        return $names;
     }
 
     /**
