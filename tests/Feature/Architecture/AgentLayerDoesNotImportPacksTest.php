@@ -1,24 +1,26 @@
 <?php
 
 /**
- * Guard the seam closed by the PlaceholderRegistry refactor: the
- * Agent layer's user-facing chat surfaces (the Filament Coach page
- * and CoachInteraction) must not import any Domain Pack directly.
+ * Guard the full Agent ⇄ Pack seam: the Agent layer must not import any
+ * Domain Pack class directly. Closed in three refactors —
+ *  - PlaceholderRegistry (Coach.php, CoachInteraction.php)
+ *  - VerbatimOutput marker (CoachInteraction.php constant removed)
+ *  - AgentToolRegistry (CoachAgent.php — pack agent tools now register
+ *    factories from FinanceServiceProvider, see ADR 0006)
  *
- * CoachAgent.php is intentionally NOT covered here — its remaining
- * BudgetSnapshot import is the agent-tool-registration leak that a
- * sibling refactor closes via a tool contribution registry.
+ * If a new file ever appears under app/Agent/ that pulls a pack class,
+ * add it here (and ask whether the pack should push instead).
  */
-it('Coach Filament page does not import any Domain Pack', function () {
-    $path = base_path('app/Agent/Filament/Pages/Coach.php');
-    $contents = (string) file_get_contents($path);
+$agentFiles = [
+    'app/Agent/Filament/Pages/Coach.php',
+    'app/Agent/Services/CoachInteraction.php',
+    'app/Agent/Agents/CoachAgent.php',
+];
 
-    expect($contents)->not->toMatch('/^use\s+App\\\\Domains\\\\/m');
-});
+foreach ($agentFiles as $relative) {
+    it("{$relative} does not import any Domain Pack", function () use ($relative) {
+        $contents = (string) file_get_contents(base_path($relative));
 
-it('CoachInteraction does not import any Domain Pack', function () {
-    $path = base_path('app/Agent/Services/CoachInteraction.php');
-    $contents = (string) file_get_contents($path);
-
-    expect($contents)->not->toMatch('/^use\s+App\\\\Domains\\\\/m');
-});
+        expect($contents)->not->toMatch('/^use\s+App\\\\Domains\\\\/m');
+    });
+}

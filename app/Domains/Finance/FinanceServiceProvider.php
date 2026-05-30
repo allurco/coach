@@ -2,6 +2,7 @@
 
 namespace App\Domains\Finance;
 
+use App\Agent\Tools\AgentToolRegistry;
 use App\Domains\Finance\Console\Commands\CoachCarryBudgetForward;
 use App\Domains\Finance\Console\Commands\CoachMonthlyBudgetReminder;
 use App\Domains\Finance\Livewire\BudgetTool;
@@ -9,6 +10,8 @@ use App\Domains\Finance\Models\Budget;
 use App\Domains\Finance\Placeholders\BudgetPlaceholder;
 use App\Domains\Finance\Tips\RefreshBudget;
 use App\Domains\Finance\Tips\SetUpBudget;
+use App\Domains\Finance\Tools\BudgetSnapshot;
+use App\Domains\Finance\Tools\ReadBudget;
 use App\Models\Goal;
 use App\Models\User;
 use App\Packs\DomainPack;
@@ -76,6 +79,17 @@ class FinanceServiceProvider extends DomainPack
         // importing this pack (ADR 0006).
         $this->app->extend(PlaceholderRegistry::class, function (PlaceholderRegistry $registry) {
             return $registry->register('budget', new BudgetPlaceholder);
+        });
+
+        // Contribute the pack's agent (LLM) tools — BudgetSnapshot writes
+        // budgets, ReadBudget reads them. CoachAgent::tools() merges these
+        // into its catalog so the Agent layer no longer imports any pack
+        // class (ADR 0006). Both tools are stateless today, so the factory
+        // closures ignore the agent argument.
+        $this->app->extend(AgentToolRegistry::class, function (AgentToolRegistry $registry) {
+            return $registry
+                ->register(fn () => new BudgetSnapshot)
+                ->register(fn () => new ReadBudget);
         });
 
         // The pack owns its scheduled jobs end to end — registration and

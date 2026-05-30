@@ -3,6 +3,7 @@
 namespace App\Agent\Agents;
 
 use App\Agent\Services\CoachPromptBuilder;
+use App\Agent\Tools\AgentToolRegistry;
 use App\Agent\Tools\CreateAction;
 use App\Agent\Tools\CreateGoal;
 use App\Agent\Tools\ListActions;
@@ -17,8 +18,6 @@ use App\Agent\Tools\UpdateAction;
 use App\Agent\Tools\VerbatimOutput;
 use App\Agent\Tools\WebFetch;
 use App\Agent\Tools\WebSearch;
-use App\Domains\Finance\Tools\BudgetSnapshot;
-use App\Domains\Finance\Tools\ReadBudget;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -70,15 +69,18 @@ class CoachAgent implements Agent, Conversational, HasTools
     {
         $activeGoalId = $this->resolveActiveGoalId();
 
-        return [
+        // Core tools depend on the agent's mutable state (active goal id,
+        // conversation id), so they stay instantiated inline. Pack tools
+        // come from AgentToolRegistry (see ADR 0006) — packs push factory
+        // closures from their ServiceProvider; this class no longer
+        // imports any pack class.
+        $core = [
             new ListActions,
             new CreateAction($activeGoalId),
             new UpdateAction,
             new MoveAction,
             new CreateGoal,
             new SwitchToGoal($this->conversationId),
-            new BudgetSnapshot,
-            new ReadBudget,
             new LogWhy($activeGoalId),
             new LogWorry($activeGoalId),
             new RememberFact,
@@ -87,6 +89,8 @@ class CoachAgent implements Agent, Conversational, HasTools
             new WebSearch,
             new WebFetch,
         ];
+
+        return [...$core, ...app(AgentToolRegistry::class)->build($this)];
     }
 
     /**
