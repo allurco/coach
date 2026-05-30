@@ -7,7 +7,14 @@
      x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight)"
      x-effect="$wire.messages; $nextTick(() => $el.scrollTop = $el.scrollHeight)">
 
-    @if (empty($messages))
+    @if ($this->conversationLoading)
+        {{-- Deferred chat history is in flight (workspace shell rendered first,
+             messages arrive on the next Livewire request). Show a tiny skeleton
+             so the chat area reads as alive instead of blank. --}}
+        <div class="msg-skeleton msg-skeleton-user" aria-hidden="true"><div class="msg-skeleton-bubble short"></div></div>
+        <div class="msg-skeleton" aria-hidden="true"><div class="msg-skeleton-bubble"></div></div>
+        <div class="msg-skeleton msg-skeleton-user" aria-hidden="true"><div class="msg-skeleton-bubble"></div></div>
+    @elseif (empty($messages))
         <div class="msg msg-coach coach-greeting-msg">
             <div class="msg-body">
                 <div class="msg-content greeting-content">

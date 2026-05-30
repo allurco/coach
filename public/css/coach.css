@@ -633,6 +633,33 @@ body:has(.complete-modal-overlay) .coach-thread {
     .msg { animation: none; }
 }
 
+/* Chat skeleton — shown while the deferred chat history is in flight. Three
+   placeholder bubbles alternating sides with a subtle shimmer so the chat
+   area reads as alive (not broken) during the brief load window. */
+.msg-skeleton { display: flex; margin-bottom: 1.25rem; }
+.msg-skeleton.msg-skeleton-user { justify-content: flex-end; }
+.msg-skeleton-bubble {
+    height: 2.6rem;
+    width: 60%;
+    border-radius: 1.1rem;
+    background: linear-gradient(
+        90deg,
+        var(--c-surface, rgba(0,0,0,.04)) 0%,
+        color-mix(in srgb, var(--c-surface, rgba(0,0,0,.04)) 50%, var(--c-line)) 50%,
+        var(--c-surface, rgba(0,0,0,.04)) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.msg-skeleton-bubble.short { width: 38%; }
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .msg-skeleton-bubble { animation: none; }
+}
+
 .msg-avatar {
     width: 28px;
     height: 28px;
