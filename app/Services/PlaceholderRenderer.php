@@ -2,118 +2,55 @@
 
 namespace App\Services;
 
-use App\Domains\Finance\Models\Budget;
-use App\Domains\Finance\Tools\BudgetSnapshot;
-use App\Models\Action;
+use App\Placeholders\PlaceholderRegistry;
 
 /**
- * Expands `{{placeholder}}` tokens inside agent/email markdown into
- * authoritative renderings sourced from the database. The agent
- * writes prose around the tokens; data comes from here so numbers
- * and lists never depend on the model's recall.
+ * Expands `{{name[:arg[:arg]…]}}` tokens inside agent/email markdown
+ * into authoritative renderings sourced from the database. The agent
+ * writes prose around the tokens; data comes from registered
+ * `PlaceholderHandler`s so numbers and lists never depend on the
+ * model's recall.
  *
- * Supported today:
- *   - {{budget:N}}        → BudgetSnapshot rendering for snapshot N
- *   - {{budget:current}}  → user's most recent budget
- *   - {{plan}}            → user's current open actions
+ * This class is a pure dispatcher — it knows the placeholder syntax
+ * but nothing about any specific domain. Core registers handlers for
+ * its own concepts (Plan) in AppServiceProvider; Domain Packs
+ * self-register theirs (e.g. Finance's Budget) from their own
+ * ServiceProvider via `$this->app->extend(PlaceholderRegistry::class, …)`.
+ * See ADR 0006 for the contribution pattern.
  *
- * Unknown placeholders pass through untouched on purpose, so a
- * mistyped token surfaces in the output instead of silently dropping.
+ * Placeholders with no registered handler pass through untouched on
+ * purpose, so a mistyped token surfaces in the output instead of
+ * silently dropping.
  */
 class PlaceholderRenderer
 {
+    public function __construct(protected PlaceholderRegistry $registry) {}
+
     /**
-     * Render every supported placeholder. When $userId is null we
-     * fall back to auth()->id(); pass it explicitly when running
-     * outside of an authenticated request (queues, mail jobs).
+     * Render every supported placeholder in $text. When $userId is
+     * null we fall back to auth()->id(); pass it explicitly when
+     * running outside an authenticated request (queues, mail jobs).
      */
     public function render(string $text, ?int $userId = null): string
     {
         $userId = $userId ?? auth()->id();
 
-        $text = $this->expandBudgetCurrent($text, $userId);
-        $text = $this->expandBudgetById($text);
-        $text = $this->expandPlan($text, $userId);
-
-        return $text;
-    }
-
-    protected function expandBudgetCurrent(string $text, ?int $userId): string
-    {
         return (string) preg_replace_callback(
-            '/\{\{budget:current\}\}/',
-            function () use ($userId): string {
-                $budget = $userId ? Budget::currentForUser($userId) : null;
+            '/\{\{([a-z][a-z0-9_-]*)((?::[^}]*)?)\}\}/i',
+            function (array $match) use ($userId): string {
+                $name = $match[1];
+                $rest = (string) $match[2];
+                $args = $rest === '' ? [] : array_slice(explode(':', $rest), 1);
 
-                return $budget
-                    ? (new BudgetSnapshot)->renderForBudget($budget)
-                    : (string) __('coach.placeholders.budget_missing');
+                $handler = $this->registry->handler($name);
+
+                if ($handler === null) {
+                    return $match[0];
+                }
+
+                return $handler->render($userId, $args);
             },
             $text,
         );
-    }
-
-    protected function expandBudgetById(string $text): string
-    {
-        return (string) preg_replace_callback(
-            '/\{\{budget:(\d+)\}\}/',
-            function (array $m): string {
-                $budget = Budget::withoutGlobalScope('owner')->find((int) $m[1]);
-
-                return $budget
-                    ? (new BudgetSnapshot)->renderForBudget($budget)
-                    : (string) __('coach.placeholders.budget_missing');
-            },
-            $text,
-        );
-    }
-
-    protected function expandPlan(string $text, ?int $userId): string
-    {
-        if (! str_contains($text, '{{plan}}')) {
-            return $text;
-        }
-
-        return str_replace('{{plan}}', $this->renderPlan($userId), $text);
-    }
-
-    protected function renderPlan(?int $userId): string
-    {
-        if ($userId === null) {
-            return (string) __('coach.placeholders.plan_empty');
-        }
-
-        $statusRank = ['in_progress' => 0, 'pending' => 1];
-        $priorityRank = ['high' => 0, 'medium' => 1, 'low' => 2];
-
-        $actions = Action::query()
-            ->withoutGlobalScope('owner')
-            ->where('user_id', $userId)
-            ->whereIn('status', ['pending', 'in_progress'])
-            ->orderBy('deadline')
-            ->limit(20)
-            ->get()
-            ->sortBy(fn (Action $a) => sprintf(
-                '%d-%d',
-                $statusRank[$a->status] ?? 9,
-                $priorityRank[$a->priority] ?? 9,
-            ))
-            ->values();
-
-        if ($actions->isEmpty()) {
-            return (string) __('coach.placeholders.plan_empty');
-        }
-
-        $lines = [(string) __('coach.placeholders.plan_header'), ''];
-
-        foreach ($actions as $action) {
-            $statusLabel = (string) __('coach.plan.filters.'.$action->status);
-            $priority = $action->priority ? " ({$action->priority})" : '';
-            $deadline = $action->deadline ? ' — '.$action->deadline->format('d/m') : '';
-
-            $lines[] = "- [{$statusLabel}] {$action->title}{$priority}{$deadline}";
-        }
-
-        return implode("\n", $lines);
     }
 }

@@ -5,9 +5,9 @@ namespace App\Agent\Filament\Pages;
 use App\Agent\Filament\Concerns\HasShareMessageModal;
 use App\Agent\Models\CoachMemory;
 use App\Agent\Services\CoachInteraction;
-use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Models\Action;
 use App\Models\Goal;
+use App\Services\PlaceholderRenderer;
 use App\Services\TipResolver;
 use App\Tips\Tip;
 use App\Tools\Tool;
@@ -655,7 +655,7 @@ class Coach extends Page implements HasForms
         if ($isAssistant) {
             $contentHtml = $m->content_html ?: null;
             if ($contentHtml === null) {
-                $renderable = BudgetSnapshot::expandPlaceholders($content);
+                $renderable = app(PlaceholderRenderer::class)->render($content, auth()->id());
                 $contentHtml = Str::markdown($renderable, [
                     'html_input' => 'escape',
                     'allow_unsafe_links' => false,
@@ -924,7 +924,7 @@ class Coach extends Page implements HasForms
                     ->update(['goal_id' => $this->activeGoalId]);
             }
 
-            $renderable = BudgetSnapshot::expandPlaceholders($rawText);
+            $renderable = app(PlaceholderRenderer::class)->render($rawText, auth()->id());
             $contentHtml = Str::markdown($renderable, [
                 'html_input' => 'escape',
                 'allow_unsafe_links' => false,

@@ -109,13 +109,19 @@ class BudgetSnapshot implements Tool
 
     /**
      * Backward-compatible facade for the historical `{{budget:N}}` use
-     * case. New code should depend on `App\Services\PlaceholderRenderer`
-     * directly — that class supports the broader vocabulary (`{{plan}}`,
-     * `{{budget:current}}`, etc.) and is the canonical entry point.
+     * case. New code should resolve `App\Services\PlaceholderRenderer`
+     * via the container — that class supports the broader vocabulary
+     * (`{{plan}}`, `{{budget:current}}`, future-pack placeholders) and
+     * is the canonical entry point.
+     *
+     * @deprecated since the PlaceholderRegistry refactor. Inject or
+     *             resolve `App\Services\PlaceholderRenderer` instead.
+     *             Kept as a thin shim for one release cycle so legacy
+     *             tests and callers don't break in lockstep.
      */
     public static function expandPlaceholders(string $text): string
     {
-        return (new PlaceholderRenderer)->render($text);
+        return app(PlaceholderRenderer::class)->render($text);
     }
 
     public function schema(JsonSchema $schema): array

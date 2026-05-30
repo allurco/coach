@@ -3,8 +3,8 @@
 namespace App\Agent\Services;
 
 use App\Agent\Agents\CoachAgent;
-use App\Domains\Finance\Tools\BudgetSnapshot;
 use App\Models\User;
+use App\Services\PlaceholderRenderer;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -218,7 +218,7 @@ class CoachInteraction
             }
             foreach ($batch['verbatim'] as $payload) {
                 if ($onChunk !== null) {
-                    $expanded = BudgetSnapshot::expandPlaceholders($payload);
+                    $expanded = app(PlaceholderRenderer::class)->render($payload);
                     $onChunk($expanded."\n\n");
                 }
                 $accumulated .= $payload."\n\n";

@@ -56,7 +56,7 @@ class ReadBudget implements Tool
 
         // Expand the placeholder server-side so the LLM receives real budget
         // data (markdown table + breakdowns) instead of the template string.
-        return (new PlaceholderRenderer)->render('{{budget:current}}', $userId);
+        return app(PlaceholderRenderer::class)->render('{{budget:current}}', $userId);
     }
 
     public function schema(JsonSchema $schema): array
