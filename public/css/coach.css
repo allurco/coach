@@ -664,6 +664,35 @@ body:has(.complete-modal-overlay) .coach-thread {
     .msg-skeleton-bubble { animation: none; }
 }
 
+/* Top-of-thread infinite-scroll sentinel — 3 small dots that pulse while
+   loadOlderMessages is in flight. Hidden via x-show when no older batch
+   remains so the IntersectionObserver stops firing. */
+.thread-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.85rem 0;
+    min-height: 1.5rem;
+}
+.thread-loader-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--c-muted, #9ca3af);
+    opacity: 0.45;
+    animation: thread-loader-pulse 1.2s ease-in-out infinite;
+}
+.thread-loader-dot:nth-child(2) { animation-delay: 0.18s; }
+.thread-loader-dot:nth-child(3) { animation-delay: 0.36s; }
+@keyframes thread-loader-pulse {
+    0%, 60%, 100% { opacity: 0.25; transform: scale(0.9); }
+    30% { opacity: 0.9; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .thread-loader-dot { animation: none; opacity: 0.5; }
+}
+
 .msg-avatar {
     width: 28px;
     height: 28px;

@@ -54,6 +54,20 @@ class Coach extends Page implements HasForms
 
     public array $messages = [];
 
+    /**
+     * Page size for chat history pagination. The initial load shows only the
+     * last exchange (the most recent user message + assistant reply) so the
+     * Workspace opens minimal-weight; older batches stream in via
+     * loadOlderMessages when the user scrolls toward the top.
+     */
+    public const MESSAGE_PAGE_SIZE = 2;
+
+    /**
+     * True when at least one older message exists past the head of $messages.
+     * Drives the top-of-thread infinite-scroll sentinel (hidden when false).
+     */
+    public bool $messagesHasMore = false;
+
     public bool $thinking = false;
 
     /** Each entry: [id, name, label, last_activity_label]. */
@@ -186,6 +200,7 @@ class Coach extends Page implements HasForms
         $this->messages = [];
         $this->conversationId = null;
         $this->conversationLoading = false;
+        $this->messagesHasMore = false;
         $this->historyOpen = false;
         $this->goalHistory = [];
         $this->memoActiveGoal = null;
@@ -208,6 +223,7 @@ class Coach extends Page implements HasForms
         $this->messages = [];
         $this->conversationId = null;
         $this->conversationLoading = true;
+        $this->messagesHasMore = false;
 
         $this->historyOpen = false;
         $this->goalHistory = [];
@@ -545,56 +561,119 @@ class Coach extends Page implements HasForms
             return;
         }
 
+        // Fetch the latest PAGE_SIZE messages in DESC order (cheap on an
+        // indexed conversation_id+created_at lookup), then flip back to
+        // chronological for display. Pull one extra row to detect whether
+        // older messages exist without a separate COUNT query.
         $rows = DB::table('agent_conversation_messages')
             ->where('conversation_id', $id)
             ->whereIn('role', ['user', 'assistant'])
-            ->orderBy('created_at', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(self::MESSAGE_PAGE_SIZE + 1)
             ->get();
 
-        $this->messages = $rows->map(function ($m) {
-            $isAssistant = $m->role === 'assistant';
-            $content = (string) $m->content;
-            $attachments = [];
+        $this->messagesHasMore = $rows->count() > self::MESSAGE_PAGE_SIZE;
+        if ($this->messagesHasMore) {
+            // Drop the sentinel — the +1 row was only there to detect more.
+            $rows = $rows->take(self::MESSAGE_PAGE_SIZE);
+        }
 
-            if (! empty($m->attachments) && $m->attachments !== '[]') {
-                $decoded = json_decode($m->attachments, true);
-                if (is_array($decoded)) {
-                    foreach ($decoded as $att) {
-                        $attachments[] = $att['name'] ?? $att['path'] ?? '?';
-                    }
-                }
-            }
+        $rows = $rows->reverse()->values();
 
-            // Write-through cache: prefer the persisted content_html when the
-            // assistant row already has it (~50-100ms saved on a goal switch).
-            // When it's null — a row freshly inserted by the laravel/ai SDK
-            // or a legacy row from before the column existed — render once
-            // and persist so the next load is fast.
-            $contentHtml = null;
-            if ($isAssistant) {
-                $contentHtml = $m->content_html ?: null;
-                if ($contentHtml === null) {
-                    $renderable = BudgetSnapshot::expandPlaceholders($content);
-                    $contentHtml = Str::markdown($renderable, [
-                        'html_input' => 'escape',
-                        'allow_unsafe_links' => false,
-                    ]);
-                    DB::table('agent_conversation_messages')
-                        ->where('id', $m->id)
-                        ->update(['content_html' => $contentHtml]);
-                }
-            }
-
-            return [
-                'role' => $isAssistant ? 'assistant' : 'user',
-                'content' => $content,
-                'content_html' => $contentHtml,
-                'attachments' => $attachments,
-                'time' => Carbon::parse($m->created_at)->format('H:i'),
-            ];
-        })->toArray();
+        $this->messages = $rows->map(fn ($m) => $this->renderMessageRow($m))->toArray();
 
         $this->conversationId = $id;
+
+        // Signal the client to scroll to the most recent message (the chat
+        // thread renders chronologically and the user expects to land at the
+        // bottom on initial load). loadOlderMessages preserves scroll
+        // separately so prepending doesn't fire this.
+        $this->dispatch('chat-scroll-to-bottom');
+    }
+
+    /**
+     * Append the previous PAGE_SIZE batch of messages above the oldest one
+     * currently in $messages. Triggered by the top-of-thread infinite-scroll
+     * sentinel. Uses the message id (a ULID — already monotonic in created_at
+     * order) as the pagination anchor so the cursor stays stable across
+     * concurrent inserts.
+     */
+    public function loadOlderMessages(): void
+    {
+        if (! $this->messagesHasMore || $this->conversationId === null || empty($this->messages)) {
+            return;
+        }
+
+        $oldestId = $this->messages[0]['id'] ?? null;
+        if ($oldestId === null) {
+            return;
+        }
+
+        $rows = DB::table('agent_conversation_messages')
+            ->where('conversation_id', $this->conversationId)
+            ->whereIn('role', ['user', 'assistant'])
+            ->where('id', '<', $oldestId)
+            ->orderBy('id', 'desc')
+            ->limit(self::MESSAGE_PAGE_SIZE + 1)
+            ->get();
+
+        $this->messagesHasMore = $rows->count() > self::MESSAGE_PAGE_SIZE;
+        if ($this->messagesHasMore) {
+            $rows = $rows->take(self::MESSAGE_PAGE_SIZE);
+        }
+
+        $older = $rows->reverse()->values()
+            ->map(fn ($m) => $this->renderMessageRow($m))
+            ->toArray();
+
+        $this->messages = array_merge($older, $this->messages);
+    }
+
+    /**
+     * Map one agent_conversation_messages row to the array shape the chat
+     * thread renders. Acts as the write-through cache for content_html:
+     * uses the persisted HTML when present, otherwise renders Markdown +
+     * placeholders once and stores the result.
+     */
+    protected function renderMessageRow($m): array
+    {
+        $isAssistant = $m->role === 'assistant';
+        $content = (string) $m->content;
+        $attachments = [];
+
+        if (! empty($m->attachments) && $m->attachments !== '[]') {
+            $decoded = json_decode($m->attachments, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $att) {
+                    $attachments[] = $att['name'] ?? $att['path'] ?? '?';
+                }
+            }
+        }
+
+        $contentHtml = null;
+        if ($isAssistant) {
+            $contentHtml = $m->content_html ?: null;
+            if ($contentHtml === null) {
+                $renderable = BudgetSnapshot::expandPlaceholders($content);
+                $contentHtml = Str::markdown($renderable, [
+                    'html_input' => 'escape',
+                    'allow_unsafe_links' => false,
+                ]);
+                DB::table('agent_conversation_messages')
+                    ->where('id', $m->id)
+                    ->update(['content_html' => $contentHtml]);
+            }
+        }
+
+        return [
+            'id' => $m->id,
+            'role' => $isAssistant ? 'assistant' : 'user',
+            'content' => $content,
+            'content_html' => $contentHtml,
+            'attachments' => $attachments,
+            'time' => Carbon::parse($m->created_at)->format('H:i'),
+        ];
     }
 
     /**
@@ -705,6 +784,9 @@ class Coach extends Page implements HasForms
         $this->pendingPrompt = $userMessage;
         $this->pendingAttachments = is_array($attachmentPaths) ? $attachmentPaths : [];
         $this->form->fill(['message' => '', 'attachments' => []]);
+        // The optimistic insert already scrolled the thread; this dispatch keeps
+        // it pinned to the bottom once the morph replaces the placeholder.
+        $this->dispatch('chat-scroll-to-bottom');
 
         // Defer AI processing to a second Livewire request so the user message
         // and "thinking" state render immediately. The frontend triggers runAi().
@@ -878,6 +960,9 @@ class Coach extends Page implements HasForms
             // have created/updated actions via tools. The current goal id
             // is passed so the component picks up SwitchToGoal moves too.
             $this->dispatch('plan-refreshed', activeGoalId: $this->activeGoalId);
+            // Keep the user pinned to the most recent message after the
+            // assistant's reply lands (and the morph replaces the thinking dots).
+            $this->dispatch('chat-scroll-to-bottom');
         } catch (Throwable $e) {
             // When the upstream LLM (Gemini) rejects the request, the
             // RequestException carries a Response with the real reason

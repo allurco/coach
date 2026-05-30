@@ -5,7 +5,7 @@
 <div class="coach-thread"
      x-data="{}"
      x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight)"
-     x-effect="$wire.messages; $nextTick(() => $el.scrollTop = $el.scrollHeight)">
+     @chat-scroll-to-bottom.window="$nextTick(() => $el.scrollTop = $el.scrollHeight)">
 
     @if ($this->conversationLoading)
         {{-- Deferred chat history is in flight (workspace shell rendered first,
@@ -51,6 +51,42 @@
             </div>
         </div>
     @else
+        {{-- Infinite-scroll sentinel: an IntersectionObserver fires loadOlder()
+             when this element comes within 200px of the visible area. Hidden
+             when there are no older messages so it stops triggering. --}}
+        <div class="thread-loader"
+             wire:key="thread-loader-{{ $conversationId }}"
+             x-data="{
+                /* Capture the thread's pre-morph scrollHeight, fire
+                   loadOlderMessages, then restore the user's view (shift
+                   scrollTop by the height added above). Without this the
+                   prepended batch pushes the visible window down and the
+                   user loses context. */
+                async loadOlder() {
+                    if (! $wire.messagesHasMore) return;
+                    const thread = $el.closest('.coach-thread');
+                    const prevHeight = thread.scrollHeight;
+                    const prevTop = thread.scrollTop;
+                    await $wire.loadOlderMessages();
+                    $nextTick(() => {
+                        thread.scrollTop = (thread.scrollHeight - prevHeight) + prevTop;
+                    });
+                }
+             }"
+             x-show="$wire.messagesHasMore"
+             x-init="
+                const obs = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) loadOlder();
+                }, { root: $el.closest('.coach-thread'), rootMargin: '200px 0px 0px 0px' });
+                obs.observe($el);
+                $el._observer = obs;
+             "
+             aria-hidden="true">
+            <span class="thread-loader-dot"></span>
+            <span class="thread-loader-dot"></span>
+            <span class="thread-loader-dot"></span>
+        </div>
+
         @foreach ($messages as $index => $msg)
             @if ($msg['role'] === 'user')
                 <div class="msg msg-user">
