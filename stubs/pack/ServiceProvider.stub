@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Domains\{{ name }};
+
+use App\Agent\Tools\AgentToolRegistry;
+use App\Models\Goal;
+use App\Models\User;
+use App\Packs\DomainPack;
+use App\Placeholders\PlaceholderRegistry;
+use App\Services\TipResolver;
+use App\Tools\Tool;
+use App\Tools\ToolRegistry;
+
+/**
+ * The {{ name }} Domain Pack — see ADR 0001 (pack identity = Goal.label)
+ * and ADR 0006 (packs self-register into core catalogs).
+ *
+ * Every Coach contribution catalog is wired below as a commented hook.
+ * Uncomment the ones you need and add your concrete Tools / Placeholders
+ * / Tips / Agent tools. Core never imports this file — that's the whole
+ * point of the catalogs.
+ */
+class {{ name }}ServiceProvider extends DomainPack
+{
+    public function label(): string
+    {
+        return '{{ label }}';
+    }
+
+    public function boot(): void
+    {
+        parent::boot();
+
+        $this->loadTranslationsFrom(__DIR__.'/lang', '{{ label }}');
+        $this->loadViewsFrom(__DIR__.'/resources/views', '{{ label }}');
+
+        // --- Workspace UI Tool(s) -----------------------------------------
+        // $this->app->extend(ToolRegistry::class, function (ToolRegistry $registry) {
+        //     return $registry->register(new Tool(
+        //         key: '{{ label }}-tool',
+        //         label: '{{ label }}::tool.label',
+        //         icon: 'heroicon-o-...',
+        //         component: '{{ label }}-tool',  // Livewire alias
+        //         isPrimary: true,
+        //         scope: '{{ label }}',           // shown only on this pack's goals
+        //     ));
+        // });
+
+        // --- Markdown placeholder handlers --------------------------------
+        // $this->app->extend(PlaceholderRegistry::class, function (PlaceholderRegistry $registry) {
+        //     return $registry->register('{{ label }}', new Placeholders\YourPlaceholder);
+        // });
+
+        // --- Coaching Tips ------------------------------------------------
+        // $this->app->extend(TipResolver::class, function (TipResolver $resolver) {
+        //     return $resolver->register(new Tips\YourTip);
+        // });
+
+        // --- Agent (LLM) tools --------------------------------------------
+        // $this->app->extend(AgentToolRegistry::class, function (AgentToolRegistry $registry) {
+        //     return $registry->register(fn () => new Tools\YourAgentTool);
+        // });
+    }
+
+    /**
+     * Optional one-line summary the agent receives on every turn for
+     * THIS user — see ADR 0002. Override and return a short string when
+     * you have something concrete to surface (a deficit, an overdue
+     * habit, an upcoming deadline). Return null to contribute nothing.
+     */
+    public function contributeSignal(User $user, ?Goal $activeGoal = null): ?string
+    {
+        return null;
+    }
+}

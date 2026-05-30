@@ -1,0 +1,10 @@
+<?php
+
+return [
+    // User-facing strings for the {{ name }} pack.
+    // Accessed via __('{{ label }}::key.subkey').
+    //
+    // Keep this file and its sibling in the other locale in sync — every
+    // key here must exist in both pt_BR and en (CI catches gaps only
+    // sometimes).
+];

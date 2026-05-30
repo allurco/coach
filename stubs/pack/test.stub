@@ -1,0 +1,17 @@
+<?php
+
+use App\Domains\{{ name }}\{{ name }}ServiceProvider;
+use App\Packs\PackRegistry;
+
+/**
+ * Pack-boot smoke test. The base DomainPack::boot() registers the pack
+ * with PackRegistry under its label so the agent can collect signals
+ * without knowing which packs are enabled (ADR 0002).
+ *
+ * As you add tools/placeholders/tips, add focused tests next to this one.
+ */
+it('the {{ name }} pack registers itself with PackRegistry under its label', function () {
+    $registry = app(PackRegistry::class);
+
+    expect($registry->get('{{ label }}'))->toBeInstanceOf({{ name }}ServiceProvider::class);
+});
