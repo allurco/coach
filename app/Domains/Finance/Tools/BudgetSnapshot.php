@@ -2,6 +2,7 @@
 
 namespace App\Domains\Finance\Tools;
 
+use App\Agent\Tools\VerbatimOutput;
 use App\Domains\Finance\Models\Budget;
 use App\Models\Action;
 use App\Services\PlaceholderRenderer;
@@ -11,7 +12,7 @@ use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
 
-class BudgetSnapshot implements Tool
+class BudgetSnapshot implements Tool, VerbatimOutput
 {
     /**
      * @param  ?int  $activeGoalId  Optional provenance — records which goal

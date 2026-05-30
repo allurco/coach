@@ -41,16 +41,6 @@ use Laravel\Ai\Streaming\Events\ToolResult;
 class CoachInteraction
 {
     /**
-     * Tools whose output the chat treats as verbatim — the raw markdown
-     * placeholder is preserved in the persisted assistant message so the
-     * structured display (e.g. the BudgetSnapshot table) survives a
-     * page reload. This list is a known leak from the Finance pack into
-     * the Agent layer; will move to a pack contribution mechanism when
-     * a second pack pressures the same pattern.
-     */
-    protected const VERBATIM_TOOLS = ['BudgetSnapshot'];
-
-    /**
      * @param  array<Document|Image>  $documents
      */
     public function run(
@@ -204,6 +194,11 @@ class CoachInteraction
         $batch = ['name' => null, 'calls' => 0, 'ok' => 0, 'verbatim' => []];
         $toolActivity = [];
         $passVerbatims = [];
+        // Resolve which tools are verbatim once per pass. The stream's
+        // ToolResult event carries only the tool name, so we materialise
+        // an instanceof check against the registered tools into a flat
+        // name set the loop can membership-check cheaply.
+        $verbatimNames = $coach->verbatimToolNames();
 
         $flushBatch = function () use (&$batch, &$toolActivity, &$accumulated, &$passVerbatims, $onChunk) {
             if ($batch['name'] === null) {
@@ -258,7 +253,7 @@ class CoachInteraction
                 if ($event->successful) {
                     $batch['ok']++;
                     $name = $event->toolResult->name;
-                    if (in_array($name, self::VERBATIM_TOOLS, true) && $batch['name'] === $name) {
+                    if (in_array($name, $verbatimNames, true) && $batch['name'] === $name) {
                         $batch['verbatim'][] = (string) $event->toolResult->result;
                     }
                 }
