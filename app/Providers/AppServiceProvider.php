@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Agent\Tools\AgentToolRegistry;
 use App\Notifications\ResetPassword;
 use App\Placeholders\PlaceholderRegistry;
 use App\Placeholders\PlanPlaceholder;
@@ -71,6 +72,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PlaceholderRegistry::class, fn () => (new PlaceholderRegistry)
             ->register('plan', new PlanPlaceholder),
         );
+
+        // Agent (LLM) tool catalog — empty by default. Core's own agent
+        // tools (CreateAction, RememberFact, …) stay hard-coded in
+        // CoachAgent::tools() because they depend on the agent's mutable
+        // state. Domain Packs push factories here from their
+        // ServiceProvider (see ADR 0006).
+        $this->app->singleton(AgentToolRegistry::class, fn () => new AgentToolRegistry);
     }
 
     public function boot(): void
