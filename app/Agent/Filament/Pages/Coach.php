@@ -80,6 +80,13 @@ class Coach extends Page implements HasForms
 
     public bool $historyOpen = false;
 
+    /**
+     * Toggled true while the workspace shell is on screen but the chat
+     * history hasn't been fetched yet (the deferred-load window). Drives
+     * the chat skeleton. See loadLatestConversation.
+     */
+    public bool $conversationLoading = false;
+
     public bool $newGoalOpen = false;
 
     public string $newGoalName = '';
@@ -145,7 +152,9 @@ class Coach extends Page implements HasForms
         // Deep link / refresh with ?goal=N opens that Workspace (Goal::find
         // is owner-scoped, so a stale or foreign id falls back to the Goals
         // start screen). No ?goal → land on the Goals start screen with no
-        // active Goal (ADR 0007).
+        // active Goal (ADR 0007). The Workspace shell renders synchronously
+        // for an instant feel; the chat history loads via the deferred
+        // loadLatestConversation call queued below.
         if ($this->activeGoalId !== null) {
             $goal = Goal::find($this->activeGoalId);
 
@@ -176,6 +185,7 @@ class Coach extends Page implements HasForms
         $this->activeTool = null;
         $this->messages = [];
         $this->conversationId = null;
+        $this->conversationLoading = false;
         $this->historyOpen = false;
         $this->goalHistory = [];
         $this->memoActiveGoal = null;
@@ -187,19 +197,17 @@ class Coach extends Page implements HasForms
      * Inner setActiveGoal that takes an already-loaded Goal model — skips
      * the extra Goal::find($id) query that setActiveGoal does. Used by
      * activateDefaultGoal on mount and by setActiveGoal after a sidebar
-     * click.
+     * click. The chat history is NOT loaded here — the workspace shell
+     * renders first (instant feel) and loadLatestConversation runs after,
+     * triggered via $wire so the heavy markdown + DB work happens off the
+     * goal-click critical path.
      */
     protected function activateGoal(Goal $goal): void
     {
         $this->activeGoalId = $goal->id;
-        $latest = $goal->latestConversation();
-
-        if ($latest) {
-            $this->loadConversation($latest->id);
-        } else {
-            $this->messages = [];
-            $this->conversationId = null;
-        }
+        $this->messages = [];
+        $this->conversationId = null;
+        $this->conversationLoading = true;
 
         $this->historyOpen = false;
         $this->goalHistory = [];
@@ -211,6 +219,39 @@ class Coach extends Page implements HasForms
         // Livewire children persist their own state across requests, so prop
         // changes alone don't propagate. See ADR 0005.
         $this->dispatch('plan-refreshed', activeGoalId: $goal->id);
+        // Defer the chat history load to a follow-up Livewire request so the
+        // workspace shell appears immediately; the skeleton shows in the chat
+        // area until loadLatestConversation lands.
+        $this->js('$wire.loadLatestConversation()');
+    }
+
+    /**
+     * Deferred chat history load. Runs as a follow-up Livewire request right
+     * after the workspace shell renders (queued via $this->js in activateGoal
+     * / mount). Looks up the goal's latest conversation and hydrates $messages
+     * via the write-through-cached loadConversation.
+     */
+    public function loadLatestConversation(): void
+    {
+        if ($this->activeGoalId === null) {
+            $this->conversationLoading = false;
+
+            return;
+        }
+
+        $goal = Goal::find($this->activeGoalId);
+        if (! $goal) {
+            $this->conversationLoading = false;
+
+            return;
+        }
+
+        $latest = $goal->latestConversation();
+        if ($latest) {
+            $this->loadConversation($latest->id);
+        }
+
+        $this->conversationLoading = false;
     }
 
     /**
@@ -524,15 +565,30 @@ class Coach extends Page implements HasForms
                 }
             }
 
-            $renderable = $isAssistant ? BudgetSnapshot::expandPlaceholders($content) : $content;
+            // Write-through cache: prefer the persisted content_html when the
+            // assistant row already has it (~50-100ms saved on a goal switch).
+            // When it's null — a row freshly inserted by the laravel/ai SDK
+            // or a legacy row from before the column existed — render once
+            // and persist so the next load is fast.
+            $contentHtml = null;
+            if ($isAssistant) {
+                $contentHtml = $m->content_html ?: null;
+                if ($contentHtml === null) {
+                    $renderable = BudgetSnapshot::expandPlaceholders($content);
+                    $contentHtml = Str::markdown($renderable, [
+                        'html_input' => 'escape',
+                        'allow_unsafe_links' => false,
+                    ]);
+                    DB::table('agent_conversation_messages')
+                        ->where('id', $m->id)
+                        ->update(['content_html' => $contentHtml]);
+                }
+            }
 
             return [
                 'role' => $isAssistant ? 'assistant' : 'user',
                 'content' => $content,
-                'content_html' => $isAssistant ? Str::markdown($renderable, [
-                    'html_input' => 'escape',
-                    'allow_unsafe_links' => false,
-                ]) : null,
+                'content_html' => $contentHtml,
                 'attachments' => $attachments,
                 'time' => Carbon::parse($m->created_at)->format('H:i'),
             ];
@@ -787,16 +843,33 @@ class Coach extends Page implements HasForms
             }
 
             $renderable = BudgetSnapshot::expandPlaceholders($rawText);
+            $contentHtml = Str::markdown($renderable, [
+                'html_input' => 'escape',
+                'allow_unsafe_links' => false,
+            ]);
             $this->messages[] = [
                 'role' => 'assistant',
                 'content' => $rawText,
-                'content_html' => Str::markdown($renderable, [
-                    'html_input' => 'escape',
-                    'allow_unsafe_links' => false,
-                ]),
+                'content_html' => $contentHtml,
                 'attachments' => [],
                 'time' => now()->format('H:i'),
             ];
+            // Seed the content_html cache for the message that was just written
+            // (CoachInteraction inserts/overwrites the row with raw content but
+            // doesn't render markdown). Saves the next loadConversation a
+            // render+UPDATE round trip for this row.
+            if ($this->conversationId !== null) {
+                $latestAssistantId = DB::table('agent_conversation_messages')
+                    ->where('conversation_id', $this->conversationId)
+                    ->where('role', 'assistant')
+                    ->orderByDesc('created_at')
+                    ->value('id');
+                if ($latestAssistantId !== null) {
+                    DB::table('agent_conversation_messages')
+                        ->where('id', $latestAssistantId)
+                        ->update(['content_html' => $contentHtml]);
+                }
+            }
 
             $this->streamingText = null;
             $this->loadGoals();
