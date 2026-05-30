@@ -6,11 +6,13 @@ use App\Domains\Finance\Console\Commands\CoachCarryBudgetForward;
 use App\Domains\Finance\Console\Commands\CoachMonthlyBudgetReminder;
 use App\Domains\Finance\Livewire\BudgetTool;
 use App\Domains\Finance\Models\Budget;
+use App\Domains\Finance\Placeholders\BudgetPlaceholder;
 use App\Domains\Finance\Tips\RefreshBudget;
 use App\Domains\Finance\Tips\SetUpBudget;
 use App\Models\Goal;
 use App\Models\User;
 use App\Packs\DomainPack;
+use App\Placeholders\PlaceholderRegistry;
 use App\Services\TipResolver;
 use App\Tools\Tool;
 use App\Tools\ToolRegistry;
@@ -67,6 +69,13 @@ class FinanceServiceProvider extends DomainPack
                 isPrimary: true,
                 scope: 'finance',
             ));
+        });
+
+        // Contribute the Budget placeholder so PlaceholderRenderer can
+        // expand `{{budget:N}}` and `{{budget:current}}` without Core
+        // importing this pack (ADR 0006).
+        $this->app->extend(PlaceholderRegistry::class, function (PlaceholderRegistry $registry) {
+            return $registry->register('budget', new BudgetPlaceholder);
         });
 
         // The pack owns its scheduled jobs end to end — registration and

@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Notifications\ResetPassword;
+use App\Placeholders\PlaceholderRegistry;
+use App\Placeholders\PlanPlaceholder;
 use App\Services\TipResolver;
 use App\Tips\AddFirstAction;
 use App\Tips\AddSecondGoal;
@@ -60,6 +62,15 @@ class AppServiceProvider extends ServiceProvider
             new Tool(key: 'plan', label: 'tools.plan', icon: 'heroicon-o-clipboard-document-list', component: 'plan-flyout', scope: 'core'),
             new Tool(key: 'contacts', label: 'tools.contacts', icon: 'heroicon-o-users', component: 'contacts-tool', scope: 'core'),
         ));
+
+        // Core placeholder catalog — `{{plan}}` is a Core concept (every
+        // user has actions regardless of which pack is active). Domain
+        // Packs contribute their own placeholders by extending this
+        // singleton from their ServiceProvider (see ADR 0006); Core
+        // never lists pack-owned placeholders.
+        $this->app->singleton(PlaceholderRegistry::class, fn () => (new PlaceholderRegistry)
+            ->register('plan', new PlanPlaceholder),
+        );
     }
 
     public function boot(): void

@@ -69,7 +69,7 @@ class Sharer
         }
         RateLimiter::hit($key, 3600);
 
-        $expandedBody = (new PlaceholderRenderer)->render($body, $user->id);
+        $expandedBody = app(PlaceholderRenderer::class)->render($body, $user->id);
 
         // Always BCC the sender — they need a copy of what went out
         // under their name.
