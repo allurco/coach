@@ -156,8 +156,10 @@ it('loads only the last PAGE_SIZE messages and flags more to fetch when older ex
 
 it('loadOlderMessages prepends the previous batch and updates messagesHasMore', function () {
     $goal = Goal::create(['label' => 'general', 'name' => 'Geral']);
+    // Seed exactly PAGE_SIZE + 1 so one loadOlder call drains the remainder
+    // regardless of how the page size is tuned.
     $messages = [];
-    for ($i = 1; $i <= Coach::MESSAGE_PAGE_SIZE + 3; $i++) {
+    for ($i = 1; $i <= Coach::MESSAGE_PAGE_SIZE + 1; $i++) {
         $messages[] = ['role' => 'user', 'content' => "msg {$i}"];
     }
     seedDeferredConversation($this->user->id, $goal->id, $messages);
@@ -171,7 +173,7 @@ it('loadOlderMessages prepends the previous batch and updates messagesHasMore', 
     $comp->call('loadOlderMessages');
 
     // All messages are now loaded; the prepended batch starts at the oldest.
-    expect($comp->get('messages'))->toHaveCount(Coach::MESSAGE_PAGE_SIZE + 3)
+    expect($comp->get('messages'))->toHaveCount(Coach::MESSAGE_PAGE_SIZE + 1)
         ->and($comp->get('messages')[0]['content'])->toBe('msg 1')
         ->and($comp->get('messagesHasMore'))->toBeFalse();
 });

@@ -55,11 +55,12 @@ class Coach extends Page implements HasForms
     public array $messages = [];
 
     /**
-     * Page size for chat history pagination. loadLatestConversation hydrates
-     * this many of the most recent messages; older batches stream in via
-     * loadOlderMessages when the user scrolls near the top.
+     * Page size for chat history pagination. The initial load shows only the
+     * last exchange (the most recent user message + assistant reply) so the
+     * Workspace opens minimal-weight; older batches stream in via
+     * loadOlderMessages when the user scrolls toward the top.
      */
-    public const MESSAGE_PAGE_SIZE = 20;
+    public const MESSAGE_PAGE_SIZE = 2;
 
     /**
      * True when at least one older message exists past the head of $messages.
